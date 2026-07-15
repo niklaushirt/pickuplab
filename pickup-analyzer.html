@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nicks Pickup Analyzer — Magnetic Transducer Measurement Suite</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --edge:#2b3444;
+    --txt:#e6edf3; --dim:#8b949e; --acc:#4dd0e1; --acc2:#ffb454;
+    --good:#3fb950; --bad:#f85149; --warn:#d29922; --grid:#233040;
+    --mag:#d16bff;
+    --headbg:linear-gradient(90deg,#111722,#161b22);
+    --btntxt:#04222a; --magtxt:#22082e;
+  }
+  :root[data-theme="light"]{
+    --bg:#f4f6fa; --panel:#ffffff; --panel2:#eef1f6; --edge:#d5dbe4;
+    --txt:#1a1f28; --dim:#5c6672; --acc:#0b8ba3; --acc2:#b7770f;
+    --good:#1f9c43; --bad:#d13b32; --warn:#b4820c; --grid:#dde2ea;
+    --mag:#9b3bd0;
+    --headbg:linear-gradient(90deg,#ffffff,#eef1f6);
+    --btntxt:#ffffff; --magtxt:#ffffff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:14px}
+  a{color:var(--acc)}
+  h1{font-size:18px;margin:0}
+  h2{font-size:15px;margin:0 0 10px;color:var(--acc);font-weight:600}
+  .sub{color:var(--dim);font-size:12px}
+  header{display:flex;align-items:center;gap:14px;padding:12px 18px;
+    background:var(--headbg);border-bottom:1px solid var(--edge);
+    position:sticky;top:0;z-index:20}
+  header .logo{font-size:22px}
+  .wrap{max-width:1180px;margin:0 auto;padding:16px}
+  .grid{display:grid;gap:16px}
+  .panel{background:var(--panel);border:1px solid var(--edge);border-radius:10px;padding:16px}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  label{font-size:12px;color:var(--dim);display:block;margin-bottom:4px}
+  select,input[type=number]{background:var(--panel2);color:var(--txt);border:1px solid var(--edge);
+    border-radius:7px;padding:8px 10px;font-size:13px;min-width:120px}
+  select:focus,input:focus{outline:1px solid var(--acc)}
+  button{background:var(--panel2);color:var(--txt);border:1px solid var(--edge);border-radius:7px;
+    padding:9px 15px;font-size:13px;cursor:pointer;transition:.15s;font-weight:500}
+  button:hover:not(:disabled){border-color:var(--acc);color:var(--acc)}
+  button.primary{background:var(--acc);color:var(--btntxt);border-color:var(--acc);font-weight:600}
+  button.primary:hover:not(:disabled){filter:brightness(1.12);color:var(--btntxt)}
+  button.mag{background:var(--mag);border-color:var(--mag);color:var(--magtxt);font-weight:600}
+  button.stop{border-color:var(--bad);color:var(--bad)}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  canvas{display:block;width:100%;background:#0a0e14;border-radius:8px;border:1px solid var(--grid)}
+  .meter{height:16px;background:#0a0e14;border-radius:8px;border:1px solid var(--grid);
+    overflow:hidden;position:relative}
+  .meter > i{position:absolute;left:0;top:0;bottom:0;width:0%;
+    background:linear-gradient(90deg,#3fb950 0%,#3fb950 60%,#d29922 82%,#f85149 100%);
+    transition:width .04s linear}
+  .meter .peak{position:absolute;top:0;bottom:0;width:2px;background:#fff;opacity:.8}
+  .metric{background:var(--panel2);border:1px solid var(--edge);border-radius:8px;padding:10px 12px}
+  .metric .k{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.4px}
+  .metric .v{font-size:20px;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums}
+  .metric .u{font-size:12px;color:var(--dim);font-weight:400}
+  .metrics{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  .tab{padding:8px 14px;border-radius:8px 8px 0 0;background:var(--panel);border:1px solid var(--edge);
+    border-bottom:none;cursor:pointer;font-size:13px;color:var(--dim)}
+  .tab.active{background:var(--panel2);color:var(--acc);font-weight:600}
+  .view{display:none}
+  .view.active{display:block}
+  .pill{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+  .pill.ok{background:rgba(63,185,80,.15);color:var(--good)}
+  .pill.no{background:rgba(248,81,73,.15);color:var(--bad)}
+  .pill.mid{background:rgba(210,153,34,.15);color:var(--warn)}
+  .note{font-size:12px;color:var(--dim);line-height:1.5;background:var(--panel2);
+    border-left:3px solid var(--acc);padding:10px 12px;border-radius:0 6px 6px 0;margin-top:10px}
+  .note.mag{border-left-color:var(--mag)}
+  .flex{display:flex;gap:16px;flex-wrap:wrap}
+  .col{flex:1;min-width:280px}
+  #overlay{position:fixed;inset:0;background:rgba(5,8,12,.94);z-index:100;display:flex;
+    align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+  #overlay .card{background:var(--panel);border:1px solid var(--edge);border-radius:14px;
+    padding:32px;max-width:520px;text-align:center}
+  #overlay h1{margin-bottom:10px}
+  #overlay p{color:var(--dim);line-height:1.6;font-size:13px}
+  .big{font-size:44px;margin-bottom:6px}
+  .warnbox{background:rgba(210,153,34,.1);border:1px solid var(--warn);border-radius:8px;
+    padding:10px;font-size:12px;color:var(--warn);margin-top:14px;text-align:left;line-height:1.5}
+  .status{font-size:12px;color:var(--dim);margin-top:8px;min-height:16px}
+  .legend{display:flex;gap:14px;font-size:11px;color:var(--dim);flex-wrap:wrap;margin-top:6px}
+  .legend i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+  table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+  th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--grid)}
+  th{color:var(--dim);font-weight:500}
+  td{font-variant-numeric:tabular-nums}
+  .hint{cursor:help;border-bottom:1px dotted var(--dim)}
+  .sliderrow{display:flex;align-items:center;gap:10px}
+  input[type=range]{flex:1;accent-color:var(--acc)}
+</style>
+</head>
+<body>
+
+<div id="overlay">
+  <div class="card">
+    <div class="big">🎸🧲</div>
+    <h1>Nicks Pickup Analyzer</h1>
+    <p>A measurement suite for magnetic guitar/bass pickups. This tool needs access to your
+    audio input device to read the signal coming from your pickup (via your audio interface).</p>
+    <div class="warnbox">
+      <b>How to connect:</b> Plug your instrument (or a bare pickup with leads) into your audio
+      interface. Passive measurements (spectrum, peak, impulse, polarity) just listen. Active
+      tests (frequency response, saturation) play a reference tone out of your <b>output device</b> —
+      route that to an <b>exciter coil</b> or small speaker placed near the pickup, or drive the
+      pickup terminals through a resistor. Use headphones-free, low levels first.
+    </div>
+    <p style="margin-top:18px"><button id="grantBtn" class="primary">Grant microphone / input access</button></p>
+    <div class="status" id="permStatus"></div>
+  </div>
+</div>
+
+<header>
+  <span class="logo">🧲</span>
+  <div>
+    <h1>Nicks Pickup Analyzer</h1>
+    <div class="sub">Magnetic transducer measurement suite · Web Audio</div>
+  </div>
+  <div style="margin-left:auto" class="row">
+    <button id="themeBtn">☀️ Light</button>
+    <span class="pill mid" id="ctxState">audio: idle</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ================= SETUP / DEVICE ================= -->
+  <div class="panel" style="margin-bottom:16px">
+    <h2>Input / Output & Meters</h2>
+    <div class="row">
+      <div>
+        <label>Input device</label>
+        <select id="inDevice"></select>
+      </div>
+      <div>
+        <label>Input channel</label>
+        <select id="inChannel"></select>
+      </div>
+      <div>
+        <label>Sample rate</label>
+        <select id="srSel">
+          <option value="0">Default</option>
+          <option value="44100">44100</option>
+          <option value="48000">48000</option>
+          <option value="96000">96000</option>
+        </select>
+      </div>
+      <div>
+        <label>Output device (test signals)</label>
+        <select id="outDevice"></select>
+      </div>
+      <div>
+        <label>Output channel</label>
+        <select id="outChannel"></select>
+      </div>
+      <div style="align-self:flex-end">
+        <button id="testTone">🔊 Test tone</button>
+      </div>
+    </div>
+
+    <div class="flex" style="margin-top:14px">
+      <div class="col">
+        <label>Input level (from pickup) <span id="inDb" class="sub"></span></label>
+        <div class="meter"><i id="inMeter"></i><span class="peak" id="inPeak"></span></div>
+        <div class="legend"><span>Clip: <span id="clipInd" class="pill ok">none</span></span>
+          <span>DC offset: <span id="dcInd" class="sub">0.000</span></span></div>
+      </div>
+      <div class="col">
+        <label>Output level (test signal) <span id="outDb" class="sub"></span></label>
+        <div class="meter"><i id="outMeter"></i></div>
+        <div class="sliderrow" style="margin-top:8px">
+          <span class="sub">Output Gain</span>
+          <input type="range" id="outGain" min="0" max="1" step="0.01" value="1">
+          <span class="sub" id="outGainVal" style="width:40px">100%</span>
+        </div>
+      </div>
+    </div>
+    <div class="status" id="setupStatus"></div>
+  </div>
+
+  <!-- ================= TABS ================= -->
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-v="spectrum">Live Spectrum</div>
+    <div class="tab" data-v="response">Frequency Response</div>
+    <div class="tab" data-v="impulse">Impulse / Tap Test</div>
+    <div class="tab" data-v="sat">Magnetic Saturation Mapper</div>
+    <div class="tab" data-v="polarity">Polarity</div>
+    <div class="tab" data-v="summary">Summary</div>
+  </div>
+
+  <!-- ---------- SPECTRUM ---------- -->
+  <div class="view active" id="v-spectrum">
+    <div class="panel">
+      <h2>Live Spectrum Analyser</h2>
+      <div class="row">
+        <button id="specRun" class="primary">▶ Start</button>
+        <button id="specHold">Hold peak</button>
+        <button id="specClear">Clear peak-hold</button>
+        <div>
+          <label>FFT size</label>
+          <select id="fftSize">
+            <option>2048</option><option selected>8192</option>
+            <option>16384</option><option>32768</option>
+          </select>
+        </div>
+        <div>
+          <label>Scale</label>
+          <select id="specScale"><option value="log" selected>Log freq</option><option value="lin">Linear</option></select>
+        </div>
+      </div>
+      <canvas id="specCanvas" height="300" style="margin-top:12px"></canvas>
+      <div class="legend">
+        <span><i style="background:var(--acc)"></i>Live spectrum</span>
+        <span><i style="background:var(--acc2)"></i>Peak hold</span>
+        <span><i style="background:var(--bad)"></i>Detected peak freq</span>
+      </div>
+      <div class="metrics" style="margin-top:14px">
+        <div class="metric"><div class="k">Peak frequency</div><div class="v"><span id="mPeakF">–</span><span class="u"> Hz</span></div></div>
+        <div class="metric"><div class="k">Peak level</div><div class="v"><span id="mPeakL">–</span><span class="u"> dB</span></div></div>
+        <div class="metric"><div class="k">Fundamental (pitch)</div><div class="v"><span id="mPitch">–</span></div></div>
+        <div class="metric"><div class="k">Spectral centroid</div><div class="v"><span id="mCentroid">–</span><span class="u"> Hz</span></div></div>
+        <div class="metric"><div class="k">RMS level</div><div class="v"><span id="mRms">–</span><span class="u"> dB</span></div></div>
+        <div class="metric"><div class="k">Crest factor</div><div class="v"><span id="mCrest">–</span><span class="u"> dB</span></div></div>
+      </div>
+      <div class="note">Pluck a string and watch the spectrum. The <b>peak frequency</b> is the loudest
+      partial; the <b>spectral centroid</b> is the "brightness" center of mass — a proxy for perceived tone.
+      For an unamplified pickup, the resonant peak of the coil colours the harmonics.</div>
+    </div>
+  </div>
+
+  <!-- ---------- FREQUENCY RESPONSE ---------- -->
+  <div class="view" id="v-response">
+    <div class="panel">
+      <h2>Frequency Response (stepped-sine sweep)</h2>
+      <div class="row">
+        <button id="sweepRun" class="primary">▶ Run sweep</button>
+        <button id="sweepStop" class="stop" disabled>■ Stop</button>
+        <div><label>Start Hz</label><input type="number" id="sweepStart" value="500" min="10"></div>
+        <div><label>End Hz</label><input type="number" id="sweepEnd" value="8000" min="100"></div>
+        <div><label>Points</label><input type="number" id="sweepPts" value="48" min="8" max="200"></div>
+        <div><label>ms/point</label><input type="number" id="sweepDwell" value="250" min="30" max="1000"></div>
+        <div style="align-self:flex-end"><label style="display:inline">&nbsp;</label>
+          <label style="cursor:pointer"><input type="checkbox" id="sweepComp" checked style="min-width:auto;vertical-align:-2px"> +6 dB/oct comp</label></div>
+      </div>
+      <canvas id="respCanvas" height="300" style="margin-top:12px"></canvas>
+      <div class="legend">
+        <span><i style="background:var(--acc)"></i>Magnitude response</span>
+        <span><i style="background:var(--bad)"></i>Resonant peak</span>
+        <span><i style="background:var(--warn)"></i>−3 dB points</span>
+      </div>
+      <div class="metrics" style="margin-top:14px">
+        <div class="metric"><div class="k">Resonant peak</div><div class="v"><span id="rPeakF">–</span><span class="u"> Hz</span></div></div>
+        <div class="metric"><div class="k">Peak gain</div><div class="v"><span id="rPeakG">–</span><span class="u"> dB</span></div></div>
+        <div class="metric"><div class="k">Q factor</div><div class="v"><span id="rQ">–</span></div></div>
+        <div class="metric"><div class="k">−3 dB bandwidth</div><div class="v"><span id="rBw">–</span><span class="u"> Hz</span></div></div>
+        <div class="metric"><div class="k">HF rolloff slope</div><div class="v"><span id="rSlope">–</span><span class="u"> dB/oct</span></div></div>
+        <div class="metric"><div class="k">Low-end (bass) ref</div><div class="v"><span id="rBass">–</span><span class="u"> dB</span></div></div>
+      </div>
+      <div class="note">A pickup is an <b>RLC resonator</b>: coil inductance, its self-capacitance +
+      cable/pot load, and DC resistance. The stepped-sine sweep reveals the resonant peak (the
+      "voice" of the pickup — bright single-coils peak high ~5–8 kHz, hot humbuckers lower ~2–4 kHz).
+      Q describes how sharp/peaky that resonance is, and the HF slope shows how fast the top rolls off
+      above it.</div>
+      <div class="status" id="sweepStatus"></div>
+    </div>
+  </div>
+
+  <!-- ---------- IMPULSE ---------- -->
+  <div class="view" id="v-impulse">
+    <div class="panel">
+      <h2>Impulse Response / Tap Test</h2>
+      <div class="row">
+        <button id="impArm" class="primary">◉ Arm trigger</button>
+        <button id="impStop" class="stop" disabled>■ Disarm</button>
+        <div><label>Trigger threshold</label><input type="number" id="impThresh" value="0.05" step="0.01" min="0.005" max="0.9"></div>
+        <div><label>Capture ms</label><input type="number" id="impLen" value="300" min="50" max="1000"></div>
+      </div>
+      <div class="status" id="impStatus">Arm, then tap the pickup magnet / pluck a muted string sharply.</div>
+      <div class="flex" style="margin-top:12px">
+        <div class="col"><label>Captured waveform</label><canvas id="impWave" height="180"></canvas></div>
+        <div class="col"><label>Decay envelope (log)</label><canvas id="impEnv" height="180"></canvas></div>
+      </div>
+      <canvas id="impSpec" height="180" style="margin-top:12px"></canvas>
+      <label class="sub" style="margin-top:4px">FFT of impulse (resonant ring)</label>
+      <div class="metrics" style="margin-top:14px">
+        <div class="metric"><div class="k">Ring frequency</div><div class="v"><span id="iRing">–</span><span class="u"> Hz</span></div></div>
+        <div class="metric"><div class="k">Decay time (T60 est)</div><div class="v"><span id="iT60">–</span><span class="u"> ms</span></div></div>
+        <div class="metric"><div class="k">Damping ratio ζ</div><div class="v"><span id="iZeta">–</span></div></div>
+        <div class="metric"><div class="k">Q (from ring)</div><div class="v"><span id="iQ">–</span></div></div>
+        <div class="metric"><div class="k">First-swing polarity</div><div class="v"><span id="iPol">–</span></div></div>
+        <div class="metric"><div class="k">Rise time</div><div class="v"><span id="iRise">–</span><span class="u"> ms</span></div></div>
+      </div>
+      <div class="note">Tapping the pole pieces injects a mechanical/magnetic impulse. The pickup's
+      RLC network "rings" at its resonant frequency and decays — same info as the swept response but
+      from a single transient. The <b>first-swing polarity</b> (which way the voltage jumps first)
+      is used by the Polarity tab.</div>
+    </div>
+  </div>
+
+  <!-- ---------- SATURATION ---------- -->
+  <div class="view" id="v-sat">
+    <div class="panel">
+      <h2>🧲 Magnetic Saturation Mapper</h2>
+      <div class="row">
+        <button id="satRun" class="mag">▶ Run saturation ramp</button>
+        <button id="satStop" class="stop" disabled>■ Stop</button>
+        <div><label>Test tone Hz</label><input type="number" id="satFreq" value="220" min="40" max="2000"></div>
+        <div><label>Ramp steps</label><input type="number" id="satSteps" value="24" min="6" max="60"></div>
+        <div><label>ms/step</label><input type="number" id="satDwell" value="120" min="40" max="600"></div>
+      </div>
+      <div class="flex" style="margin-top:12px">
+        <div class="col">
+          <label>Transfer curve — output vs input drive (watch it bend asymmetrically)</label>
+          <canvas id="satTransfer" height="240"></canvas>
+        </div>
+        <div class="col">
+          <label>Waveform at max drive (half-wave compression)</label>
+          <canvas id="satWave" height="240"></canvas>
+        </div>
+      </div>
+      <canvas id="satHarm" height="150" style="margin-top:12px"></canvas>
+      <label class="sub">Harmonic content vs drive — even harmonics (asymmetry) rising faster than odd = magnetic saturation signature</label>
+      <div class="metrics" style="margin-top:14px">
+        <div class="metric"><div class="k">Asymmetry index</div><div class="v"><span id="sAsym">–</span><span class="u"> %</span></div></div>
+        <div class="metric"><div class="k">+peak / −peak ratio</div><div class="v"><span id="sRatio">–</span></div></div>
+        <div class="metric"><div class="k">Compressed half</div><div class="v"><span id="sHalf">–</span></div></div>
+        <div class="metric"><div class="k">2nd harmonic (even)</div><div class="v"><span id="sH2">–</span><span class="u"> dB</span></div></div>
+        <div class="metric"><div class="k">3rd harmonic (odd)</div><div class="v"><span id="sH3">–</span><span class="u"> dB</span></div></div>
+        <div class="metric"><div class="k">Even/Odd energy</div><div class="v"><span id="sEO">–</span></div></div>
+        <div class="metric"><div class="k">THD at max drive</div><div class="v"><span id="sTHD">–</span><span class="u"> %</span></div></div>
+        <div class="metric"><div class="k">DC shift under drive</div><div class="v"><span id="sDC">–</span></div></div>
+        <div class="metric"><div class="k">Saturation onset</div><div class="v"><span id="sOnset">–</span><span class="u"> % drive</span></div></div>
+        <div class="metric"><div class="k">Character</div><div class="v" style="font-size:15px"><span id="sChar">–</span></div></div>
+      </div>
+      <div class="note mag"><b>Why this matters:</b> Real high-output pickup distortion is <i>not</i> the
+      symmetric soft-clip most plugins use. As drive rises, the magnetic field around the pole pieces
+      <b>saturates on one polarity first</b> — compressing one half of the waveform while the other
+      stays linear. That asymmetry pumps out <b>even harmonics</b> (2nd, 4th) which sound "warm/amp-like",
+      versus the odd-harmonic buzz of symmetric clipping. This mapper measures the +/− peak compression,
+      the even-vs-odd harmonic balance, and the transfer-curve bend so you can see the true saturation
+      shape — and, if you're modelling it, fit an asymmetric waveshaper instead of a tanh.
+      <br><br><b>Caution:</b> a passive pickup can't be electrically over-driven by this app directly.
+      To exercise real magnetic saturation you must present a strong, increasing magnetic stimulus
+      (a driven exciter coil / speaker coupling the ramped tone into the pickup, or a hot string
+      signal). If you feed the pickup a small clean signal, you'll correctly see a straight transfer
+      curve = no saturation.</div>
+    </div>
+  </div>
+
+  <!-- ---------- POLARITY ---------- -->
+  <div class="view" id="v-polarity">
+    <div class="panel">
+      <h2>Pickup Polarity Detector</h2>
+      <p class="sub">Determines the electrical polarity (which lead is "hot" on a rising north-pole
+      approach) and lets you compare two pickups for in-phase / out-of-phase pairing and hum-cancelling.</p>
+      <div class="row">
+        <button id="polArm" class="primary">◉ Test polarity (tap magnet)</button>
+        <button id="polRef">Store as reference</button>
+        <button id="polClear">Clear reference</button>
+      </div>
+      <div class="status" id="polStatus">Arm, then bring a magnet/screwdriver <b>toward</b> the pole
+      pieces and pull away — or tap sharply. We read the sign of the first voltage swing.</div>
+      <canvas id="polWave" height="200" style="margin-top:12px"></canvas>
+      <div class="metrics" style="margin-top:14px">
+        <div class="metric"><div class="k">Detected polarity</div><div class="v" style="font-size:16px"><span id="pPol">–</span></div></div>
+        <div class="metric"><div class="k">First swing</div><div class="v"><span id="pSwing">–</span></div></div>
+        <div class="metric"><div class="k">Confidence</div><div class="v"><span id="pConf">–</span><span class="u"> %</span></div></div>
+        <div class="metric"><div class="k">vs reference</div><div class="v" style="font-size:16px"><span id="pRef">–</span></div></div>
+      </div>
+      <div class="note">Polarity here is the <b>electrical</b> sign convention of the coil. For a single
+      pickup it tells you which lead should be hot. Comparing two pickups: <b>same</b> electrical
+      polarity + <b>same</b> magnetic polarity = in-phase and hum-<i>adds</i>; opposite electrical
+      AND opposite magnetic = in-phase and hum-<i>cancels</i> (the classic humbucker / RWRP middle
+      position). This app measures electrical polarity only — note the magnet orientation yourself.</div>
+    </div>
+  </div>
+
+  <!-- ---------- SUMMARY ---------- -->
+  <div class="view" id="v-summary">
+    <div class="panel">
+      <h2>Measurement Summary</h2>
+      <p class="sub">Consolidated report of everything measured this session. Run each test to populate.</p>
+      <table id="sumTable">
+        <tr><th>Parameter</th><th>Value</th><th>Interpretation</th></tr>
+      </table>
+      <div class="row" style="margin-top:14px">
+        <button id="exportBtn">⬇ Export JSON</button>
+        <button id="exportCsvBtn">⬇ Export CSV</button>
+        <button id="exportPngBtn">⬇ Export PNG</button>
+        <button id="printBtn">🖨 Print / Save PDF</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   Pickup Analyzer — single-file Web Audio measurement suite
+   ============================================================ */
+
+const $ = id => document.getElementById(id);
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const dB = x => 20*Math.log10(Math.max(x,1e-9));
+const NOTE=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+function hzToNote(f){
+  if(!f||f<=0) return "–";
+  const n=Math.round(12*Math.log2(f/440)+69);
+  const name=NOTE[(n%12+12)%12]+ (Math.floor(n/12)-1);
+  const exact=440*Math.pow(2,(n-69)/12);
+  const cents=Math.round(1200*Math.log2(f/exact));
+  return `${name} ${cents>=0?'+':''}${cents}¢`;
+}
+
+/* ---- global audio state ---- */
+let AC=null, stream=null, srcNode=null, splitter=null, chanGain=null,
+    analyser=null, outGainNode=null, testOsc=null, testGain=null, monTap=null, silentSink=null,
+    outMerger=null, numOutChannels=2, testToneOn=false, testToneOsc=null, testToneGain=null;
+let numInChannels=1, selChannel=0;
+let report={};
+
+const setupStatus=$("setupStatus");
+
+/* ============================================================
+   PERMISSION + DEVICE SETUP
+   ============================================================ */
+$("grantBtn").onclick = async ()=>{
+  $("permStatus").textContent="Requesting access…";
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({audio:{
+      echoCancellation:false, noiseSuppression:false, autoGainControl:false,
+      channelCount:2
+    }});
+    await enumerate();
+    await buildGraph();
+    $("overlay").style.display="none";
+  }catch(e){
+    $("permStatus").innerHTML=`<span class="pill no">Denied</span> ${e.message}`;
+  }
+};
+
+async function enumerate(){
+  const devs = await navigator.mediaDevices.enumerateDevices();
+  const inSel=$("inDevice"), outSel=$("outDevice");
+  inSel.innerHTML=""; outSel.innerHTML="";
+  devs.filter(d=>d.kind==="audioinput").forEach(d=>{
+    const o=document.createElement("option"); o.value=d.deviceId;
+    o.textContent=d.label||`Input ${inSel.length+1}`; inSel.appendChild(o);
+  });
+  const anyOut=document.createElement("option");anyOut.value="";anyOut.textContent="System default";
+  outSel.appendChild(anyOut);
+  devs.filter(d=>d.kind==="audiooutput").forEach(d=>{
+    const o=document.createElement("option"); o.value=d.deviceId;
+    o.textContent=d.label||`Output ${outSel.length}`; outSel.appendChild(o);
+  });
+}
+
+// Full (re)build: context + output path. Only used on first connect or when the
+// sample rate changes (that genuinely needs a new context). Changing the INPUT
+// device must NOT come through here — it would tear down the running output.
+async function buildGraph(){
+  const srWanted=parseInt($("srSel").value)||0;
+  if(AC) { try{await AC.close();}catch(e){} }
+  AC = srWanted ? new (window.AudioContext||window.webkitAudioContext)({sampleRate:srWanted})
+                : new (window.AudioContext||window.webkitAudioContext)();
+  try{ await AC.resume(); }catch(e){}
+  $("ctxState").textContent=`audio: ${AC.sampleRate|0} Hz`;
+  $("ctxState").className="pill ok";
+  // a fresh context invalidates any playing test tone
+  testToneOn=false; $("testTone").textContent="🔊 Test tone"; $("testTone").classList.remove("primary");
+
+  buildOutput();
+  await buildInput();
+
+  // set output sink if supported
+  if(typeof AC.setSinkId==="function" && $("outDevice").value){
+    try{await AC.setSinkId($("outDevice").value);}catch(e){}
+  }
+  await enumerate(); // labels now populated
+}
+
+// Build the output test-signal path (merger → destination). Context-level, built once.
+function buildOutput(){
+  numOutChannels = Math.min(AC.destination.maxChannelCount || 2, 8);
+  try{ AC.destination.channelCount = numOutChannels;
+       AC.destination.channelCountMode = "explicit";
+       AC.destination.channelInterpretation = "discrete"; }catch(e){}
+  outMerger = AC.createChannelMerger(numOutChannels);
+  outMerger.connect(AC.destination);
+
+  outGainNode = AC.createGain();
+  outGainNode.gain.value = parseFloat($("outGain").value);
+  monTap = AC.createAnalyser(); monTap.fftSize=1024;
+  outGainNode.connect(monTap);
+
+  const ocSel=$("outChannel"); ocSel.innerHTML="";
+  for(let i=0;i<numOutChannels;i++){
+    const o=document.createElement("option");o.value=i;o.textContent=`Channel ${i+1}`;ocSel.appendChild(o);
+  }
+  if(numOutChannels>=2){const o=document.createElement("option");o.value="both";o.textContent="Both (1+2)";ocSel.appendChild(o);}
+  ocSel.value="both"; connectOutChannel();
+}
+
+// (Re)acquire and wire ONLY the input path. Safe to call on input-device change
+// without disturbing the output / any playing test tone.
+async function buildInput(){
+  // tear down previous input nodes
+  try{ srcNode && srcNode.disconnect(); }catch(e){}
+  try{ splitter && splitter.disconnect(); }catch(e){}
+  try{ chanGain && chanGain.disconnect(); }catch(e){}
+  try{ analyser && analyser.disconnect(); }catch(e){}
+  try{ silentSink && silentSink.disconnect(); }catch(e){}
+
+  // Ask for ALL channels the device offers. Chrome clamps to device capability;
+  // forcing channelCount:2 collapses a multichannel interface to a stereo downmix.
+  const devId=$("inDevice").value;
+  if(stream) stream.getTracks().forEach(t=>t.stop());
+  stream = await navigator.mediaDevices.getUserMedia({audio:{
+    deviceId: devId?{exact:devId}:undefined,
+    echoCancellation:false, noiseSuppression:false, autoGainControl:false,
+    channelCount:{ideal:32}
+  }});
+
+  const track=stream.getAudioTracks()[0];
+  let caps={}; try{ caps=track.getCapabilities?track.getCapabilities():{}; }catch(e){}
+  const settings=track.getSettings();
+  // Trust track settings/capabilities — NOT srcNode.channelCount, which a
+  // MediaStreamAudioSourceNode always reports as 2 regardless of real channels.
+  numInChannels = settings.channelCount
+                 || (caps.channelCount && caps.channelCount.max)
+                 || 1;
+  numInChannels = Math.max(1, numInChannels|0);
+
+  srcNode = AC.createMediaStreamSource(stream);
+
+  // channel picker — reflect the ACTUAL number of delivered channels
+  const chSel=$("inChannel"); chSel.innerHTML="";
+  for(let i=0;i<numInChannels;i++){
+    const o=document.createElement("option");o.value=i;o.textContent=`Channel ${i+1}`;chSel.appendChild(o);
+  }
+  if(numInChannels>1){
+    const optMono=document.createElement("option");optMono.value="mix";optMono.textContent="Mono mix (all ch)";
+    chSel.appendChild(optMono);
+  }
+  selChannel=0; chSel.value="0";
+
+  splitter = AC.createChannelSplitter(numInChannels);
+  srcNode.connect(splitter);
+  chanGain = AC.createGain();
+  connectChannel();
+
+  analyser = AC.createAnalyser();
+  analyser.fftSize = parseInt($("fftSize").value);
+  analyser.smoothingTimeConstant = 0.5;
+  chanGain.connect(analyser);
+
+  // Muted sink: a live MediaStream source is only rendered if the graph reaches
+  // the destination. Without this the analyser reads all-zeros.
+  silentSink = AC.createGain();
+  silentSink.gain.value = 0;
+  analyser.connect(silentSink);
+  silentSink.connect(AC.destination);
+
+  const chWarn = numInChannels<=2 ? ` <span class="sub">— if your interface has more inputs but only ${numInChannels} show here, Chrome is downmixing it; see note below</span>` : "";
+  setupStatus.innerHTML=`<span class="pill ok">Connected</span> Chrome delivered <b>${numInChannels}</b> input channel(s) @ ${AC.sampleRate} Hz${chWarn}`;
+  startMeters();
+}
+
+function connectChannel(){
+  try{ splitter.disconnect(); }catch(e){}
+  try{ chanGain.disconnect(); }catch(e){}
+  const chSel=$("inChannel").value;
+  if(chSel==="mix"){
+    for(let i=0;i<numInChannels;i++){
+      const g=AC.createGain(); g.gain.value=1/numInChannels;
+      splitter.connect(g,i); g.connect(chanGain);
+    }
+  }else{
+    selChannel=clamp(parseInt(chSel)||0, 0, numInChannels-1);
+    splitter.connect(chanGain, selChannel);
+  }
+  // reconnect downstream
+  if(analyser){ chanGain.connect(analyser); }
+}
+
+function connectOutChannel(){
+  if(!outGainNode||!outMerger)return;
+  try{ outGainNode.disconnect(outMerger); }catch(e){}
+  const sel=$("outChannel").value;
+  if(sel==="both"){
+    outGainNode.connect(outMerger,0,0);
+    if(numOutChannels>=2) outGainNode.connect(outMerger,0,1);
+  }else{
+    const ch=Math.min(parseInt(sel)||0, numOutChannels-1);
+    outGainNode.connect(outMerger,0,ch);
+  }
+}
+
+$("inChannel").onchange=()=>{ if(AC) connectChannel(); };
+$("inDevice").onchange=()=>{ if(AC) buildInput(); };   // input-only: leaves output running
+$("outChannel").onchange=()=>{ if(AC) connectOutChannel(); };
+$("srSel").onchange=()=>{ if(AC) buildGraph(); };       // needs a new context
+$("outDevice").onchange=async()=>{
+  if(AC && typeof AC.setSinkId==="function" && $("outDevice").value){
+    try{await AC.setSinkId($("outDevice").value);}catch(e){}
+  }
+};
+$("testTone").onclick=()=>{
+  if(!AC)return;
+  if(AC.state==="suspended") AC.resume();
+  if(testToneOn){
+    try{testToneOsc.stop();}catch(e){}
+    try{testToneOsc.disconnect();testToneGain.disconnect();}catch(e){}
+    testToneOn=false; $("testTone").textContent="🔊 Test tone"; $("testTone").classList.remove("primary");
+    return;
+  }
+  testToneOsc=AC.createOscillator(); testToneOsc.frequency.value=440;
+  testToneGain=AC.createGain(); testToneGain.gain.value=0.4;
+  testToneOsc.connect(testToneGain); testToneGain.connect(outGainNode);
+  testToneOsc.start();
+  testToneOn=true; $("testTone").textContent="⏹ Stop tone"; $("testTone").classList.add("primary");
+};
+$("fftSize").onchange=()=>{ if(analyser) analyser.fftSize=parseInt($("fftSize").value); };
+$("outGain").oninput=()=>{
+  const v=parseFloat($("outGain").value);
+  $("outGainVal").textContent=Math.round(v*100)+"%";
+  if(outGainNode) outGainNode.gain.value=v;
+};
+
+/* ============================================================
+   METERS  (input + output, clip, DC offset)
+   ============================================================ */
+let meterRAF=null, inPeakHold=0, inPeakDecay=0;
+function startMeters(){
+  if(meterRAF) cancelAnimationFrame(meterRAF);
+  const buf=new Float32Array(analyser.fftSize);
+  const outBuf=new Float32Array(monTap.fftSize);
+  function loop(){
+    analyser.getFloatTimeDomainData(buf);
+    let peak=0,sum=0,dc=0;
+    for(let i=0;i<buf.length;i++){ const v=buf[i]; dc+=v; const a=Math.abs(v); if(a>peak)peak=a; sum+=v*v; }
+    dc/=buf.length;
+    const rms=Math.sqrt(sum/buf.length);
+    $("inMeter").style.width=clamp(peak*100,0,100)+"%";
+    $("inDb").textContent=`${dB(rms).toFixed(1)} dB rms / ${dB(peak).toFixed(1)} pk`;
+    if(peak>=0.985){ $("clipInd").textContent="CLIP"; $("clipInd").className="pill no"; }
+    else if(peak>0.9){ $("clipInd").textContent="hot"; $("clipInd").className="pill mid"; }
+    else { $("clipInd").textContent="ok"; $("clipInd").className="pill ok"; }
+    $("dcInd").textContent=dc.toFixed(4);
+    // peak hold marker
+    if(peak>inPeakHold){inPeakHold=peak;inPeakDecay=0;} else {inPeakDecay++; if(inPeakDecay>30)inPeakHold*=0.97;}
+    $("inPeak").style.left=clamp(inPeakHold*100,0,100)+"%";
+
+    monTap.getFloatTimeDomainData(outBuf);
+    let opk=0; for(let i=0;i<outBuf.length;i++){const a=Math.abs(outBuf[i]);if(a>opk)opk=a;}
+    $("outMeter").style.width=clamp(opk*100,0,100)+"%";
+    $("outDb").textContent=`${dB(opk).toFixed(1)} pk`;
+
+    meterRAF=requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+/* ============================================================
+   SHARED DSP HELPERS
+   ============================================================ */
+function goertzel(buf, f, sr){ // magnitude at frequency f
+  const w=2*Math.PI*f/sr, cw=Math.cos(w), coeff=2*cw;
+  let s0=0,s1=0,s2=0;
+  for(let i=0;i<buf.length;i++){ s0=buf[i]+coeff*s1-s2; s2=s1; s1=s0; }
+  const real=s1-s2*cw, imag=s2*Math.sin(w);
+  return Math.sqrt(real*real+imag*imag)/(buf.length/2);
+}
+function rmsOf(buf){let s=0;for(let i=0;i<buf.length;i++)s+=buf[i]*buf[i];return Math.sqrt(s/buf.length);}
+function collect(ms){ // gather time-domain samples over ms using analyser
+  return new Promise(res=>{
+    const need=Math.ceil(AC.sampleRate*ms/1000);
+    const out=new Float32Array(need); let filled=0;
+    const tmp=new Float32Array(analyser.fftSize);
+    const iv=setInterval(()=>{
+      analyser.getFloatTimeDomainData(tmp);
+      const n=Math.min(tmp.length,need-filled);
+      out.set(tmp.subarray(0,n),filled); filled+=n;
+      if(filled>=need){clearInterval(iv);res(out);}
+    }, Math.max(8, analyser.fftSize/AC.sampleRate*1000*0.5));
+  });
+}
+function playTone(freq, amp){
+  stopTone();
+  testOsc=AC.createOscillator(); testOsc.frequency.value=freq;
+  testGain=AC.createGain(); testGain.gain.value=amp;
+  testOsc.connect(testGain); testGain.connect(outGainNode);
+  testOsc.start();
+}
+function stopTone(){ if(testOsc){try{testOsc.stop();}catch(e){} testOsc.disconnect(); testOsc=null;} if(testGain){testGain.disconnect();testGain=null;} }
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* canvas helper */
+function ctxOf(id){const c=$(id);const r=c.getBoundingClientRect();
+  c.width=r.width*devicePixelRatio;c.height=(c.height||200)*devicePixelRatio;
+  const x=c.getContext("2d");x.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  return {x,w:r.width,h:c.height/devicePixelRatio,c};}
+function grid(x,w,h,rows=4){x.strokeStyle="#233040";x.lineWidth=1;x.beginPath();
+  for(let i=0;i<=rows;i++){const y=h*i/rows;x.moveTo(0,y);x.lineTo(w,y);}x.stroke();}
+
+/* ============================================================
+   LIVE SPECTRUM
+   ============================================================ */
+let specRAF=null, peakHold=null, holdOn=false;
+$("specRun").onclick=()=>{ if(specRAF){stopSpec();}else{startSpec();} };
+$("specHold").onclick=()=>{holdOn=!holdOn; $("specHold").classList.toggle("primary",holdOn);};
+$("specClear").onclick=()=>{peakHold=null;};
+function stopSpec(){cancelAnimationFrame(specRAF);specRAF=null;$("specRun").textContent="▶ Start";$("specRun").classList.add("primary");}
+function startSpec(){
+  if(!analyser)return;
+  $("specRun").textContent="■ Stop";$("specRun").classList.remove("primary");
+  const N=analyser.frequencyBinCount;
+  let freqData=new Float32Array(N);
+  const timeData=new Float32Array(analyser.fftSize);
+  function loop(){
+    if(analyser.frequencyBinCount!==N){startSpec();return;}
+    analyser.getFloatFrequencyData(freqData);
+    analyser.getFloatTimeDomainData(timeData);
+    const sr=AC.sampleRate, nyq=sr/2;
+    const {x,w,h}=ctxOf("specCanvas");
+    x.clearRect(0,0,w,h); grid(x,w,h,6);
+    const logScale=$("specScale").value==="log";
+    const fmin=20, fmax=nyq;
+    const xOf=f=> logScale ? (Math.log10(f/fmin)/Math.log10(fmax/fmin))*w : (f/fmax)*w;
+    const dbMin=-110,dbMax=-10;
+    const yOf=d=> h-( (clamp(d,dbMin,dbMax)-dbMin)/(dbMax-dbMin) )*h;
+
+    // peak hold
+    if(!peakHold||peakHold.length!==N){peakHold=new Float32Array(N).fill(-200);}
+    if(holdOn) for(let i=0;i<N;i++) if(freqData[i]>peakHold[i]) peakHold[i]=freqData[i];
+
+    // draw peak hold
+    if(holdOn){x.strokeStyle="#ffb454";x.lineWidth=1;x.beginPath();
+      for(let i=1;i<N;i++){const f=i*nyq/N;if(f<fmin)continue;const px=xOf(f);const py=yOf(peakHold[i]);
+        i===1?x.moveTo(px,py):x.lineTo(px,py);}x.stroke();}
+
+    // draw spectrum
+    x.strokeStyle="#4dd0e1";x.lineWidth=1.5;x.beginPath();
+    let peakDb=-999,peakBin=0;
+    for(let i=1;i<N;i++){const f=i*nyq/N;if(f<fmin)continue;const px=xOf(f);const py=yOf(freqData[i]);
+      i===1?x.moveTo(px,py):x.lineTo(px,py);
+      if(freqData[i]>peakDb){peakDb=freqData[i];peakBin=i;}}
+    x.stroke();
+
+    // peak freq parabolic interp
+    let pf=peakBin*nyq/N;
+    if(peakBin>0&&peakBin<N-1){const a=freqData[peakBin-1],b=freqData[peakBin],c=freqData[peakBin+1];
+      const d=0.5*(a-c)/(a-2*b+c+1e-9); pf=(peakBin+d)*nyq/N;}
+    // mark peak
+    x.strokeStyle="#f85149";x.setLineDash([4,4]);x.beginPath();
+    x.moveTo(xOf(pf),0);x.lineTo(xOf(pf),h);x.stroke();x.setLineDash([]);
+
+    // spectral centroid & rms/crest
+    let num=0,den=0; for(let i=1;i<N;i++){const mag=Math.pow(10,freqData[i]/20);const f=i*nyq/N;num+=f*mag;den+=mag;}
+    const centroid=den>0?num/den:0;
+    let rms=rmsOf(timeData),pk=0;for(let i=0;i<timeData.length;i++){const a=Math.abs(timeData[i]);if(a>pk)pk=a;}
+
+    $("mPeakF").textContent=pf>fmin?pf.toFixed(1):"–";
+    $("mPeakL").textContent=peakDb>-200?peakDb.toFixed(1):"–";
+    $("mPitch").textContent=pf>fmin?hzToNote(pf):"–";
+    $("mCentroid").textContent=centroid>0?centroid.toFixed(0):"–";
+    $("mRms").textContent=dB(rms).toFixed(1);
+    $("mCrest").textContent=(dB(pk)-dB(rms)).toFixed(1);
+
+    // axis labels
+    x.fillStyle="#8b949e";x.font="10px sans-serif";
+    [50,100,200,500,1000,2000,5000,10000].forEach(f=>{if(f<fmax){x.fillText(f>=1000?(f/1000)+"k":f, xOf(f)+2, h-3);}});
+
+    report.spectrum={peakF:pf,peakL:peakDb,centroid,pitch:hzToNote(pf)};
+    specRAF=requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+/* ============================================================
+   FREQUENCY RESPONSE (stepped sine)
+   ============================================================ */
+let sweepAbort=false, sweepData=[];
+$("sweepRun").onclick=runSweep;
+$("sweepStop").onclick=()=>{sweepAbort=true;};
+async function runSweep(){
+  if(!AC)return;
+  sweepAbort=false; sweepData=[];
+  $("sweepRun").disabled=true;$("sweepStop").disabled=false;
+  const f0=parseFloat($("sweepStart").value),f1=parseFloat($("sweepEnd").value);
+  const measStart=Math.min(450,f0); // sweep from 450 Hz, but only draw/analyse from f0
+  const pts=parseInt($("sweepPts").value),dwell=parseInt($("sweepDwell").value);
+  const comp=$("sweepComp").checked; // +6 dB/oct differentiator compensation
+  const amp=0.9;
+  for(let i=0;i<pts;i++){
+    if(sweepAbort)break;
+    const frac=i/(pts-1);
+    const f=measStart*Math.pow(f1/measStart,frac);
+    playTone(f,amp);
+    await sleep(dwell*0.4); // settle
+    const buf=await collect(dwell*0.6);
+    const mag=goertzel(buf,f,AC.sampleRate);
+    $("sweepStatus").textContent=`Sweeping… ${i+1}/${pts}  @ ${f.toFixed(0)} Hz`+(f<f0?"  (warm-up, below display start)":"");
+    if(f<f0){ continue; } // measured for settling/warm-up, not drawn or analysed
+    // +6 dB/oct compensation: voltage doubles per octave above the start freq.
+    // Anchored so db==raw at f0.
+    const compDb = comp ? 6*Math.log2(f/f0) : 0;
+    sweepData.push({f,mag,rawDb:dB(mag),db:dB(mag)+compDb});
+    smoothSweep();
+    drawSweep();
+  }
+  stopTone();
+  $("sweepRun").disabled=false;$("sweepStop").disabled=true;
+  analyzeSweep();
+  $("sweepStatus").textContent=sweepAbort?"Stopped.":"Sweep complete.";
+}
+// smoothed magnitude (5-tap triangular kernel over the displayed points)
+const SV = d => (d && d.sdb!==undefined) ? d.sdb : (d?d.db:0);
+function smoothSweep(){
+  const n=sweepData.length; const wgt=[1,2,3,2,1];
+  for(let i=0;i<n;i++){
+    let s=0,ws=0;
+    for(let k=-2;k<=2;k++){const j=i+k;if(j<0||j>=n)continue;const wt=wgt[k+2];s+=sweepData[j].db*wt;ws+=wt;}
+    sweepData[i].sdb=s/ws;
+  }
+}
+// draw a smooth curve through screen points using quadratic midpoints
+function smoothPath(x,pts){
+  if(pts.length<2){return;}
+  x.beginPath();x.moveTo(pts[0][0],pts[0][1]);
+  if(pts.length===2){x.lineTo(pts[1][0],pts[1][1]);x.stroke();return;}
+  for(let i=1;i<pts.length-1;i++){
+    const xc=(pts[i][0]+pts[i+1][0])/2, yc=(pts[i][1]+pts[i+1][1])/2;
+    x.quadraticCurveTo(pts[i][0],pts[i][1],xc,yc);
+  }
+  const L=pts[pts.length-1];x.quadraticCurveTo(L[0],L[1],L[0],L[1]);
+  x.stroke();
+}
+function drawSweep(){
+  const {x,w,h}=ctxOf("respCanvas"); x.clearRect(0,0,w,h); grid(x,w,h,6);
+  if(!sweepData.length)return;
+  const f0=sweepData[0].f,f1=sweepData[sweepData.length-1].f;
+  let dmin=Infinity,dmax=-Infinity; sweepData.forEach(d=>{const v=SV(d);if(v<dmin)dmin=v;if(v>dmax)dmax=v;});
+  dmax+=3;dmin-=3;
+  const xOf=f=>(Math.log10(f/f0)/Math.log10(Math.max(f1/f0,1.0001)))*w;
+  const yOf=d=>h-((d-dmin)/(dmax-dmin))*h;
+  const scr=sweepData.map(d=>[xOf(d.f),yOf(SV(d))]);
+  x.strokeStyle="#4dd0e1";x.lineWidth=2;smoothPath(x,scr);
+  x.fillStyle="rgba(77,208,225,.55)";sweepData.forEach((d,i)=>{x.beginPath();x.arc(scr[i][0],scr[i][1],1.8,0,7);x.fill();});
+  x.fillStyle="#8b949e";x.font="10px sans-serif";
+  [100,200,500,1000,2000,5000,10000].forEach(f=>{if(f>=f0&&f<=f1)x.fillText(f>=1000?(f/1000)+"k":f,xOf(f)+2,h-3);});
+  window._sweepDraw={xOf,yOf,dmin,dmax,f0,f1,w,h};
+}
+function analyzeSweep(){
+  if(sweepData.length<4)return;
+  smoothSweep();
+  let peak=sweepData[0]; sweepData.forEach(d=>{if(SV(d)>SV(peak))peak=d;});
+  const peakDb=SV(peak), halfDb=peakDb-3;
+  // find -3dB crossings around peak (on smoothed curve)
+  let loF=sweepData[0].f, hiF=sweepData[sweepData.length-1].f, foundLo=false,foundHi=false;
+  const pi=sweepData.indexOf(peak);
+  for(let i=pi;i>0;i--){ if(SV(sweepData[i])<=halfDb){
+    const a=sweepData[i],b=sweepData[i+1];const t=(halfDb-SV(a))/(SV(b)-SV(a));loF=a.f*Math.pow(b.f/a.f,t);foundLo=true;break;}}
+  for(let i=pi;i<sweepData.length-1;i++){ if(SV(sweepData[i])<=halfDb){
+    const a=sweepData[i-1],b=sweepData[i];const t=(halfDb-SV(a))/(SV(b)-SV(a));hiF=a.f*Math.pow(b.f/a.f,t);foundHi=true;break;}}
+  const bw=(foundLo&&foundHi)?(hiF-loF):null;
+  const Q=bw?peak.f/bw:null;
+  // HF slope: above resonance
+  const hiPts=sweepData.filter(d=>d.f>peak.f*1.5);
+  let slope=null;
+  if(hiPts.length>2){const a=hiPts[0],b=hiPts[hiPts.length-1];
+    slope=(SV(b)-SV(a))/Math.log2(b.f/a.f);}
+  // low-end reference: lowest displayed point vs peak
+  const bassRef=SV(sweepData[0])-peakDb;
+
+  $("rPeakF").textContent=peak.f.toFixed(0);
+  $("rPeakG").textContent=peakDb.toFixed(1);
+  $("rQ").textContent=Q?Q.toFixed(2):"–";
+  $("rBw").textContent=bw?bw.toFixed(0):"–";
+  $("rSlope").textContent=slope?slope.toFixed(1):"–";
+  $("rBass").textContent=bassRef?bassRef.toFixed(1):"–";
+
+  // redraw with markers
+  overlaySweepMarkers({f:peak.f,db:peakDb},loF,hiF,foundLo,foundHi);
+
+  report.response={resonantHz:peak.f,peakGain:peakDb,Q,bandwidth:bw,hfSlope:slope,bassRef};
+  refreshSummary();
+}
+function overlaySweepMarkers(peak,loF,hiF,foundLo,foundHi){
+  drawSweep();
+  const D=window._sweepDraw; if(!D)return;
+  const {x,h}=ctxOf("respCanvas");
+  // ctxOf recreated context & cleared — need redraw curve again
+  redrawSweepCurve();
+  const {xOf,yOf}=window._sweepDraw;
+  const cx=$("respCanvas").getContext("2d");
+  cx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  cx.strokeStyle="#f85149";cx.setLineDash([4,4]);cx.beginPath();
+  cx.moveTo(xOf(peak.f),0);cx.lineTo(xOf(peak.f),D.h);cx.stroke();cx.setLineDash([]);
+  cx.fillStyle="#f85149";cx.beginPath();cx.arc(xOf(peak.f),yOf(peak.db),4,0,7);cx.fill();
+  cx.fillStyle="#f85149";cx.font="11px sans-serif";cx.fillText(peak.f.toFixed(0)+" Hz",xOf(peak.f)+5,14);
+  cx.strokeStyle="#d29922";cx.setLineDash([2,3]);
+  if(foundLo){cx.beginPath();cx.moveTo(xOf(loF),0);cx.lineTo(xOf(loF),D.h);cx.stroke();}
+  if(foundHi){cx.beginPath();cx.moveTo(xOf(hiF),0);cx.lineTo(xOf(hiF),D.h);cx.stroke();}
+  cx.setLineDash([]);
+}
+function redrawSweepCurve(){
+  const D=window._sweepDraw;if(!D)return;
+  const cx=$("respCanvas").getContext("2d");
+  cx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  cx.strokeStyle="#4dd0e1";cx.lineWidth=2;
+  smoothPath(cx, sweepData.map(d=>[D.xOf(d.f),D.yOf(SV(d))]));
+}
+
+/* ============================================================
+   IMPULSE / TAP TEST
+   ============================================================ */
+let impArmed=false, impRAF=null;
+$("impArm").onclick=()=>armImpulse($("impStatus"),"imp");
+$("impStop").onclick=()=>{impArmed=false;$("impArm").disabled=false;$("impStop").disabled=true;cancelAnimationFrame(impRAF);};
+function armImpulse(statusEl, mode){
+  if(!analyser)return;
+  impArmed=true; $("impArm").disabled=true; $("impStop").disabled=false;
+  statusEl.textContent="Armed — tap the pole pieces / pluck a muted string.";
+  const thr=parseFloat($("impThresh").value);
+  const capMs=parseInt($("impLen").value);
+  const tmp=new Float32Array(analyser.fftSize);
+  function watch(){
+    if(!impArmed)return;
+    analyser.getFloatTimeDomainData(tmp);
+    let pk=0;for(let i=0;i<tmp.length;i++){const a=Math.abs(tmp[i]);if(a>pk)pk=a;}
+    if(pk>=thr){ captureImpulse(tmp,capMs,statusEl); return; }
+    impRAF=requestAnimationFrame(watch);
+  }
+  watch();
+}
+async function captureImpulse(firstBuf,capMs,statusEl){
+  statusEl.textContent="Captured — analysing…";
+  const more=await collect(capMs);
+  // stitch: find onset in first buffer
+  let buf=new Float32Array(firstBuf.length+more.length);
+  buf.set(firstBuf,0);buf.set(more,firstBuf.length);
+  // find onset
+  const thr=parseFloat($("impThresh").value);
+  let onset=0;for(let i=0;i<buf.length;i++){if(Math.abs(buf[i])>=thr){onset=i;break;}}
+  buf=buf.subarray(Math.max(0,onset-20));
+  analyzeImpulse(buf);
+  impArmed=false;$("impArm").disabled=false;$("impStop").disabled=true;
+  statusEl.textContent="Done. Re-arm to capture again.";
+}
+function analyzeImpulse(buf){
+  const sr=AC.sampleRate;
+  // waveform
+  drawWave("impWave",buf,"#4dd0e1");
+  // first swing polarity
+  let firstSign=0,pk=0,pkIdx=0;
+  for(let i=0;i<buf.length;i++){if(Math.abs(buf[i])>pk){pk=Math.abs(buf[i]);pkIdx=i;}}
+  const thr=pk*0.2;
+  for(let i=0;i<buf.length;i++){if(Math.abs(buf[i])>thr){firstSign=Math.sign(buf[i]);break;}}
+  // envelope (abs, smoothed) + log
+  const env=envelope(buf);
+  drawEnv("impEnv",env,sr);
+  // decay: linear fit to log-env after peak → decay rate alpha (nepers/s)
+  const {t60,alpha}=decayFit(env,sr);
+  // ring frequency: FFT of buffer, find peak
+  const ring=ringFreq(buf,sr);
+  // damping ratio ζ = alpha / w0, and Q = 1/(2ζ)
+  const w0=2*Math.PI*ring;
+  const zeta=(alpha>0&&w0>0)?alpha/w0:null;
+  const Q=zeta>0?1/(2*zeta):null;
+  drawImpSpec("impSpec",buf,sr,ring);
+  // rise time: 10%-90% of peak
+  let i10=0,i90=0;for(let i=0;i<pkIdx;i++){if(Math.abs(buf[i])>=0.1*pk){i10=i;break;}}
+  for(let i=0;i<pkIdx;i++){if(Math.abs(buf[i])>=0.9*pk){i90=i;break;}}
+  const rise=(i90-i10)/sr*1000;
+
+  $("iRing").textContent=ring?ring.toFixed(0):"–";
+  $("iT60").textContent=t60?t60.toFixed(0):"–";
+  $("iZeta").textContent=zeta?zeta.toFixed(4):"–";
+  $("iQ").textContent=Q?Q.toFixed(2):"–";
+  $("iPol").textContent=firstSign>0?"⬆ Positive":firstSign<0?"⬇ Negative":"–";
+  $("iRise").textContent=isFinite(rise)?rise.toFixed(2):"–";
+
+  report.impulse={ringHz:ring,t60ms:t60,zeta,Q,firstSwing:firstSign>0?"positive":"negative",riseMs:rise};
+  refreshSummary();
+}
+function envelope(buf){
+  const env=new Float32Array(buf.length);let e=0;const a=0.995;
+  for(let i=0;i<buf.length;i++){const v=Math.abs(buf[i]);e=Math.max(v,e*a);env[i]=e;}
+  return env;
+}
+function decayFit(env,sr){
+  // find peak
+  let pk=0,pi=0;for(let i=0;i<env.length;i++){if(env[i]>pk){pk=env[i];pi=i;}}
+  // fit log(env) vs t from peak to where env>pk*0.05
+  let n=0,sx=0,sy=0,sxx=0,sxy=0;
+  for(let i=pi;i<env.length;i++){
+    if(env[i]<pk*0.02)break;
+    const t=(i-pi)/sr;const y=Math.log(env[i]/pk);
+    sx+=t;sy+=y;sxx+=t*t;sxy+=t*y;n++;
+  }
+  if(n<5)return {t60:null,zeta:null};
+  const slope=(n*sxy-sx*sy)/(n*sxx-sx*sx); // nepers/sec (negative)
+  const alpha=-slope; // decay rate
+  const t60=alpha>0?(Math.log(1000)/alpha)*1000:null; // ms for -60dB
+  // zeta from alpha and ring freq: alpha=zeta*w0
+  return {t60,alpha};
+}
+function ringFreq(buf,sr){
+  // windowed FFT via Goertzel scan for dominant freq 40-8000
+  let best=0,bestF=0;
+  for(let f=60;f<6000;f*=1.02){const m=goertzel(buf,f,sr);if(m>best){best=m;bestF=f;}}
+  // refine
+  let bf=bestF,bm=best;
+  for(let f=bestF*0.95;f<bestF*1.05;f+=bestF*0.003){const m=goertzel(buf,f,sr);if(m>bm){bm=m;bf=f;}}
+  return bf;
+}
+function drawWave(id,buf,color){
+  const {x,w,h}=ctxOf(id);x.clearRect(0,0,w,h);
+  x.strokeStyle="#233040";x.beginPath();x.moveTo(0,h/2);x.lineTo(w,h/2);x.stroke();
+  let pk=1e-6;for(let i=0;i<buf.length;i++)pk=Math.max(pk,Math.abs(buf[i]));
+  x.strokeStyle=color;x.lineWidth=1;x.beginPath();
+  const step=Math.max(1,Math.floor(buf.length/w));
+  for(let i=0;i<buf.length;i+=step){const px=i/buf.length*w;const py=h/2-(buf[i]/pk)*h/2*0.9;
+    i?x.lineTo(px,py):x.moveTo(px,py);}x.stroke();
+}
+function drawEnv(id,env,sr){
+  const {x,w,h}=ctxOf(id);x.clearRect(0,0,w,h);grid(x,w,h,4);
+  let pk=1e-9;for(let i=0;i<env.length;i++)pk=Math.max(pk,env[i]);
+  x.strokeStyle="#ffb454";x.lineWidth=1.5;x.beginPath();
+  const step=Math.max(1,Math.floor(env.length/w));
+  for(let i=0;i<env.length;i+=step){const px=i/env.length*w;
+    const d=dB(env[i]/pk);const py=clamp((-d)/60,0,1)*h;
+    i?x.lineTo(px,py):x.moveTo(px,py);}x.stroke();
+  x.fillStyle="#8b949e";x.font="10px sans-serif";
+  x.fillText("0dB",2,10);x.fillText("-60dB",2,h-3);
+}
+function drawImpSpec(id,buf,sr,ring){
+  const {x,w,h}=ctxOf(id);x.clearRect(0,0,w,h);grid(x,w,h,4);
+  const f0=40,f1=Math.min(sr/2,10000);
+  const xOf=f=>Math.log10(f/f0)/Math.log10(f1/f0)*w;
+  let mags=[],best=1e-9;
+  for(let f=f0;f<f1;f*=1.01){const m=goertzel(buf,f,sr);mags.push([f,m]);if(m>best)best=m;}
+  x.strokeStyle="#4dd0e1";x.lineWidth=1.5;x.beginPath();
+  mags.forEach((p,i)=>{const py=h-(clamp(dB(p[1]/best),-60,0)+60)/60*h;i?x.lineTo(xOf(p[0]),py):x.moveTo(xOf(p[0]),py);});x.stroke();
+  if(ring){x.strokeStyle="#f85149";x.setLineDash([4,4]);x.beginPath();x.moveTo(xOf(ring),0);x.lineTo(xOf(ring),h);x.stroke();x.setLineDash([]);
+    x.fillStyle="#f85149";x.font="11px sans-serif";x.fillText(ring.toFixed(0)+" Hz",xOf(ring)+4,14);}
+  x.fillStyle="#8b949e";x.font="10px sans-serif";
+  [100,200,500,1000,2000,5000].forEach(f=>{if(f>=f0&&f<=f1)x.fillText(f>=1000?f/1000+"k":f,xOf(f)+2,h-3);});
+}
+
+/* ============================================================
+   MAGNETIC SATURATION MAPPER
+   ============================================================ */
+let satAbort=false;
+$("satRun").onclick=runSat;
+$("satStop").onclick=()=>{satAbort=true;};
+async function runSat(){
+  if(!AC)return;
+  satAbort=false;
+  $("satRun").disabled=true;$("satStop").disabled=false;
+  const freq=parseFloat($("satFreq").value);
+  const steps=parseInt($("satSteps").value);
+  const dwell=parseInt($("satDwell").value);
+  const curve=[]; // {drive, outRms, posPk, negPk, h1,h2,h3,h4, dc}
+  for(let s=0;s<steps;s++){
+    if(satAbort)break;
+    const drive=(s+1)/steps; // 0..1
+    // ramp oscillator amplitude; overall out also scaled by outGain slider
+    playTone(freq, drive);
+    await sleep(dwell*0.4);
+    const buf=await collect(dwell*0.6);
+    // measure asymmetric peaks over a few cycles
+    let posPk=0,negPk=0,dc=0;
+    for(let i=0;i<buf.length;i++){dc+=buf[i];if(buf[i]>posPk)posPk=buf[i];if(buf[i]<negPk)negPk=buf[i];}
+    dc/=buf.length;
+    const h1=goertzel(buf,freq,AC.sampleRate);
+    const h2=goertzel(buf,freq*2,AC.sampleRate);
+    const h3=goertzel(buf,freq*3,AC.sampleRate);
+    const h4=goertzel(buf,freq*4,AC.sampleRate);
+    const h5=goertzel(buf,freq*5,AC.sampleRate);
+    curve.push({drive,posPk,negPk,dc,h1,h2,h3,h4,h5,rms:rmsOf(buf),buf: s===steps-1?buf.slice(0,Math.min(buf.length,4096)):null});
+    drawSatTransfer(curve);
+    drawSatHarm(curve);
+    $("satStop").textContent=`■ Stop (${s+1}/${steps})`;
+  }
+  stopTone();
+  $("satStop").textContent="■ Stop";
+  $("satRun").disabled=false;$("satStop").disabled=true;
+  analyzeSat(curve,freq);
+}
+function drawSatTransfer(curve){
+  const {x,w,h}=ctxOf("satTransfer");x.clearRect(0,0,w,h);grid(x,w,h,4);
+  // x = drive, y = pos peak (up) and neg peak (down), centered
+  x.strokeStyle="#233040";x.beginPath();x.moveTo(0,h/2);x.lineTo(w,h/2);x.stroke();
+  let mx=1e-6;curve.forEach(p=>{mx=Math.max(mx,p.posPk,-p.negPk);});
+  // ideal linear reference
+  x.strokeStyle="#3b4a5e";x.setLineDash([3,3]);x.lineWidth=1;
+  x.beginPath();x.moveTo(0,h/2);x.lineTo(w,h/2-h/2*0.9);x.stroke();
+  x.beginPath();x.moveTo(0,h/2);x.lineTo(w,h/2+h/2*0.9);x.stroke();x.setLineDash([]);
+  // positive envelope
+  x.strokeStyle="#d16bff";x.lineWidth=2;x.beginPath();
+  curve.forEach((p,i)=>{const px=p.drive*w;const py=h/2-(p.posPk/mx)*h/2*0.9;i?x.lineTo(px,py):x.moveTo(px,py);});x.stroke();
+  // negative envelope
+  x.strokeStyle="#4dd0e1";x.lineWidth=2;x.beginPath();
+  curve.forEach((p,i)=>{const px=p.drive*w;const py=h/2-(p.negPk/mx)*h/2*0.9;i?x.lineTo(px,py):x.moveTo(px,py);});x.stroke();
+  x.fillStyle="#d16bff";x.font="10px sans-serif";x.fillText("+ peak (compressing?)",6,14);
+  x.fillStyle="#4dd0e1";x.fillText("− peak",6,h-6);
+  x.fillStyle="#8b949e";x.fillText("drive →",w-50,h/2-4);
+  // last wave
+  const last=curve[curve.length-1];
+  if(last&&last.buf) drawWave("satWave",last.buf,"#d16bff");
+}
+function drawSatHarm(curve){
+  const {x,w,h}=ctxOf("satHarm");x.clearRect(0,0,w,h);grid(x,w,h,4);
+  if(curve.length<2)return;
+  const draw=(key,color)=>{x.strokeStyle=color;x.lineWidth=1.5;x.beginPath();
+    curve.forEach((p,i)=>{const ref=p.h1||1e-9;const d=dB(p[key]/ref);
+      const py=clamp((-d)/80,0,1)*h;const px=p.drive*w;i?x.lineTo(px,py):x.moveTo(px,py);});x.stroke();};
+  draw("h2","#d16bff"); // even
+  draw("h3","#4dd0e1"); // odd
+  draw("h4","#ffb454"); // even
+  x.fillStyle="#8b949e";x.font="10px sans-serif";
+  x.fillText("H2(even)",6,12);x.fillStyle="#4dd0e1";x.fillText("H3(odd)",70,12);
+  x.fillStyle="#ffb454";x.fillText("H4(even)",130,12);
+  x.fillStyle="#8b949e";x.fillText("drive →",w-50,h-4);x.fillText("(relative to fundamental)",6,h-4);
+}
+function analyzeSat(curve,freq){
+  if(curve.length<3)return;
+  const last=curve[curve.length-1];
+  const posPk=last.posPk, negPk=-last.negPk;
+  const ratio=posPk/(negPk||1e-9);
+  const asym=Math.abs(posPk-negPk)/((posPk+negPk)||1e-9)*100;
+  const compressedHalf = posPk<negPk ? "positive half" : "negative half";
+  const h2db=dB(last.h2/last.h1), h3db=dB(last.h3/last.h1);
+  const evenE=last.h2*last.h2+last.h4*last.h4;
+  const oddE=last.h3*last.h3+ (last.h5?last.h5*last.h5:0);
+  const eo=evenE/(oddE||1e-12);
+  const thd=Math.sqrt(last.h2**2+last.h3**2+last.h4**2+(last.h5||0)**2)/(last.h1||1e-9)*100;
+  const dcShift=last.dc - curve[0].dc;
+  // saturation onset: drive where THD crosses 3%
+  let onset=null;
+  for(const p of curve){const t=Math.sqrt(p.h2**2+p.h3**2+p.h4**2)/(p.h1||1e-9)*100;
+    if(t>3){onset=p.drive*100;break;}}
+  // character classification
+  let character;
+  if(thd<2) character="Linear (no saturation)";
+  else if(asym>15 && eo>0.8) character="🧲 Asymmetric magnetic saturation";
+  else if(asym>15) character="Asymmetric (even-harmonic warmth)";
+  else if(eo<0.4) character="Symmetric clip (odd harmonics)";
+  else character="Mixed saturation";
+
+  $("sAsym").textContent=asym.toFixed(1);
+  $("sRatio").textContent=ratio.toFixed(3);
+  $("sHalf").textContent=asym>5?compressedHalf:"symmetric";
+  $("sH2").textContent=isFinite(h2db)?h2db.toFixed(1):"–";
+  $("sH3").textContent=isFinite(h3db)?h3db.toFixed(1):"–";
+  $("sEO").textContent=eo.toFixed(2);
+  $("sTHD").textContent=thd.toFixed(1);
+  $("sDC").textContent=dcShift.toFixed(4);
+  $("sOnset").textContent=onset?onset.toFixed(0):"none";
+  $("sChar").textContent=character;
+
+  report.saturation={asymmetryPct:asym,posNegRatio:ratio,compressedHalf,h2_dB:h2db,h3_dB:h3db,
+    evenOddEnergy:eo,thdPct:thd,dcShift,onsetDrivePct:onset,character};
+  refreshSummary();
+}
+
+/* ============================================================
+   POLARITY
+   ============================================================ */
+let polArmed=false, polRAF=null, polReference=null;
+$("polArm").onclick=()=>armPolarity();
+$("polRef").onclick=()=>{polReference=report._lastPol||null; $("polStatus").textContent=polReference?"Reference stored.":"Run a test first."; updatePolRefDisplay();};
+$("polClear").onclick=()=>{polReference=null;updatePolRefDisplay();};
+function armPolarity(){
+  if(!analyser)return;
+  polArmed=true;$("polStatus").textContent="Armed — bring a magnet toward the poles, or tap sharply.";
+  const thr=0.04;
+  const tmp=new Float32Array(analyser.fftSize);
+  function watch(){
+    if(!polArmed)return;
+    analyser.getFloatTimeDomainData(tmp);
+    let pk=0;for(let i=0;i<tmp.length;i++)pk=Math.max(pk,Math.abs(tmp[i]));
+    if(pk>=thr){capturePol(tmp);return;}
+    polRAF=requestAnimationFrame(watch);
+  }
+  watch();
+}
+async function capturePol(first){
+  const more=await collect(120);
+  const buf=new Float32Array(first.length+more.length);buf.set(first,0);buf.set(more,first.length);
+  // onset
+  let pk=0,pi=0;for(let i=0;i<buf.length;i++){if(Math.abs(buf[i])>pk){pk=Math.abs(buf[i]);pi=i;}}
+  const thr=pk*0.2;let onset=0;for(let i=0;i<buf.length;i++){if(Math.abs(buf[i])>=thr){onset=i;break;}}
+  const seg=buf.subarray(Math.max(0,onset-30));
+  drawWave("polWave",seg,"#4dd0e1");
+  // determine first significant swing
+  let sign=0;for(let i=0;i<seg.length;i++){if(Math.abs(seg[i])>=thr){sign=Math.sign(seg[i]);break;}}
+  // confidence: |first swing peak| relative to noise before
+  let noise=0,cnt=0;for(let i=0;i<Math.min(30,seg.length);i++){noise+=Math.abs(seg[i]);cnt++;}
+  const conf=clamp((pk-noise/Math.max(cnt,1))/pk,0,1)*100;
+  const pol = sign>0?"Positive-going (lead A = hot)":"Negative-going (lead B = hot)";
+  $("pPol").textContent=sign>0?"⬆ Positive (A hot)":"⬇ Negative (B hot)";
+  $("pSwing").textContent=sign>0?"rising":"falling";
+  $("pConf").textContent=conf.toFixed(0);
+  report._lastPol={sign,pol,conf};
+  updatePolRefDisplay();
+  report.polarity={firstSwing:sign>0?"positive":"negative",interpretation:pol,confidencePct:conf};
+  refreshSummary();
+  polArmed=false;$("polStatus").textContent="Done. Note the magnet's N/S orientation for phase pairing.";
+}
+function updatePolRefDisplay(){
+  if(!polReference){$("pRef").textContent="–";return;}
+  const cur=report._lastPol;
+  if(!cur){$("pRef").textContent="ref set";return;}
+  $("pRef").textContent = cur.sign===polReference.sign ? "SAME polarity ✅ (in-phase*)" : "OPPOSITE ⚠ (out-of-phase*)";
+}
+
+/* ============================================================
+   TABS
+   ============================================================ */
+$("tabs").addEventListener("click",e=>{
+  const t=e.target.closest(".tab");if(!t)return;
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
+  t.classList.add("active");$("v-"+t.dataset.v).classList.add("active");
+});
+
+/* ============================================================
+   SUMMARY + EXPORT
+   ============================================================ */
+function refreshSummary(){
+  const t=$("sumTable");
+  t.innerHTML="<tr><th>Parameter</th><th>Value</th><th>Interpretation</th></tr>";
+  const section=(title)=>{const r=t.insertRow();r.classList.add("secrow");const c=r.insertCell();c.colSpan=3;
+    c.textContent=title;
+    c.style.cssText="color:var(--acc);font-weight:700;padding-top:14px;text-transform:uppercase;font-size:12px;letter-spacing:.5px";};
+  const add=(k,v,note)=>{const r=t.insertRow();r.insertCell().textContent=k;
+    r.insertCell().innerHTML=`<b>${v}</b>`;r.insertCell().innerHTML=`<span class="sub">${note||""}</span>`;};
+  const num=(x,d,u)=>(x!=null&&isFinite(x))?x.toFixed(d)+(u||""):"–";
+
+  if(report.spectrum){const s=report.spectrum; section("Live Spectrum");
+    add("Peak frequency",s.peakF.toFixed(1)+" Hz ("+s.pitch+")","Loudest partial");
+    add("Spectral centroid",s.centroid.toFixed(0)+" Hz","Brightness / tone center of mass");}
+
+  if(report.response){const r=report.response; section("Frequency Response");
+    add("Resonant peak",r.resonantHz.toFixed(0)+" Hz", r.resonantHz>5000?"Bright / vintage single-coil range":r.resonantHz>3500?"Balanced":"Warm / high-output humbucker range");
+    add("Peak gain",num(r.peakGain,1," dB"),"");
+    add("Q factor",r.Q?r.Q.toFixed(2):"–", r.Q>3?"Sharp, peaky (present)":r.Q?"Broad, smooth":"");
+    add("−3 dB bandwidth",r.bandwidth?r.bandwidth.toFixed(0)+" Hz":"–","");
+    add("HF rolloff slope",num(r.hfSlope,1," dB/oct"),"Top-end roll-off above resonance");
+    add("Low-end (bass) ref",num(r.bassRef,1," dB"),"Level at sweep start vs. peak");}
+
+  if(report.impulse){const i=report.impulse; section("Impulse / Tap Test");
+    add("Ring frequency",i.ringHz.toFixed(0)+" Hz","Should match resonant peak");
+    add("Decay time (T60)",num(i.t60ms,0," ms"),"");
+    add("Damping ratio ζ",num(i.zeta,4),"");
+    add("Impulse Q",num(i.Q,2),"");
+    add("First-swing polarity",i.firstSwing,"");
+    add("Rise time",num(i.riseMs,2," ms"),"10–90% of first peak");}
+
+  if(report.saturation){const s=report.saturation; section("Magnetic Saturation Mapper");
+    add("Character",s.character,"");
+    add("Asymmetry index",num(s.asymmetryPct,1," %"), s.asymmetryPct>15?"Strong half-wave compression":"Near-symmetric");
+    add("+peak / −peak ratio",num(s.posNegRatio,3),"");
+    add("Compressed half",s.compressedHalf,"");
+    add("2nd harmonic (even)",num(s.h2_dB,1," dB"),"");
+    add("3rd harmonic (odd)",num(s.h3_dB,1," dB"),"");
+    add("Even/Odd energy",num(s.evenOddEnergy,2), s.evenOddEnergy>0.8?"Even-dominant = magnetic / amp-like":"Odd-dominant = clip-like");
+    add("THD @ max drive",num(s.thdPct,1," %"),"");
+    add("DC shift under drive",num(s.dcShift,4),"");
+    add("Saturation onset",s.onsetDrivePct?s.onsetDrivePct.toFixed(0)+"% drive":"none","");}
+
+  if(report.polarity){const p=report.polarity; section("Polarity");
+    add("Electrical polarity",p.firstSwing,p.interpretation);
+    add("Confidence",num(p.confidencePct,0," %"),"");}
+}
+$("exportBtn").onclick=()=>{
+  const clean=JSON.parse(JSON.stringify(report,(k,v)=>k==="_lastPol"||k==="buf"?undefined:v));
+  clean.meta={date:new Date().toISOString(),sampleRate:AC?AC.sampleRate:null};
+  const blob=new Blob([JSON.stringify(clean,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download="pickup-report-"+Date.now()+".json";a.click();
+};
+// read the summary table into a 2D array of strings
+function summaryRows(){
+  return [...$("sumTable").rows].map(r=>[...r.cells].map(c=>c.textContent.trim()));
+}
+function download(blob,name){
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+$("exportCsvBtn").onclick=()=>{
+  const rows=summaryRows();
+  if(rows.length<=1){alert("Nothing to export yet — run a measurement first.");return;}
+  const esc=s=>/[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+  const csv=rows.map(r=>r.map(esc).join(",")).join("\r\n");
+  download(new Blob([csv],{type:"text/csv"}),"pickup-summary-"+Date.now()+".csv");
+};
+$("exportPngBtn").onclick=()=>{
+  const rows=summaryRows();
+  if(rows.length<=1){alert("Nothing to export yet — run a measurement first.");return;}
+  const scale=2, pad=24*scale, rowH=30*scale, titleH=48*scale;
+  const cols=[300,230,470], colW=cols.map(c=>c*scale);
+  const W=colW.reduce((a,b)=>a+b,0)+pad*2;
+  const H=titleH+rowH*rows.length+pad*2;
+  const cv=document.createElement("canvas");cv.width=W;cv.height=H;
+  const x=cv.getContext("2d");
+  x.fillStyle="#0d1117";x.fillRect(0,0,W,H);
+  x.textBaseline="middle";
+  // title
+  x.fillStyle="#4dd0e1";x.font=`bold ${22*scale}px -apple-system,Segoe UI,Roboto,sans-serif`;
+  x.fillText("Nicks Pickup Analyzer — Summary",pad,pad+14*scale);
+  x.fillStyle="#8b949e";x.font=`${11*scale}px -apple-system,Segoe UI,Roboto,sans-serif`;
+  x.fillText(new Date().toLocaleString()+(AC?`  ·  ${AC.sampleRate} Hz`:""),pad,pad+34*scale);
+  // rows
+  let y=titleH+pad;
+  rows.forEach((r,ri)=>{
+    // section subheader (single-cell rows)
+    if(ri>0 && r.length===1){
+      x.fillStyle="#161b22";x.fillRect(pad-8*scale,y,W-pad*2+16*scale,rowH);
+      x.fillStyle="#4dd0e1";x.font=`bold ${13*scale}px sans-serif`;
+      x.fillText(r[0].toUpperCase(),pad,y+rowH/2);
+      x.strokeStyle="#233040";x.lineWidth=1;x.beginPath();x.moveTo(pad-8*scale,y+rowH);x.lineTo(W-pad+8*scale,y+rowH);x.stroke();
+      y+=rowH; return;
+    }
+    if(ri===0){x.fillStyle="#161b22";x.fillRect(pad-8*scale,y,W-pad*2+16*scale,rowH);}
+    else if(ri%2===0){x.fillStyle="#12161d";x.fillRect(pad-8*scale,y,W-pad*2+16*scale,rowH);}
+    let cx=pad;
+    r.forEach((cell,ci)=>{
+      if(ri===0){x.fillStyle="#8b949e";x.font=`bold ${13*scale}px sans-serif`;}
+      else{x.fillStyle=ci===0?"#e6edf3":ci===1?"#ffb454":"#8b949e";
+        x.font=`${ci===1?"bold ":""}${13*scale}px sans-serif`;}
+      // clip text to column width
+      const maxW=colW[ci]-14*scale; let txt=cell;
+      while(x.measureText(txt).width>maxW && txt.length>1) txt=txt.slice(0,-2);
+      if(txt!==cell) txt=txt.slice(0,-1)+"…";
+      x.fillText(txt,cx,y+rowH/2);
+      cx+=colW[ci];
+    });
+    x.strokeStyle="#233040";x.lineWidth=1;x.beginPath();x.moveTo(pad-8*scale,y+rowH);x.lineTo(W-pad+8*scale,y+rowH);x.stroke();
+    y+=rowH;
+  });
+  cv.toBlob(b=>download(b,"pickup-summary-"+Date.now()+".png"),"image/png");
+};
+$("printBtn").onclick=()=>window.print();
+
+/* ============================================================
+   THEME (dark / light)
+   ============================================================ */
+function applyTheme(t){
+  document.documentElement.setAttribute("data-theme",t);
+  $("themeBtn").textContent = t==="light" ? "🌙 Dark" : "☀️ Light";
+  try{ localStorage.setItem("pa-theme",t); }catch(e){}
+}
+$("themeBtn").onclick=()=>{
+  const cur=document.documentElement.getAttribute("data-theme")==="light"?"light":"dark";
+  applyTheme(cur==="light"?"dark":"light");
+};
+(function(){ let t="dark"; try{ t=localStorage.getItem("pa-theme")||"dark"; }catch(e){} applyTheme(t); })();
+
+/* resume audio context on interaction (autoplay policy) */
+document.addEventListener("click",()=>{if(AC&&AC.state==="suspended")AC.resume();},{once:false});
+</script>
+</body>
+</html>

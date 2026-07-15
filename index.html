@@ -1,0 +1,1138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nicks Pickup Lab — Browser Pickup Measurement Workbench</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0a0d0c;
+      --panel: #111715;
+      --panel-2: #151d1a;
+      --line: #28342f;
+      --ink: #e7eee9;
+      --muted: #93a29a;
+      --lime: #ffb24a;
+      --primary-fill: #f28c28;
+      --cyan: #ff7a3d;
+      --amber: #ffd166;
+      --red: #ff6470;
+      --blue: #72a7ff;
+      --page-top: #0b0f0e;
+      --page-bottom: #090c0b;
+      --control: #0c1210;
+      --control-hover: #76513a;
+      --primary-ink: #2b1400;
+      --danger-ink: #ffd9dc;
+      --danger-border: #673139;
+      --danger-bg: #241215;
+      --logo-ink: #211100;
+      --status-bg: rgba(17,23,21,.8);
+      --dot: #66736d;
+      --panel-top: rgba(20,28,25,.96);
+      --panel-bottom: rgba(14,20,18,.96);
+      --notice-border: #5b432c;
+      --notice-bg: rgba(255,159,63,.055);
+      --notice-ink: #d7c8bb;
+      --canvas-bg: #090d0b;
+      --canvas-grid: #202b27;
+      --canvas-label: #718078;
+      --canvas-reference: rgba(255,255,255,.25);
+      --meter-grid: rgba(255,255,255,.045);
+      --meter-bg: #080b0a;
+      --unit: #718078;
+      --tab-active: #2a211b;
+      --tab-border: #64432d;
+      --row-line: rgba(40,52,47,.65);
+      --modal-overlay: rgba(4,7,6,.78);
+      --modal-border: #3b4a44;
+      --tooltip-border: #526159;
+      --tooltip-bg: rgba(8,12,10,.94);
+      --page-glow-1: rgba(255,122,61,.12);
+      --page-glow-2: rgba(255,178,74,.075);
+      --accent-shadow: rgba(242,140,40,.2);
+      --accent-ring: rgba(255,178,74,.12);
+      --accent-halo: rgba(255,122,61,.5);
+      --radius: 16px;
+      --shadow: 0 18px 55px rgba(0,0,0,.28);
+    }
+    html[data-theme="light"] {
+      color-scheme: light;
+      --bg: #edf2ef;
+      --panel: #ffffff;
+      --panel-2: #f4f7f5;
+      --line: #c9d4ce;
+      --ink: #17231e;
+      --muted: #5b6c64;
+      --lime: #173f68;
+      --primary-fill: #214f7b;
+      --cyan: #0b5b96;
+      --amber: #a75b00;
+      --red: #cb3449;
+      --blue: #123e66;
+      --page-top: #f7faf8;
+      --page-bottom: #e9efec;
+      --control: #ffffff;
+      --control-hover: #718ba3;
+      --primary-ink: #ffffff;
+      --danger-ink: #8f2030;
+      --danger-border: #d9aab1;
+      --danger-bg: #fff1f3;
+      --logo-ink: #ffffff;
+      --status-bg: rgba(255,255,255,.82);
+      --dot: #829088;
+      --panel-top: rgba(255,255,255,.98);
+      --panel-bottom: rgba(246,249,247,.98);
+      --notice-border: #b8c9d8;
+      --notice-bg: rgba(23,63,104,.07);
+      --notice-ink: #344f68;
+      --canvas-bg: #f8faf9;
+      --canvas-grid: #d9e1dd;
+      --canvas-label: #617168;
+      --canvas-reference: rgba(31,48,40,.28);
+      --meter-grid: rgba(23,35,30,.08);
+      --meter-bg: #f1f5f3;
+      --unit: #687970;
+      --tab-active: #e6edf3;
+      --tab-border: #b8c8d6;
+      --row-line: rgba(201,212,206,.8);
+      --modal-overlay: rgba(224,232,228,.82);
+      --modal-border: #b8c7c0;
+      --tooltip-border: #aebdb6;
+      --tooltip-bg: rgba(255,255,255,.96);
+      --page-glow-1: rgba(11,91,150,.08);
+      --page-glow-2: rgba(23,63,104,.05);
+      --accent-shadow: rgba(33,79,123,.18);
+      --accent-ring: rgba(33,79,123,.1);
+      --accent-halo: rgba(11,91,150,.38);
+      --shadow: 0 18px 45px rgba(26,43,35,.12);
+    }
+    * { box-sizing: border-box; }
+    html { background: var(--bg); }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(900px 520px at 85% -10%, var(--page-glow-1), transparent 60%),
+        radial-gradient(760px 460px at 0% 15%, var(--page-glow-2), transparent 65%),
+        linear-gradient(180deg, var(--page-top), var(--page-bottom) 64%);
+      font: 14px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    button, select, input { font: inherit; }
+    button, select, input[type="number"] {
+      color: var(--ink);
+      border: 1px solid var(--line);
+      background: var(--control);
+      border-radius: 10px;
+      min-height: 38px;
+    }
+    button { cursor: pointer; padding: 8px 13px; font-weight: 700; }
+    button:hover { border-color: var(--control-hover); transform: translateY(-1px); }
+    button:disabled { opacity: .42; cursor: not-allowed; transform: none; }
+    button.primary { background: var(--primary-fill); border-color: var(--primary-fill); color: var(--primary-ink); }
+    button.danger { color: var(--danger-ink); border-color: var(--danger-border); background: var(--danger-bg); }
+    button.ghost { background: transparent; }
+    select, input[type="number"] { width: 100%; padding: 7px 10px; }
+    input[type="range"] { width: 100%; accent-color: var(--lime); }
+    input[type="checkbox"] { accent-color: var(--lime); }
+    .shell { max-width: 1580px; margin: 0 auto; padding: 22px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 18px; }
+    .brand { display: flex; gap: 14px; align-items: center; }
+    .logo {
+      width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center;
+      background: linear-gradient(135deg, var(--primary-fill), var(--cyan)); color: var(--logo-ink); font-weight: 1000;
+      box-shadow: 0 10px 30px var(--accent-shadow); letter-spacing: -.08em;
+    }
+    h1 { font-size: clamp(21px, 2.2vw, 31px); line-height: 1.05; margin: 0; letter-spacing: -.035em; }
+    .subtitle { color: var(--muted); margin-top: 5px; }
+    .header-tools { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+    .theme-toggle { white-space: nowrap; }
+    .status-pill { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--status-bg); padding: 8px 12px; border-radius: 999px; white-space: nowrap; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dot); box-shadow: 0 0 0 4px rgba(102,115,109,.1); }
+    .dot.live { background: var(--lime); box-shadow: 0 0 0 4px var(--accent-ring), 0 0 16px var(--accent-halo); }
+    .dot.warn { background: var(--amber); }
+    .grid { display: grid; gap: 14px; }
+    .top-grid { grid-template-columns: minmax(300px, 1.2fr) minmax(390px, 2.4fr) minmax(64px, .18fr); }
+    .panel { background: linear-gradient(180deg, var(--panel-top), var(--panel-bottom)); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .panel-head { min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 15px; border-bottom: 1px solid var(--line); }
+    .panel-title { font-weight: 800; letter-spacing: .01em; }
+    .kicker { color: var(--lime); font: 800 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace; text-transform: uppercase; letter-spacing: .12em; }
+    .panel-body { padding: 15px; }
+    .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+    .control-grid .wide { grid-column: 1 / -1; }
+    .field { display: grid; gap: 6px; color: var(--muted); font-size: 12px; }
+    .device-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 6px; }
+    .device-row button { min-width: 72px; padding-inline: 10px; }
+    .value { color: var(--ink); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; float: right; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 13px; }
+    .toggle { display: flex; align-items: center; gap: 8px; min-height: 38px; color: var(--muted); }
+    .notice { margin-top: 13px; padding: 10px 11px; border: 1px solid var(--notice-border); background: var(--notice-bg); border-radius: 10px; color: var(--notice-ink); font-size: 12px; }
+    .scope-panel { display: flex; flex-direction: column; min-height: 0; }
+    .scope-wrap { position: relative; min-height: 332px; flex: 1 1 332px; display: grid; grid-template-rows: 208px minmax(124px, 1fr); overflow: hidden; }
+    canvas { display: block; width: 100%; min-width: 0; cursor: crosshair; }
+    #scope { height: 208px; min-height: 0; contain: size; }
+    #spectrum { height: 100%; min-height: 0; contain: size; border-top: 1px solid var(--line); }
+    .scope-legend { position: absolute; display: flex; gap: 14px; top: 10px; left: 12px; pointer-events: none; color: var(--muted); font-size: 11px; }
+    .legend-swatch { display: inline-block; width: 13px; height: 2px; vertical-align: middle; margin-right: 5px; }
+    .meters { height: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 13px; padding: 15px 14px; }
+    .meter-col { min-width: 0; display: grid; grid-template-rows: auto 1fr auto; gap: 7px; text-align: center; }
+    .meter-track { min-height: 245px; position: relative; overflow: hidden; border-radius: 9px; border: 1px solid var(--line); background: repeating-linear-gradient(to top, transparent 0 19px, var(--meter-grid) 20px), var(--meter-bg); }
+    .meter-fill { position: absolute; left: 3px; right: 3px; bottom: 3px; height: 0%; border-radius: 6px; background: var(--primary-fill); transition: height 55ms linear; }
+    .meter-peak { position: absolute; left: 2px; right: 2px; bottom: 2%; height: 2px; background: var(--ink); opacity: .75; transition: bottom 100ms linear; }
+    .meter-label { font: 800 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); letter-spacing: .08em; }
+    .meter-db { font: 700 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .live-measurements { margin-top: 14px; }
+    .live-measurements .metrics { margin-top: 0; }
+    .metrics { grid-template-columns: repeat(8, minmax(118px, 1fr)); }
+    .metric { min-height: 90px; padding: 13px; background: linear-gradient(180deg, var(--panel-2), var(--panel-bottom)); border: 1px solid var(--line); border-radius: 13px; }
+    .metric-name { color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .metric-value { margin-top: 9px; font: 750 19px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: -.04em; }
+    .metric-unit { color: var(--unit); font-size: 10px; margin-top: 5px; }
+    .metric[title] { cursor: help; }
+    .lower { margin-top: 14px; grid-template-columns: minmax(320px, .92fr) minmax(520px, 2.08fr); align-items: stretch; }
+    .tabs { display: flex; gap: 5px; padding: 7px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+    .tab { background: transparent; border-color: transparent; color: var(--muted); white-space: nowrap; }
+    .tab.active { color: var(--ink); background: var(--tab-active); border-color: var(--tab-border); }
+    .tab-panel { display: none; padding: 16px; }
+    .tab-panel.active { display: block; }
+    .generator-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 11px; }
+    .readout { padding: 12px; border: 1px solid var(--line); background: var(--panel-2); border-radius: 11px; }
+    .readout strong { display: block; margin-bottom: 4px; }
+    .readout p { margin: 0; color: var(--muted); font-size: 12px; }
+    .test-layout { display: grid; grid-template-columns: minmax(250px,.8fr) minmax(330px,1.4fr); gap: 15px; }
+    .test-controls { display: grid; gap: 11px; align-content: start; }
+    .test-chart { min-height: 270px; border: 1px solid var(--line); background: var(--canvas-bg); border-radius: 12px; overflow: hidden; }
+    .test-chart canvas { height: 270px; }
+    .result-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 11px; }
+    .result { background: var(--control); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+    .result span { display: block; color: var(--muted); font-size: 10px; }
+    .result b { display: block; margin-top: 4px; font: 750 15px/1.15 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .progress { height: 6px; border-radius: 10px; background: var(--meter-bg); border: 1px solid var(--line); overflow: hidden; }
+    .progress > div { height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary-fill), var(--cyan)); transition: width 180ms linear; }
+    .setup { display: grid; gap: 11px; }
+    .setup-step { display: grid; grid-template-columns: 27px 1fr; gap: 10px; color: var(--muted); }
+    .step-num { width: 27px; height: 27px; display: grid; place-items: center; border-radius: 50%; color: var(--primary-ink); background: var(--primary-fill); font-weight: 900; }
+    .setup-step b { color: var(--ink); display: block; }
+    .summary-panel { margin-top: 14px; }
+    .summary-head { flex-wrap: wrap; }
+    .summary-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .summary-content { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
+    .summary-section:nth-child(-n+3) { grid-column: 1; }
+    .summary-section:nth-child(4) { grid-column: 2; grid-row: 1 / span 3; }
+    .summary-section { border: 1px solid var(--line); background: var(--panel-2); border-radius: 12px; overflow: hidden; }
+    .summary-section h3 { margin: 0; padding: 11px 13px; border-bottom: 1px solid var(--line); color: var(--lime); font-size: 12px; letter-spacing: .05em; text-transform: uppercase; }
+    .summary-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; padding: 9px 13px; border-bottom: 1px solid var(--row-line); }
+    .summary-row:last-child { border-bottom: 0; }
+    .summary-row span { color: var(--muted); }
+    .summary-row b { text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .summary-empty, .summary-placeholder { color: var(--muted); padding: 13px; }
+    footer { display: flex; justify-content: space-between; gap: 16px; color: var(--unit); font-size: 11px; margin: 18px 3px 3px; }
+    .modal { position: fixed; inset: 0; z-index: 10; display: none; place-items: center; padding: 20px; background: var(--modal-overlay); backdrop-filter: blur(12px); }
+    .modal.show { display: grid; }
+    .modal-card { max-width: 510px; width: 100%; background: var(--panel); border: 1px solid var(--modal-border); border-radius: 20px; padding: 23px; box-shadow: var(--shadow); }
+    .modal h2 { margin: 0 0 8px; }
+    .modal p { color: var(--muted); }
+    .tiny { font-size: 11px; color: var(--muted); }
+    .graph-tooltip {
+      position: fixed; z-index: 30; display: none; pointer-events: none;
+      min-width: 150px; padding: 8px 10px; border-radius: 9px;
+      border: 1px solid var(--tooltip-border); background: var(--tooltip-bg); color: var(--ink);
+      box-shadow: var(--shadow); backdrop-filter: blur(8px);
+      font: 700 11px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+      white-space: nowrap;
+    }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+    @media (min-width: 1121px) {
+      .meters-panel .panel-head { flex-direction: column; justify-content: center; gap: 3px; padding: 9px 5px; text-align: center; }
+      .meters-panel .panel-title { font-size: 11px; }
+      .meters-panel .kicker { font-size: 8px; }
+      .meters { grid-template-columns: 1fr; grid-template-rows: repeat(2, minmax(0,1fr)); gap: 10px; padding: 10px 7px; }
+      .meter-track { min-height: 0; }
+    }
+    @media (max-width: 1120px) {
+      .top-grid { grid-template-columns: minmax(290px, 1fr) minmax(430px, 2fr); }
+      .meters-panel { grid-column: 1 / -1; }
+      .meters { height: 150px; grid-template-columns: 1fr 1fr; }
+      .meter-col { grid-template-columns: 1fr; grid-template-rows: auto minmax(34px,1fr) auto; text-align: center; align-items: stretch; }
+      .meter-track { min-height: 34px; grid-row: 2; }
+      .meter-fill { top: 3px; bottom: 3px; right: auto; height: auto !important; width: 0%; transition: width 55ms linear; }
+      .meter-peak { top: 2px; bottom: 2px !important; left: 2%; right: auto; width: 2px; height: auto; transition: left 100ms linear; }
+      .metrics { grid-template-columns: repeat(4, 1fr); }
+    }
+    @media (max-width: 760px) {
+      .shell { padding: 12px; }
+      header { align-items: flex-start; }
+      .header-tools { max-width: 150px; }
+      .status-pill { font-size: 0; padding: 11px; }
+      .top-grid, .lower, .test-layout { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .result-strip { grid-template-columns: 1fr 1fr; }
+      .generator-grid { grid-template-columns: 1fr; }
+      .summary-content { grid-template-columns: 1fr; }
+      .summary-section:nth-child(n) { grid-column: auto; grid-row: auto; }
+      footer { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <div class="modal show" id="permissionModal" role="dialog" aria-modal="true" aria-labelledby="permissionTitle">
+    <div class="modal-card">
+      <div class="kicker">Audio permission</div>
+      <h2 id="permissionTitle">Connect your audio interface</h2>
+      <p>Nicks Pickup Lab needs microphone access to read the high-impedance/instrument input. Audio stays in this page and is never uploaded.</p>
+      <div class="notice">Use an interface's <b>Hi-Z / Instrument</b> input. Keep monitoring off and gain low until levels are visible.</div>
+      <div class="actions">
+        <button class="primary" id="grantButton">Allow audio input</button>
+        <button class="ghost" id="dismissModal">Not now</button>
+      </div>
+      <p class="tiny" id="permissionHint">The browser permission prompt appears only after you click “Allow audio input”.</p>
+    </div>
+  </div>
+  <div class="graph-tooltip" id="graphTooltip" role="status" aria-live="polite"></div>
+
+  <main class="shell">
+    <header>
+      <div class="brand">
+        <div class="logo">PL</div>
+        <div><h1>Nicks Pickup Lab</h1><div class="subtitle">Single-file pickup measurement workbench</div></div>
+      </div>
+      <div class="header-tools">
+        <button class="ghost theme-toggle" id="themeToggle" type="button" aria-pressed="false">☀ Light theme</button>
+        <div class="status-pill"><span class="dot" id="statusDot"></span><span id="statusText">Waiting for audio permission</span></div>
+      </div>
+    </header>
+
+    <section class="grid top-grid">
+      <article class="panel">
+        <div class="panel-head"><span class="panel-title">Input</span><span class="kicker" id="sampleRateLabel">— Hz</span></div>
+        <div class="panel-body">
+          <div class="control-grid">
+            <label class="field wide">Input device<select id="inputDevice"><option>Permission required</option></select></label>
+            <label class="field">Channel<select id="inputChannel"><option value="0">Input 1</option><option value="1">Input 2</option><option value="sum">1 + 2 mono</option><option value="diff">1 − 2</option></select></label>
+            <label class="field">FFT size<select id="fftSize"><option>4096</option><option>8192</option><option selected>16384</option><option>32768</option></select></label>
+            <label class="field wide">Input trim <span class="value" id="inputTrimValue">0.0 dB</span><input id="inputTrim" type="range" min="-24" max="24" step="0.5" value="0"></label>
+            <label class="field wide">Analysis smoothing <span class="value" id="smoothValue">65%</span><input id="smooth" type="range" min="0" max="95" step="1" value="65"></label>
+            <label class="field wide">Measurement averaging <span class="value" id="averageWindowValue">30.0 s</span><input id="averageWindow" type="range" min="0" max="30" step="0.5" value="30"></label>
+            <label class="field wide">Noise floor threshold <span class="value" id="noiseFloorThresholdValue">−80 dBFS</span><input id="noiseFloorThreshold" type="range" min="-90" max="0" step="1" value="-80"></label>
+            <label class="toggle wide"><input id="monitorToggle" type="checkbox"> Monitor input to output <span class="tiny">(feedback risk)</span></label>
+          </div>
+          <div class="actions">
+            <button class="primary" id="startButton">Start analyzer</button>
+            <button class="danger" id="stopButton" disabled>Stop</button>
+            <button id="freezeButton" disabled>Freeze trace</button>
+          </div>
+          <div class="notice" id="deviceNote">Microphone DSP is requested off. The OS or interface driver can still apply processing; use a raw audio interface input where possible.</div>
+        </div>
+      </article>
+
+      <article class="panel scope-panel">
+        <div class="panel-head"><span class="panel-title">Oscilloscope + spectrum</span><span class="kicker" id="traceState">live</span></div>
+        <div class="scope-wrap">
+          <div class="scope-legend"><span><i class="legend-swatch" style="background:var(--cyan)"></i>input</span><span><i class="legend-swatch" style="background:var(--lime)"></i>held peak</span></div>
+          <canvas id="scope" aria-label="Input waveform"></canvas>
+          <canvas id="spectrum" aria-label="Normalized frequency spectrum"></canvas>
+        </div>
+      </article>
+
+      <article class="panel meters-panel">
+        <div class="panel-head"><span class="panel-title">Meters</span><span class="kicker">dBFS</span></div>
+        <div class="meters">
+          <div class="meter-col"><div class="meter-label">Input</div><div class="meter-track"><div class="meter-fill" id="inputFill"></div><div class="meter-peak" id="inputPeak"></div></div><div class="meter-db" id="inputDb">−∞</div></div>
+          <div class="meter-col"><div class="meter-label">Output</div><div class="meter-track"><div class="meter-fill" id="outputFill"></div><div class="meter-peak" id="outputPeak"></div></div><div class="meter-db" id="outputDb">−∞</div></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel live-measurements">
+      <div class="panel-head"><span class="panel-title">Live Measurements</span><span class="kicker">real-time analyzer</span></div>
+      <div class="panel-body">
+        <div class="grid metrics" id="metrics">
+      <div class="metric" title="Largest FFT bin, interpolated between bins"><div class="metric-name">Peak frequency</div><div class="metric-value" id="mPeakFreq">—</div><div class="metric-unit">Hz</div></div>
+      <div class="metric" title="Estimated strongest harmonic fundamental"><div class="metric-name">Fundamental</div><div class="metric-value" id="mFundamental">—</div><div class="metric-unit">Hz</div></div>
+      <div class="metric" title="Root-mean-square input level"><div class="metric-name">RMS level</div><div class="metric-value" id="mRms">—</div><div class="metric-unit">dBFS</div></div>
+      <div class="metric" title="Largest absolute sample"><div class="metric-name">Sample peak</div><div class="metric-value" id="mPeak">—</div><div class="metric-unit">dBFS</div></div>
+      <div class="metric" title="Peak divided by RMS; a transient/dynamics indicator"><div class="metric-name">Crest factor</div><div class="metric-value" id="mCrest">—</div><div class="metric-unit">dB</div></div>
+      <div class="metric" title="Mean sample value; ideally close to zero"><div class="metric-name">DC offset</div><div class="metric-value" id="mDc">—</div><div class="metric-unit">% FS</div></div>
+      <div class="metric" title="Median spectral bin level excluding low-frequency rumble"><div class="metric-name">Noise floor</div><div class="metric-value" id="mNoise">—</div><div class="metric-unit">dBFS</div></div>
+      <div class="metric" title="Fundamental level relative to estimated noise floor"><div class="metric-name">SNR estimate</div><div class="metric-value" id="mSnr">—</div><div class="metric-unit">dB</div></div>
+      <div class="metric" title="Power-weighted center of the spectrum"><div class="metric-name">Spectral centroid</div><div class="metric-value" id="mCentroid">—</div><div class="metric-unit">Hz</div></div>
+      <div class="metric" title="Frequency below which 85% of spectral power lies"><div class="metric-name">85% roll-off</div><div class="metric-value" id="mRolloff">—</div><div class="metric-unit">Hz</div></div>
+      <div class="metric" title="Power-weighted standard deviation around the centroid"><div class="metric-name">Spectral bandwidth</div><div class="metric-value" id="mBandwidth">—</div><div class="metric-unit">Hz</div></div>
+      <div class="metric" title="Geometric mean divided by arithmetic mean; 0 is tonal, 1 is noise-like"><div class="metric-name">Spectral flatness</div><div class="metric-value" id="mFlatness">—</div><div class="metric-unit">0…1</div></div>
+      <div class="metric" title="Least-squares slope of spectrum level versus octave"><div class="metric-name">Spectral slope</div><div class="metric-value" id="mSlope">—</div><div class="metric-unit">dB/oct</div></div>
+      <div class="metric" title="Harmonic distortion estimated from FFT harmonics 2–8"><div class="metric-name">THD estimate</div><div class="metric-value" id="mThd">—</div><div class="metric-unit">%</div></div>
+      <div class="metric" title="Energy in even harmonics divided by odd harmonics"><div class="metric-name">Even / odd</div><div class="metric-value" id="mEvenOdd">—</div><div class="metric-unit">dB</div></div>
+      <div class="metric" title="Difference between positive and negative waveform peaks"><div class="metric-name">Peak asymmetry</div><div class="metric-value" id="mAsymmetry">—</div><div class="metric-unit">dB</div></div>
+      <div class="metric" title="Sign changes per second"><div class="metric-name">Zero crossings</div><div class="metric-value" id="mZcr">—</div><div class="metric-unit">/ sec</div></div>
+      <div class="metric" title="Samples at or beyond 0.995 full scale"><div class="metric-name">Clipped samples</div><div class="metric-value" id="mClip">—</div><div class="metric-unit">%</div></div>
+      <div class="metric" title="Difference between short and long RMS envelopes"><div class="metric-name">Transient index</div><div class="metric-value" id="mTransient">—</div><div class="metric-unit">dB</div></div>
+      <div class="metric" title="Approximate detected pitch in MIDI note naming"><div class="metric-name">Nearest note</div><div class="metric-value" id="mNote">—</div><div class="metric-unit">cents</div></div>
+      <div class="metric" title="Low-band power from 20–150 Hz relative to total"><div class="metric-name">Low band</div><div class="metric-value" id="mLowBand">—</div><div class="metric-unit">%</div></div>
+      <div class="metric" title="Mid-band power from 150 Hz–2 kHz relative to total"><div class="metric-name">Mid band</div><div class="metric-value" id="mMidBand">—</div><div class="metric-unit">%</div></div>
+      <div class="metric" title="High-band power from 2–16 kHz relative to total"><div class="metric-name">High band</div><div class="metric-value" id="mHighBand">—</div><div class="metric-unit">%</div></div>
+          <div class="metric" title="Simple confidence score for a stable tonal estimate"><div class="metric-name">Tone confidence</div><div class="metric-value" id="mConfidence">—</div><div class="metric-unit">%</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid lower">
+      <article class="panel">
+        <div class="panel-head"><span class="panel-title">Output Generator</span><span class="kicker">use with driver coil</span></div>
+        <div class="panel-body">
+          <div class="generator-grid">
+            <label class="field">Signal<select id="generatorType"><option value="off">Off</option><option value="sine">Sine</option><option value="square">Square</option><option value="white" selected>White noise</option><option value="pink">Pink noise</option></select></label>
+            <div class="field"><label for="outputDevice">Output device</label><div class="device-row"><select id="outputDevice"><option value="">System default</option></select><button id="loadOutputs" type="button" title="Ask the browser for speaker-selection access, then refresh the list">Find devices</button></div></div>
+            <label class="field">Output channel<select id="outputChannel"><option value="stereo">Outputs 1 + 2</option><option value="0">Output 1</option><option value="1">Output 2</option></select></label>
+            <label class="field">Frequency <span class="value" id="frequencyValue">440 Hz</span><input id="frequency" type="range" min="20" max="12000" step="1" value="440"></label>
+            <label class="field">Output level <span class="value" id="outputLevelValue">−3.0 dBFS</span><input id="outputLevel" type="range" min="-60" max="0" step="0.5" value="-3"></label>
+          </div>
+          <div class="actions"><button class="primary" id="generatorButton" disabled>Start generator</button><button class="danger" id="muteButton" disabled>Mute</button></div>
+          <div class="notice"><b>Fixture:</b> interface line/headphone out → current-limited driver coil → magnetic field → pickup → Hi-Z input. Do not connect an interface output directly to the pickup. The requested −3 dBFS default is hot: reduce the interface/headphone gain before starting.</div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-tab="saturation">Magnetic Saturation Mapper</button>
+          <button class="tab" data-tab="impulse">Bode plot</button>
+          <button class="tab" data-tab="polarity">Polarity</button>
+          <button class="tab" data-tab="setup">Test setup</button>
+        </div>
+
+        <div class="tab-panel active" id="tab-saturation">
+          <div class="test-layout">
+            <div class="test-controls">
+              <div class="readout"><strong>Increasing-field transfer test</strong><p>Plays stepped sine bursts and measures gain compression, positive/negative peak balance, and harmonic growth. Output dBFS is a repeatable proxy for field strength, not gauss.</p></div>
+              <label class="field">Test frequency <span class="value" id="satFreqValue">440 Hz</span><input id="satFreq" type="range" min="80" max="3000" step="1" value="440"></label>
+              <label class="field">Maximum drive <span class="value" id="satMaxValue">−6 dBFS</span><input id="satMax" type="range" min="-30" max="-3" step="1" value="-6"></label>
+              <label class="field">Drive steps<select id="satSteps"><option>8</option><option selected>12</option><option>16</option></select></label>
+              <button class="primary" id="runSaturation" disabled>Run saturation map</button>
+              <button class="danger" id="abortTest" disabled>Abort active test</button>
+              <div class="progress"><div id="satProgress"></div></div>
+              <div class="tiny" id="satStatus">Ready when the analyzer is running.</div>
+            </div>
+            <div>
+              <div class="test-chart"><canvas id="saturationChart" aria-label="Magnetic saturation transfer plot"></canvas></div>
+              <div class="result-strip">
+                <div class="result"><span>Onset</span><b id="rSatOnset">—</b></div>
+                <div class="result"><span>Max compression</span><b id="rCompression">—</b></div>
+                <div class="result"><span>Max asymmetry</span><b id="rSatAsym">—</b></div>
+                <div class="result"><span>THD at max</span><b id="rSatThd">—</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="tab-impulse">
+          <div class="test-layout">
+            <div class="test-controls">
+              <div class="readout"><strong>500 Hz–8 kHz magnitude response</strong><p>Plots pickup output in dB versus frequency with light 1/48-octave smoothing. Excitation level is referenced at 500 Hz, then falls by 6 dB per octave—approximately half voltage each octave—to protect the high-frequency drive.</p></div>
+              <label class="field">Level at 500 Hz <span class="value" id="sweepLevelValue">−6 dBFS</span><input id="sweepLevel" type="range" min="-48" max="-6" step="1" value="-6"></label>
+              <label class="field">Sweep duration<select id="sweepDuration"><option value="2.5" selected>2.5 s</option><option value="5">5 s</option><option value="10">10 s</option></select></label>
+              <div class="readout"><strong>Excitation contour</strong><p>500 Hz: selected level · 1 kHz: −6 dB · 2 kHz: −12 dB · 4 kHz: −18 dB · 8 kHz: −24 dB</p></div>
+              <button class="primary" id="runImpulse" disabled>Measure Bode plot</button>
+              <div class="progress"><div id="impulseProgress"></div></div>
+              <div class="tiny" id="impulseStatus">Ready when the analyzer is running.</div>
+            </div>
+            <div>
+              <div class="test-chart"><canvas id="impulseChart" aria-label="Bode magnitude plot"></canvas></div>
+              <div class="result-strip">
+                <div class="result"><span>Peak magnitude</span><b id="rResonance">—</b></div>
+                <div class="result"><span>8 kHz / 500 Hz</span><b id="rIrBandwidth">—</b></div>
+                <div class="result"><span>Measured slope</span><b id="rLatency">—</b></div>
+                <div class="result"><span>Excitation slope</span><b id="rDecay">−6.0 dB/oct</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="tab-polarity">
+          <div class="test-layout">
+            <div class="test-controls">
+              <div class="readout"><strong>Relative electrical polarity</strong><p>Emits repeated positive-leading magnetic pulses, averages the pickup response, and classifies its first significant excursion. “Positive” only becomes absolute when driver-coil winding, output wiring, magnet face, and pickup leads are documented.</p></div>
+              <label class="field">Pulse level <span class="value" id="pulseLevelValue">−9 dBFS</span><input id="pulseLevel" type="range" min="-48" max="-9" step="1" value="-9"></label>
+              <label class="field">Averages<select id="pulseAverages"><option>4</option><option selected>8</option><option>16</option></select></label>
+              <button class="primary" id="runPolarity" disabled>Determine relative polarity</button>
+              <div class="progress"><div id="polarityProgress"></div></div>
+              <div class="tiny" id="polarityStatus">Ready when the analyzer is running.</div>
+            </div>
+            <div>
+              <div class="test-chart"><canvas id="polarityChart" aria-label="Polarity response plot"></canvas></div>
+              <div class="result-strip">
+                <div class="result"><span>Relative polarity</span><b id="rPolarity">—</b></div>
+                <div class="result"><span>Confidence</span><b id="rPolarityConfidence">—</b></div>
+                <div class="result"><span>First excursion</span><b id="rFirstExcursion">—</b></div>
+                <div class="result"><span>Peak response</span><b id="rPulsePeak">—</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="tab-setup">
+          <div class="setup">
+            <div class="setup-step"><span class="step-num">1</span><div><b>Build a repeatable magnetic driver</b>Fix a small coil above the pickup at a recorded height and orientation. Add current limiting appropriate to your interface or headphone amp. Never short an output.</div></div>
+            <div class="setup-step"><span class="step-num">2</span><div><b>Define positive</b>Mark driver-coil winding direction, its face toward the pickup, cable polarity, pickup magnet face, and which pickup lead goes to input hot. Polarity results are relative to this convention.</div></div>
+            <div class="setup-step"><span class="step-num">3</span><div><b>Set clean gain</b>Use Hi-Z input, disable pads/DSP/AGC, keep the interface below clipping, and do a low-level sweep first. A saturating preamp can masquerade as pickup saturation.</div></div>
+            <div class="setup-step"><span class="step-num">4</span><div><b>Validate with loopback</b>Run the saturation test through an attenuated electrical loopback. It should remain symmetric and linear. Any loopback compression/asymmetry is in the interface, not the pickup.</div></div>
+            <div class="setup-step"><span class="step-num">5</span><div><b>Control the load</b>Record cable capacitance, volume/tone pot values, and interface input impedance. These strongly move the pickup resonance and must stay fixed for comparisons.</div></div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel summary-panel" id="summaryPanel">
+      <div class="panel-head summary-head">
+        <div><span class="panel-title">Measurement summary</span> <span class="kicker" id="summaryState">not created</span></div>
+        <div class="summary-actions">
+          <button class="primary" id="createSummary">Create summary</button>
+          <button id="exportSummaryPng" disabled>Export PNG</button>
+          <button id="exportSummaryCsv" disabled>Export CSV</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="summary-content" id="summaryContent" aria-live="polite"><div class="summary-placeholder">Run measurements, then create a snapshot containing every available non-null result.</div></div>
+      </div>
+    </section>
+
+    <footer><span>Nicks Pickup Lab · local processing only · no uploads · no external libraries</span><span>Measurements are dBFS/referenced to the fixture unless calibrated externally.</span></footer>
+  </main>
+
+  <script>
+  (() => {
+    'use strict';
+    const $ = id => document.getElementById(id);
+    const els = {};
+    for (const id of ['permissionModal','grantButton','dismissModal','permissionHint','graphTooltip','themeToggle','statusDot','statusText','sampleRateLabel','inputDevice','inputChannel','fftSize','inputTrim','inputTrimValue','smooth','smoothValue','averageWindow','averageWindowValue','noiseFloorThreshold','noiseFloorThresholdValue','monitorToggle','startButton','stopButton','freezeButton','scope','spectrum','traceState','inputFill','inputPeak','inputDb','outputFill','outputPeak','outputDb','generatorType','outputDevice','loadOutputs','outputChannel','frequency','frequencyValue','outputLevel','outputLevelValue','generatorButton','muteButton','satFreq','satFreqValue','satMax','satMaxValue','satSteps','runSaturation','abortTest','satProgress','satStatus','saturationChart','rSatOnset','rCompression','rSatAsym','rSatThd','sweepLevel','sweepLevelValue','sweepDuration','runImpulse','impulseProgress','impulseStatus','impulseChart','rResonance','rIrBandwidth','rLatency','rDecay','pulseLevel','pulseLevelValue','pulseAverages','polarityProgress','polarityStatus','polarityChart','rPolarity','rPolarityConfidence','rFirstExcursion','rPulsePeak','runPolarity','summaryPanel','summaryState','summaryContent','createSummary','exportSummaryPng','exportSummaryCsv']) els[id] = $(id);
+
+    const metricIds = ['mPeakFreq','mFundamental','mRms','mPeak','mCrest','mDc','mNoise','mSnr','mCentroid','mRolloff','mBandwidth','mFlatness','mSlope','mThd','mEvenOdd','mAsymmetry','mZcr','mClip','mTransient','mNote','mLowBand','mMidBand','mHighBand','mConfidence'];
+    const M = Object.fromEntries(metricIds.map(id => [id, $(id)]));
+    const state = {
+      ctx: null, stream: null, source: null, splitter: null, inputGain: null, analyser: null,
+      outputAnalyser: null, outputMerger: null, outBus: null, monitorGain: null, processor: null, silentGain: null,
+      generator: null, noiseSource: null, running: false, raf: 0, frozen: false, heldSpectrum: null,
+      timeData: null, freqData: null, filteredTimeData: null, filteredFreqData: null, outTimeData: null, shortRms: 0, longRms: 0,
+      capture: null, testAbort: false, activeTest: false, peakHoldIn: 0, peakHoldOut: 0,
+      satData: [], impulseData: null, polarityData: null, polarityFirst: -1, polarityThreshold: 0, metricHistory: [], summaryData: null
+    };
+
+    const clamp = (v,a,b) => Math.max(a, Math.min(b,v));
+    const db = v => v > 1e-12 ? 20 * Math.log10(v) : -120;
+    const fromDb = v => Math.pow(10, v/20);
+    const fmtDb = v => Number.isFinite(v) ? (v <= -100 ? '−∞' : v.toFixed(1)) : '—';
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const nextPow2 = n => 1 << Math.ceil(Math.log2(Math.max(2,n)));
+    const cssColor = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+    function setTheme(theme) {
+      const light=theme==='light';
+      document.documentElement.dataset.theme=light?'light':'dark';
+      els.themeToggle.textContent=light?'☾ Dark theme':'☀ Light theme';
+      els.themeToggle.setAttribute('aria-pressed',String(light));
+      drawSaturation(state.satData);drawImpulse(state.impulseData);drawPolarity(state.polarityData);
+      if(!state.running)drawIdleSpectrum();
+    }
+
+    function setStatus(text, kind='') {
+      els.statusText.textContent = text;
+      els.statusDot.className = 'dot' + (kind ? ' ' + kind : '');
+    }
+
+    function sizeCanvas(canvas) {
+      const dpr = Math.min(2, devicePixelRatio || 1), rect = canvas.getBoundingClientRect();
+      const w = Math.max(2, Math.round(rect.width*dpr)), h = Math.max(2, Math.round(rect.height*dpr));
+      if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+      return {ctx: canvas.getContext('2d'), w, h, dpr};
+    }
+
+    function grid(c,w,h,dpr,xLines=8,yLines=4) {
+      c.clearRect(0,0,w,h); c.fillStyle=cssColor('--canvas-bg'); c.fillRect(0,0,w,h);
+      c.strokeStyle=cssColor('--canvas-grid'); c.lineWidth=dpr; c.beginPath();
+      for(let i=1;i<xLines;i++){ const x=Math.round(w*i/xLines)+.5; c.moveTo(x,0); c.lineTo(x,h); }
+      for(let i=1;i<yLines;i++){ const y=Math.round(h*i/yLines)+.5; c.moveTo(0,y); c.lineTo(w,y); }
+      c.stroke();
+    }
+
+    function label(c,text,x,y,dpr,align='left',color='') {
+      c.fillStyle=color||cssColor('--canvas-label'); c.font=`${10*dpr}px ui-monospace, SFMono-Regular, Menlo, monospace`; c.textAlign=align; c.fillText(text,x,y);
+    }
+
+    async function requestPermission() {
+      els.permissionModal.classList.add('show');
+      if (!navigator.mediaDevices?.getUserMedia) {
+        els.permissionHint.textContent = 'Audio capture is unavailable here. Open this file from localhost or HTTPS in a current browser.';
+        setStatus('Audio capture unavailable','warn'); return false;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:{ideal:2}, sampleRate:{ideal:48000}}, video:false});
+        if (state.stream) state.stream.getTracks().forEach(t=>t.stop());
+        state.stream = stream;
+        await populateDevices();
+        els.permissionModal.classList.remove('show');
+        setStatus('Audio permission granted','live');
+        els.startButton.disabled = false;
+        return true;
+      } catch(err) {
+        els.permissionHint.textContent = `${err.name || 'Error'}: ${err.message || 'Audio permission was not granted.'}`;
+        setStatus('Audio permission needed','warn');
+        return false;
+      }
+    }
+
+    async function populateDevices(preferredOutput='') {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const current = state.stream?.getAudioTracks()[0]?.getSettings()?.deviceId || els.inputDevice.value;
+      const currentOutput = preferredOutput || els.outputDevice.value;
+      const inputs = devices.filter(d=>d.kind==='audioinput');
+      els.inputDevice.innerHTML = inputs.map((d,i)=>`<option value="${escapeHtml(d.deviceId)}">${escapeHtml(d.label || `Audio input ${i+1}`)}</option>`).join('');
+      if (inputs.some(d=>d.deviceId===current)) els.inputDevice.value=current;
+      const outputs = devices.filter(d=>d.kind==='audiooutput');
+      els.outputDevice.innerHTML = '<option value="">System default</option>' + outputs.map((d,i)=>`<option value="${escapeHtml(d.deviceId)}">${escapeHtml(d.label || `Audio output ${i+1}`)}</option>`).join('');
+      if (outputs.some(d=>d.deviceId===currentOutput)) els.outputDevice.value=currentOutput;
+      els.loadOutputs.textContent = outputs.length ? `Refresh (${outputs.length})` : 'Find devices';
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass || !('setSinkId' in AudioContextClass.prototype)) {
+        els.outputDevice.title = 'This browser may show devices but does not support routing an AudioContext to them';
+      }
+    }
+
+    async function loadAllOutputDevices() {
+      if (!navigator.mediaDevices?.enumerateDevices) return;
+      els.loadOutputs.disabled = true;
+      els.loadOutputs.textContent = 'Requesting…';
+      try {
+        let chosen = null;
+        if (navigator.mediaDevices.selectAudioOutput) chosen = await navigator.mediaDevices.selectAudioOutput();
+        await populateDevices(chosen?.deviceId || '');
+        if (chosen?.deviceId && state.ctx?.setSinkId) {
+          await state.ctx.setSinkId(chosen.deviceId);
+          populateOutputChannels();
+          configureOutputRouting();
+        }
+        const count = [...els.outputDevice.options].filter(o=>o.value).length;
+        setStatus(count ? `${count} output device${count===1?'':'s'} available` : 'Only the system default is exposed by this browser', count?'live':'warn');
+      } catch(err) {
+        await populateDevices();
+        setStatus(err.name==='NotAllowedError' ? 'Output-device access was not granted' : `Output scan failed: ${err.message}`, 'warn');
+      } finally { els.loadOutputs.disabled = false; }
+    }
+
+    function populateOutputChannels() {
+      const destination = state.ctx?.destination;
+      const reported = destination?.maxChannelCount || destination?.channelCount || 2;
+      const count = clamp(Math.floor(reported), 1, 32);
+      const previous = els.outputChannel.value;
+      const options = [];
+      if (count >= 2) options.push('<option value="stereo">Outputs 1 + 2</option>');
+      for (let i=0; i<count; i++) options.push(`<option value="${i}">Output ${i+1}</option>`);
+      els.outputChannel.innerHTML = options.join('');
+      if (previous === 'stereo' && count >= 2) els.outputChannel.value = previous;
+      else if (/^\d+$/.test(previous) && +previous < count) els.outputChannel.value = previous;
+      else els.outputChannel.value = '0';
+      els.outputChannel.title = count > 2 ? `${count} hardware output channels reported` : `${count} output channel${count===1?'':'s'} reported`;
+    }
+
+    function configureOutputRouting() {
+      if (!state.ctx || !state.outputAnalyser) return;
+      try { state.outputAnalyser.disconnect(); } catch(_) {}
+      try { state.outputMerger?.disconnect(); } catch(_) {}
+      const destination = state.ctx.destination;
+      const count = clamp(Math.floor(destination.maxChannelCount || destination.channelCount || 2), 1, 32);
+      try {
+        destination.channelCountMode = 'explicit';
+        destination.channelInterpretation = 'discrete';
+        destination.channelCount = count;
+      } catch(_) {}
+      state.outputMerger = state.ctx.createChannelMerger(count);
+      state.outputMerger.channelCountMode = 'explicit';
+      state.outputMerger.channelInterpretation = 'discrete';
+      if (els.outputChannel.value === 'stereo' && count >= 2) {
+        state.outputAnalyser.connect(state.outputMerger, 0, 0);
+        state.outputAnalyser.connect(state.outputMerger, 0, 1);
+      } else {
+        const selected = clamp(parseInt(els.outputChannel.value,10) || 0, 0, count-1);
+        state.outputAnalyser.connect(state.outputMerger, 0, selected);
+      }
+      state.outputMerger.connect(destination);
+    }
+
+    function escapeHtml(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+    async function replaceStream() {
+      const wasRunning = state.running;
+      if (wasRunning) stopAudio(false);
+      if (state.stream) state.stream.getTracks().forEach(t=>t.stop());
+      try {
+        state.stream = await navigator.mediaDevices.getUserMedia({audio:{deviceId: els.inputDevice.value ? {exact:els.inputDevice.value}:undefined, echoCancellation:false,noiseSuppression:false,autoGainControl:false,channelCount:{ideal:2}},video:false});
+        if (wasRunning) await startAudio();
+      } catch(err) { setStatus(`Input error: ${err.message}`,'warn'); }
+    }
+
+    async function startAudio() {
+      if (state.running) return;
+      if (!state.stream) {
+        els.permissionHint.textContent = 'Click “Allow audio input” to open the browser permission prompt.';
+        els.permissionModal.classList.add('show');
+        setStatus('Waiting for audio permission','warn');
+        return;
+      }
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!state.ctx || state.ctx.state==='closed') state.ctx = new AC({latencyHint:'interactive'});
+      await state.ctx.resume();
+      if (els.outputDevice.value && state.ctx.setSinkId) { try { await state.ctx.setSinkId(els.outputDevice.value); } catch(e) { console.warn(e); } }
+      populateOutputChannels();
+      buildGraph();
+      state.running = true;
+      state.metricHistory.length = 0;
+      els.startButton.disabled=true; els.stopButton.disabled=false; els.freezeButton.disabled=false;
+      els.generatorButton.disabled=false; els.runSaturation.disabled=false; els.runImpulse.disabled=false; els.runPolarity.disabled=false;
+      els.sampleRateLabel.textContent = `${state.ctx.sampleRate.toLocaleString()} Hz`;
+      setStatus('Analyzer running','live');
+      drawLoop();
+    }
+
+    function buildGraph() {
+      const ctx=state.ctx;
+      state.source=ctx.createMediaStreamSource(state.stream);
+      state.splitter=ctx.createChannelSplitter(2);
+      state.inputGain=ctx.createGain(); state.inputGain.gain.value=fromDb(+els.inputTrim.value);
+      state.analyser=ctx.createAnalyser(); state.analyser.fftSize=+els.fftSize.value; state.analyser.smoothingTimeConstant=+els.smooth.value/100; state.analyser.minDecibels=-120; state.analyser.maxDecibels=0;
+      state.outputAnalyser=ctx.createAnalyser(); state.outputAnalyser.fftSize=2048; state.outputAnalyser.smoothingTimeConstant=.55;
+      state.outBus=ctx.createGain(); state.monitorGain=ctx.createGain(); state.monitorGain.gain.value=els.monitorToggle.checked?1:0;
+      state.processor=ctx.createScriptProcessor(2048,1,1); state.silentGain=ctx.createGain(); state.silentGain.gain.value=0;
+      state.source.connect(state.splitter);
+      connectChannel();
+      state.inputGain.connect(state.analyser); state.inputGain.connect(state.processor); state.inputGain.connect(state.monitorGain);
+      state.monitorGain.connect(state.outBus); state.outBus.connect(state.outputAnalyser); configureOutputRouting();
+      state.processor.connect(state.silentGain); state.silentGain.connect(ctx.destination);
+      state.processor.onaudioprocess=e=>{
+        if (!state.capture) return;
+        if (!state.capture.started) { state.capture.started=true; state.capture.onReady?.(); }
+        const data=e.inputBuffer.getChannelData(0);
+        const remaining=state.capture.target-state.capture.samples.length;
+        for(let i=0;i<Math.min(data.length,remaining);i++) state.capture.samples.push(data[i]);
+        if(state.capture.samples.length>=state.capture.target){ const cap=state.capture; state.capture=null; cap.resolve(Float32Array.from(cap.samples)); }
+      };
+      updateArrays();
+    }
+
+    function connectChannel() {
+      try { state.splitter.disconnect(); } catch(_) {}
+      const choice=els.inputChannel.value;
+      if(choice==='sum' || choice==='diff') {
+        const g1=state.ctx.createGain(), g2=state.ctx.createGain(); g1.gain.value=.5; g2.gain.value=choice==='diff'?-.5:.5;
+        state.splitter.connect(g1,0); state.splitter.connect(g2,1); g1.connect(state.inputGain); g2.connect(state.inputGain);
+      } else state.splitter.connect(state.inputGain,+choice);
+    }
+
+    function updateArrays(){
+      state.timeData=new Float32Array(state.analyser.fftSize);state.freqData=new Float32Array(state.analyser.frequencyBinCount);state.filteredTimeData=new Float32Array(state.analyser.fftSize);state.filteredFreqData=new Float32Array(state.analyser.frequencyBinCount);state.outTimeData=new Float32Array(state.outputAnalyser.fftSize);state.heldSpectrum=new Float32Array(state.analyser.frequencyBinCount).fill(-120);
+    }
+
+    function stopAudio(close=true) {
+      state.running=false; cancelAnimationFrame(state.raf); stopGenerator(); abortTests();
+      if(state.processor) state.processor.onaudioprocess=null;
+      for(const n of ['source','splitter','inputGain','analyser','processor','silentGain','monitorGain','outBus','outputAnalyser','outputMerger']) { try{ state[n]?.disconnect(); }catch(_){} state[n]=null; }
+      if(close && state.ctx){ state.ctx.close(); state.ctx=null; }
+      els.startButton.disabled=false; els.stopButton.disabled=true; els.freezeButton.disabled=true; els.generatorButton.disabled=true; els.runSaturation.disabled=true; els.runImpulse.disabled=true; els.runPolarity.disabled=true;
+      setStatus('Analyzer stopped','warn');drawIdleSpectrum();
+    }
+
+    function drawLoop() {
+      if(!state.running) return;
+      if(!state.frozen){ state.analyser.getFloatTimeDomainData(state.timeData); state.analyser.getFloatFrequencyData(state.freqData); }
+      state.outputAnalyser.getFloatTimeDomainData(state.outTimeData);
+      const filtered=applyNoiseFloor(state.timeData,state.freqData),instant=analyzeFrame(filtered.time,filtered.freq,state.ctx.sampleRate,state.analyser.fftSize),meterRms=instant.rms,meterPeak=instant.peak;
+      instant.gateOpen=filtered.gateOpen;instant.hasSpectrum=filtered.hasSpectrum;maskFilteredStats(instant,filtered);
+      const averaged=averageMeasurementFrame(instant);
+      updateMetrics(averaged);drawScope(filtered.time);drawSpectrum(filtered.freq,instant);updateMeters(filtered.gateOpen?meterRms:0,filtered.gateOpen?meterPeak:0,rmsPeak(state.outTimeData));
+      state.raf=requestAnimationFrame(drawLoop);
+    }
+
+    function applyNoiseFloor(time,freq){
+      const threshold=+els.noiseFloorThreshold.value,raw=rmsPeak(time),gateOpen=db(raw.rms)>=threshold,timeOut=state.filteredTimeData,freqOut=state.filteredFreqData,binHz=state.ctx.sampleRate/state.analyser.fftSize,minBin=Math.max(1,Math.floor(20/binHz)),maxBin=Math.min(freq.length-1,Math.ceil(Math.min(20000,state.ctx.sampleRate/2)/binHz));
+      if(gateOpen)timeOut.set(time);else timeOut.fill(0);
+      let hasSpectrum=false;for(let i=0;i<freq.length;i++){const visible=freq[i]>=threshold;freqOut[i]=visible?freq[i]:-120;if(visible&&i>=minBin&&i<=maxBin)hasSpectrum=true;}
+      return {time:timeOut,freq:freqOut,gateOpen,hasSpectrum};
+    }
+
+    function maskFilteredStats(stats,filtered){
+      if(!filtered.gateOpen)for(const key of ['rms','peak','dc','clip','zcr','crest','asymmetry','transient'])stats[key]=NaN;
+      if(!filtered.hasSpectrum)for(const key of ['peakFreq','fundamental','noise','snr','centroid','rolloff','bandwidth','flatness','slope','thd','evenOdd','low','mid','high','confidence'])stats[key]=NaN;
+      return stats;
+    }
+
+    function averageMeasurementFrame(instant) {
+      const seconds = +els.averageWindow.value;
+      if (seconds <= 0) {
+        state.metricHistory.length = 0;
+        return instant;
+      }
+      const now = performance.now();
+      state.metricHistory.push({time:now, stats:instant});
+      const cutoff = now-seconds*1000;
+      while (state.metricHistory.length > 1 && state.metricHistory[0].time < cutoff) state.metricHistory.shift();
+      const averaged = {...instant};
+      for (const key of Object.keys(instant)) {
+        if (key==='peakBin' || key==='binHz' || typeof instant[key] !== 'number') continue;
+        if (!Number.isFinite(instant[key])) { averaged[key]=instant[key]; continue; }
+        let sum=0, count=0;
+        for (const frame of state.metricHistory) {
+          const value=frame.stats[key];
+          if (Number.isFinite(value)) { sum+=value; count++; }
+        }
+        if (count) averaged[key]=sum/count;
+      }
+      averaged.peakBin=Math.round(averaged.peakFreq/instant.binHz);
+      return averaged;
+    }
+
+    function analyzeFrame(time,freq,sr,fftSize) {
+      let sum=0, peak=0, pos=0, neg=0, mean=0, clips=0, zc=0;
+      for(let i=0;i<time.length;i++){ const v=time[i]; sum+=v*v; mean+=v; if(v>pos)pos=v;if(v<neg)neg=v;peak=Math.max(peak,Math.abs(v));if(Math.abs(v)>=.995)clips++;if(i&&((v>=0)!==(time[i-1]>=0)))zc++; }
+      const rms=Math.sqrt(sum/time.length), dc=mean/time.length;
+      state.shortRms=.82*state.shortRms+.18*rms; state.longRms=.985*state.longRms+.015*rms;
+      const binHz=sr/fftSize, minBin=Math.max(1,Math.floor(20/binHz)), maxBin=Math.min(freq.length-1,Math.ceil(Math.min(16000,sr*.48)/binHz));
+      let peakBin=minBin;
+      for(let i=minBin+1;i<=maxBin;i++) if(freq[i]>freq[peakBin]) peakBin=i;
+      let delta=0; if(peakBin>0&&peakBin<freq.length-1){ const a=freq[peakBin-1],b=freq[peakBin],c=freq[peakBin+1],den=a-2*b+c; if(Math.abs(den)>1e-9)delta=.5*(a-c)/den; }
+      const peakFreq=(peakBin+clamp(delta,-.5,.5))*binHz;
+      const fundamental=estimateFundamental(freq,peakBin,binHz);
+      let pSum=0, fSum=0, logSum=0, count=0, low=0,mid=0,high=0;
+      const powers=[];
+      for(let i=minBin;i<=maxBin;i++){ const p=Math.pow(10,freq[i]/10); powers.push(p); pSum+=p; fSum+=p*i*binHz; logSum+=Math.log(p+1e-30); count++; const f=i*binHz;if(f<150)low+=p;else if(f<2000)mid+=p;else high+=p; }
+      const centroid=pSum?fSum/pSum:0;
+      let variance=0,cum=0,rolloff=0; for(let j=0;j<powers.length;j++){ const f=(j+minBin)*binHz;variance+=powers[j]*(f-centroid)**2;cum+=powers[j];if(!rolloff&&cum>=pSum*.85)rolloff=f; }
+      const bandwidth=pSum?Math.sqrt(variance/pSum):0, flatness=pSum?Math.exp(logSum/count)/(pSum/count):0;
+      const noiseVals=Array.from(freq.slice(Math.max(minBin,Math.floor(80/binHz)),maxBin+1)).sort((a,b)=>a-b); const noise=noiseVals[Math.floor(noiseVals.length*.5)]??-120;
+      const fundBin=Math.round(fundamental/binHz), fundAmp=fundBin<freq.length?Math.pow(10,freq[fundBin]/20):0;
+      let h2=0,hOdd=0,hEven=0;
+      for(let h=2;h<=8;h++){ const b=Math.round(fundBin*h); if(b>=freq.length)break; const a=Math.pow(10,Math.max(freq[b-1]||-120,freq[b]||-120,freq[b+1]||-120)/20); h2+=a*a; if(h%2)hOdd+=a*a; else hEven+=a*a; }
+      const thd=fundAmp?100*Math.sqrt(h2)/fundAmp:0, evenOdd=10*Math.log10((hEven+1e-20)/(hOdd+1e-20));
+      const slope=spectralSlope(freq,binHz,minBin,maxBin);
+      const confidence=clamp((freq[peakBin]-noise-6)*2.2,0,100);
+      return {rms,peak,dc,pos,neg,clip:100*clips/time.length,zcr:zc*sr/time.length,crest:db(peak/(rms||1e-12)),peakFreq,fundamental,noise,snr:freq[peakBin]-noise,centroid,rolloff,bandwidth,flatness,slope,thd,evenOdd,asymmetry:db((pos+1e-12)/(Math.abs(neg)+1e-12)),transient:db((state.shortRms+1e-12)/(state.longRms+1e-12)),low:100*low/(pSum||1),mid:100*mid/(pSum||1),high:100*high/(pSum||1),confidence,peakBin,binHz};
+    }
+
+    function estimateFundamental(freq, peakBin, binHz) {
+      let best=peakBin, bestScore=-Infinity;
+      for(let div=1;div<=6;div++){ const b=Math.round(peakBin/div); if(b<1)continue; let score=0,n=0;for(let h=1;h<=6;h++){const k=b*h;if(k>=freq.length)break;score+=Math.max(freq[k],freq[k-1]||-120,freq[k+1]||-120)/(h===1?1.6:1);n++;}score/=Math.max(1,n);if(score>bestScore){bestScore=score;best=b;} }
+      return best*binHz;
+    }
+
+    function spectralSlope(freq,binHz,minBin,maxBin){
+      let n=0,sx=0,sy=0,sxx=0,sxy=0; const step=Math.max(1,Math.floor((maxBin-minBin)/300));
+      for(let i=minBin;i<=maxBin;i+=step){const x=Math.log2(i*binHz/1000),y=freq[i];n++;sx+=x;sy+=y;sxx+=x*x;sxy+=x*y;}
+      return (n*sxx-sx*sx)?(n*sxy-sx*sy)/(n*sxx-sx*sx):0;
+    }
+
+    function nearestNote(f){ if(!f||f<20)return {name:'—',cents:''};const midi=69+12*Math.log2(f/440),r=Math.round(midi),names=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];return {name:names[(r%12+12)%12]+(Math.floor(r/12)-1),cents:`${Math.round((midi-r)*100)>=0?'+':''}${Math.round((midi-r)*100)}`}; }
+
+    function updateMetrics(s) {
+      const note=nearestNote(s.fundamental),fixed=(value,digits)=>Number.isFinite(value)?value.toFixed(digits):'—',rounded=value=>Number.isFinite(value)?Math.round(value):'—',level=value=>Number.isFinite(value)?fmtDb(db(value)):'—',dbLevel=value=>Number.isFinite(value)?fmtDb(value):'—';
+      const vals={mPeakFreq:fixed(s.peakFreq,1),mFundamental:fixed(s.fundamental,1),mRms:level(s.rms),mPeak:level(s.peak),mCrest:fixed(s.crest,1),mDc:Number.isFinite(s.dc)?(s.dc*100).toFixed(3):'—',mNoise:dbLevel(s.noise),mSnr:fixed(s.snr,1),mCentroid:rounded(s.centroid),mRolloff:rounded(s.rolloff),mBandwidth:rounded(s.bandwidth),mFlatness:fixed(s.flatness,3),mSlope:fixed(s.slope,1),mThd:Number.isFinite(s.thd)?(s.thd<1000?s.thd.toFixed(2):'>999'):'—',mEvenOdd:fixed(s.evenOdd,1),mAsymmetry:fixed(s.asymmetry,2),mZcr:rounded(s.zcr),mClip:fixed(s.clip,3),mTransient:fixed(s.transient,1),mNote:note.name,mLowBand:fixed(s.low,1),mMidBand:fixed(s.mid,1),mHighBand:fixed(s.high,1),mConfidence:rounded(s.confidence)};
+      for(const [id,v] of Object.entries(vals)) M[id].textContent=v;
+      M.mNote.nextElementSibling.textContent=note.cents ? `${note.cents} cents`:'cents';
+    }
+
+    function drawScope(data) {
+      const {ctx:c,w,h,dpr}=sizeCanvas(els.scope); grid(c,w,h,dpr,10,4); c.strokeStyle=cssColor('--cyan');c.lineWidth=1.5*dpr;c.beginPath();
+      const step=Math.max(1,Math.floor(data.length/w));
+      for(let x=0;x<w;x++){ const i=Math.min(data.length-1,x*step), y=h/2-data[i]*h*.44; x?c.lineTo(x,y):c.moveTo(x,y); } c.stroke();
+      label(c,'+1.0',6*dpr,13*dpr,dpr);label(c,'0',6*dpr,h/2-4*dpr,dpr);label(c,'−1.0',6*dpr,h-6*dpr,dpr);
+    }
+
+    function drawNoSignalBox(c,w,h,dpr){
+      const title='No Signal',message='Select input and launch generator or measurement',available=Math.max(100*dpr,w-48*dpr);
+      c.save();c.textAlign='center';c.font=`700 ${14*dpr}px ui-sans-serif, system-ui, sans-serif`;const titleWidth=c.measureText(title).width;
+      c.font=`${10*dpr}px ui-monospace, SFMono-Regular, Menlo, monospace`;const naturalMessageWidth=c.measureText(message).width,messageScale=Math.min(1,available/naturalMessageWidth),messageSize=Math.max(8,10*messageScale);
+      c.font=`${messageSize*dpr}px ui-monospace, SFMono-Regular, Menlo, monospace`;const messageWidth=c.measureText(message).width,boxW=Math.min(w-24*dpr,Math.max(titleWidth,messageWidth)+32*dpr),boxH=62*dpr,boxX=(w-boxW)/2,boxY=(h-boxH)/2;
+      c.shadowColor=cssColor('--accent-halo');c.shadowBlur=14*dpr;c.fillStyle=cssColor('--panel');c.strokeStyle=cssColor('--primary-fill');c.lineWidth=1.5*dpr;c.beginPath();c.roundRect(boxX,boxY,boxW,boxH,10*dpr);c.fill();c.shadowBlur=0;c.stroke();
+      c.fillStyle=cssColor('--primary-fill');c.font=`700 ${14*dpr}px ui-sans-serif, system-ui, sans-serif`;c.fillText(title,w/2,boxY+24*dpr);
+      c.fillStyle=cssColor('--muted');c.font=`${messageSize*dpr}px ui-monospace, SFMono-Regular, Menlo, monospace`;c.fillText(message,w/2,boxY+45*dpr);c.restore();
+    }
+
+    function drawIdleSpectrum(){
+      const {ctx:c,w,h,dpr}=sizeCanvas(els.spectrum);grid(c,w,h,dpr,8,4);const minF=20,maxF=20000,minDb=-72,maxDb=0,xFor=f=>Math.log(f/minF)/Math.log(maxF/minF)*w,yFor=v=>h-clamp((v-minDb)/(maxDb-minDb),0,1)*h;
+      for(const level of [0,-18,-36,-54,-72])label(c,`${level}`,6*dpr,clamp(yFor(level)+(level===0?12:-4)*dpr,12*dpr,h-4*dpr),dpr);
+      for(const f of [20,50,100,200,500,1000,2000,5000,10000,20000])label(c,f>=1000?`${f/1000}k`:`${f}`,xFor(f)+3*dpr,h-6*dpr,dpr);
+      drawNoSignalBox(c,w,h,dpr);
+    }
+
+    function drawSpectrum(data,s) {
+      const {ctx:c,w,h,dpr}=sizeCanvas(els.spectrum); grid(c,w,h,dpr,8,4); const minF=20,maxF=Math.min(20000,state.ctx.sampleRate/2),minDb=-72,maxDb=0,minBin=Math.max(1,Math.floor(minF/s.binHz)),maxBin=Math.min(data.length-1,Math.ceil(maxF/s.binHz));
+      let peakDb=-120;for(let i=minBin;i<=maxBin;i++)if(Number.isFinite(data[i])&&data[i]>peakDb)peakDb=data[i];
+      const xFor=f=>Math.log(f/minF)/Math.log(maxF/minF)*w, yFor=v=>h-clamp((v-minDb)/(maxDb-minDb),0,1)*h;
+      for(const level of [0,-18,-36,-54,-72])label(c,`${level}`,6*dpr,clamp(yFor(level)+(level===0?12:-4)*dpr,12*dpr,h-4*dpr),dpr);
+      for(const f of [20,50,100,200,500,1000,2000,5000,10000,20000])if(f<=maxF)label(c,f>=1000?`${f/1000}k`:`${f}`,xFor(f)+3*dpr,h-6*dpr,dpr);
+      if(!s.hasSpectrum){drawNoSignalBox(c,w,h,dpr);return;}
+      if(!state.frozen) for(let i=0;i<data.length;i++) state.heldSpectrum[i]=Math.max(data[i],state.heldSpectrum[i]-.12);
+      let heldPeak=-120;for(let i=minBin;i<=maxBin;i++)if(Number.isFinite(state.heldSpectrum[i])&&state.heldSpectrum[i]>heldPeak)heldPeak=state.heldSpectrum[i];
+      const line=(arr,reference,color,width,alpha=1)=>{c.save();c.globalAlpha=alpha;c.strokeStyle=color;c.lineWidth=width*dpr;c.beginPath();let started=false;for(let i=minBin;i<=maxBin;i++){const f=i*s.binHz,x=xFor(f),y=yFor(arr[i]-reference);if(!started){c.moveTo(x,y);started=true}else c.lineTo(x,y);}c.stroke();c.restore();};
+      line(state.heldSpectrum,heldPeak,cssColor('--lime'),1,.48); line(data,peakDb,cssColor('--cyan'),1.35);
+      c.save();c.globalAlpha=.75;c.setLineDash([4*dpr,4*dpr]);c.strokeStyle=cssColor('--amber');c.beginPath();const px=xFor(s.peakFreq);c.moveTo(px,0);c.lineTo(px,h);c.stroke();c.restore();
+      label(c,`normalized · 0 dB = ${fmtDb(peakDb)} dBFS peak`,w-7*dpr,13*dpr,dpr,'right',cssColor('--cyan'));
+    }
+
+    function rmsPeak(data){let s=0,p=0;for(const v of data){s+=v*v;p=Math.max(p,Math.abs(v));}return {rms:Math.sqrt(s/data.length),peak:p};}
+    function updateMeters(inRms,inPeak,out){
+      state.peakHoldIn=Math.max(inPeak,state.peakHoldIn*.986);state.peakHoldOut=Math.max(out.peak,state.peakHoldOut*.986);
+      setMeter('input',inRms,state.peakHoldIn);setMeter('output',out.rms,state.peakHoldOut);
+    }
+    function setMeter(which,rms,peak){const pct=clamp((db(rms)+60)/60*100,0,100),pp=clamp((db(peak)+60)/60*100,0,100),fill=els[which+'Fill'],line=els[which+'Peak'];if(matchMedia('(max-width:1120px)').matches){fill.style.width=pct+'%';line.style.left=pp+'%';}else{fill.style.height=pct+'%';line.style.bottom=pp+'%';}els[which+'Db'].textContent=fmtDb(db(rms));}
+
+    function polarityView(data=state.polarityData,first=state.polarityFirst){
+      const sr=state.ctx?.sampleRate||48000,span=Math.max(2,Math.min(data?.length||Math.floor(sr*.1),Math.floor(sr*.1)));let center=first>=0?first:0;
+      if(data?.length&&first<0)for(let i=1;i<data.length;i++)if(Math.abs(data[i])>Math.abs(data[center]))center=i;
+      const start=Math.round(center-span/2);let peak=1e-12;
+      if(data?.length)for(let i=Math.max(0,start);i<Math.min(data.length,start+span);i++)peak=Math.max(peak,Math.abs(data[i]));
+      return {sr,span,start,center,first,peak};
+    }
+
+    function graphCoordinates(canvas, event) {
+      const rect=canvas.getBoundingClientRect(), rx=clamp((event.clientX-rect.left)/rect.width,0,1), ry=clamp((event.clientY-rect.top)/rect.height,0,1);
+      const sr=state.ctx?.sampleRate || 48000;
+      if(canvas===els.scope){
+        const samples=state.timeData?.length || +els.fftSize.value;
+        return `X ${((rx*samples/sr)*1000).toFixed(2)} ms · Y ${((.5-ry)/.44).toFixed(4)} FS`;
+      }
+      if(canvas===els.spectrum){
+        const minF=20,maxF=Math.min(20000,sr/2),frequency=minF*Math.pow(maxF/minF,rx),level=-72+(1-ry)*72;
+        return `X ${formatFrequency(frequency)} · Y ${level.toFixed(1)} dB rel. peak`;
+      }
+      if(canvas===els.saturationChart){
+        const padLeft=38/rect.width,padRight=12/rect.width,padTop=12/rect.height,padBottom=38/rect.height;
+        const px=clamp((rx-padLeft)/(1-padLeft-padRight),0,1),py=clamp((ry-padTop)/(1-padTop-padBottom),0,1),data=state.satData;
+        const minX=data.length?Math.min(...data.map(p=>p.drive)):-42,maxX=data.length?Math.max(...data.map(p=>p.drive)):+els.satMax.value;
+        const values=data.length?data.map(p=>db(p.rms)):[-100,0],minY=Math.min(...values)-(data.length?2:0),maxY=Math.max(...values)+(data.length?2:0);
+        return `X ${(minX+px*(maxX-minX)).toFixed(2)} dBFS drive · Y ${(maxY-py*(maxY-minY)).toFixed(2)} dBFS out`;
+      }
+      if(canvas===els.impulseChart){
+        const d=state.impulseData,info=bodePlotInfo(d),frequency=500*Math.pow(8000/500,rx),topPad=12/rect.height,bottomEdge=1-24/rect.height,py=clamp((ry-topPad)/(bottomEdge-topPad),0,1),level=info.magMax-py*(info.magMax-info.magMin);
+        return `X ${formatFrequency(frequency)} · Y ${level.toFixed(2)} dB rel. 500 Hz`;
+      }
+      if(canvas===els.polarityChart){
+        const view=polarityView(),sample=view.start+rx*view.span,reference=view.first>=0?view.first:view.center,response=((.5-ry)/.4)*view.peak,time=(sample-reference)/view.sr*1000;
+        return `X ${time>=0?'+':''}${time.toFixed(2)} ms from impulse · Y ${response.toFixed(5)} FS`;
+      }
+      return `X ${rx.toFixed(3)} · Y ${(1-ry).toFixed(3)}`;
+    }
+
+    function formatFrequency(value){return value>=1000?`${(value/1000).toFixed(2)} kHz`:`${value.toFixed(1)} Hz`;}
+    function bodeSmoothedTrace(d){
+      if(!d)return [];
+      if(d.bodeTrace)return d.bodeTrace;
+      const points=600,halfOctave=1/96,trace=[];
+      for(let p=0;p<points;p++){
+        const frequency=500*Math.pow(8000/500,p/(points-1)),low=Math.max(500,frequency*Math.pow(2,-halfOctave)),high=Math.min(8000,frequency*Math.pow(2,halfOctave)),first=clamp(Math.floor(low/d.binHz),1,d.mag.length-1),last=clamp(Math.ceil(high/d.binHz),first,d.mag.length-1);
+        let amplitude=0,count=0;for(let i=first;i<=last;i++){if(Number.isFinite(d.mag[i])){amplitude+=Math.pow(10,clamp(d.mag[i],-300,300)/20);count++;}}
+        trace.push({frequency,raw:count?20*Math.log10(amplitude/count+1e-20):-120});
+      }
+      const reference=trace[0].raw;for(const point of trace)point.level=point.raw-reference;
+      d.bodeTrace=trace;return trace;
+    }
+    function bodePlotInfo(d){
+      if(!d)return {reference:0,magMin:-36,magMax:12,peak:{frequency:500,level:0}};
+      const trace=bodeSmoothedTrace(d),reference=trace[0]?.raw||0;let min=Infinity,max=-Infinity,peak=trace[0];for(const point of trace){if(!Number.isFinite(point.level))continue;if(point.level<min)min=point.level;if(point.level>max){max=point.level;peak=point;}}
+      if(!Number.isFinite(min)||!Number.isFinite(max)){min=-36;max=12;}
+      let magMax=Math.ceil((max+3)/6)*6,magMin=Math.floor((min-3)/6)*6;if(magMax-magMin<24)magMin=magMax-24;if(magMax-magMin>72)magMin=magMax-72;
+      return {reference,magMin,magMax,peak,trace};
+    }
+    function showGraphTooltip(event){
+      const canvas=event.currentTarget,text=graphCoordinates(canvas,event),tip=els.graphTooltip;
+      tip.textContent=text;tip.style.display='block';
+      const left=Math.min(innerWidth-tip.offsetWidth-8,event.clientX+14),top=Math.max(8,Math.min(innerHeight-tip.offsetHeight-8,event.clientY+14));
+      tip.style.left=`${Math.max(8,left)}px`;tip.style.top=`${top}px`;
+    }
+    function hideGraphTooltip(){els.graphTooltip.style.display='none';}
+
+    function createNoise(kind) {
+      const len=state.ctx.sampleRate*2,buf=state.ctx.createBuffer(1,len,state.ctx.sampleRate),d=buf.getChannelData(0);let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+      for(let i=0;i<len;i++){const w=Math.random()*2-1;if(kind==='pink'){b0=.99886*b0+w*.0555179;b1=.99332*b1+w*.0750759;b2=.969*b2+w*.153852;b3=.8665*b3+w*.3104856;b4=.55*b4+w*.5329522;b5=-.7616*b5-w*.016898;d[i]=(b0+b1+b2+b3+b4+b5+b6+w*.5362)*.11;b6=w*.115926;}else d[i]=w*.35;}
+      const src=state.ctx.createBufferSource();src.buffer=buf;src.loop=true;return src;
+    }
+
+    function startGenerator() {
+      if(!state.running || state.generator) return;
+      const type=els.generatorType.value;if(type==='off'){els.generatorType.value='sine';}
+      const gain=state.ctx.createGain();gain.gain.value=0;gain.connect(state.outBus);
+      let src;if(['white','pink'].includes(els.generatorType.value)){src=createNoise(els.generatorType.value);state.noiseSource=src;}else{src=state.ctx.createOscillator();src.type=els.generatorType.value;src.frequency.value=+els.frequency.value;}
+      src.connect(gain);src.start();gain.gain.setTargetAtTime(fromDb(+els.outputLevel.value),state.ctx.currentTime,.02);state.generator={src,gain};els.generatorButton.textContent='Stop generator';els.muteButton.disabled=false;
+    }
+    function stopGenerator(){if(!state.generator)return;try{state.generator.gain.gain.setTargetAtTime(0,state.ctx.currentTime,.01);state.generator.src.stop(state.ctx.currentTime+.06);}catch(_){}state.generator=null;els.generatorButton.textContent='Start generator';els.muteButton.disabled=true;}
+
+    function captureFor(ms,onReady=null){ if(state.capture) state.capture.reject(new Error('Capture replaced'));return new Promise((resolve,reject)=>{state.capture={target:Math.ceil(state.ctx.sampleRate*ms/1000),samples:[],resolve,reject,onReady,started:false};}); }
+
+    function goertzel(data,f,sr){const w=2*Math.PI*f/sr,coeff=2*Math.cos(w);let s0=0,s1=0,s2=0;for(const x of data){s0=x+coeff*s1-s2;s2=s1;s1=s0;}const re=s1-s2*Math.cos(w),im=s2*Math.sin(w);return Math.hypot(re,im)/(data.length/2);}
+    function sampleStats(data,f,sr){let sum=0,pos=0,neg=0;for(const v of data){sum+=v*v;if(v>pos)pos=v;if(v<neg)neg=v;}const fund=goertzel(data,f,sr);let hs=0;for(let h=2;h<=8&&f*h<sr/2;h++){const a=goertzel(data,f*h,sr);hs+=a*a;}return {rms:Math.sqrt(sum/data.length),pos,neg,thd:fund?100*Math.sqrt(hs)/fund:0,fund};}
+
+    async function runSaturation() {
+      if(state.activeTest)return; stopGenerator(); state.activeTest=true;state.testAbort=false;setTestButtons(false);els.abortTest.disabled=false;state.satData=[];drawSaturation([]);
+      const f=+els.satFreq.value,max=+els.satMax.value,n=+els.satSteps.value,min=-42,levels=Array.from({length:n},(_,i)=>min+(max-min)*i/(n-1));
+      els.satStatus.textContent='Starting low-level reference…';
+      const osc=state.ctx.createOscillator(),gain=state.ctx.createGain();osc.type='sine';osc.frequency.value=f;gain.gain.value=0;osc.connect(gain);gain.connect(state.outBus);osc.start();
+      try{
+        for(let i=0;i<levels.length;i++){
+          if(state.testAbort)throw new Error('Test aborted');const level=levels[i];els.satStatus.textContent=`Step ${i+1}/${n}: ${level.toFixed(1)} dBFS`;gain.gain.setTargetAtTime(fromDb(level),state.ctx.currentTime,.025);await sleep(260);
+          const samples=await captureFor(360);const st=sampleStats(samples,f,state.ctx.sampleRate);state.satData.push({drive:level,...st});els.satProgress.style.width=`${(i+1)/n*100}%`;drawSaturation(state.satData);
+        }
+        computeSatResults();els.satStatus.textContent='Complete. Repeat with identical coil position for comparisons.';
+      }catch(e){els.satStatus.textContent=e.message;}finally{gain.gain.setTargetAtTime(0,state.ctx.currentTime,.01);try{osc.stop(state.ctx.currentTime+.05)}catch(_){}state.activeTest=false;els.abortTest.disabled=true;setTestButtons(true);}
+    }
+
+    function computeSatResults(){const d=state.satData;if(d.length<2)return;const baseGain=db(d[0].rms)-d[0].drive;let onset=null,maxComp=0,maxAsym=0;for(const p of d){p.compression=(db(p.rms)-p.drive)-baseGain;p.asym=db((p.pos+1e-12)/(Math.abs(p.neg)+1e-12));if(onset===null&&p.compression<-1)onset=p.drive;maxComp=Math.min(maxComp,p.compression);if(Math.abs(p.asym)>Math.abs(maxAsym))maxAsym=p.asym;}els.rSatOnset.textContent=onset===null?'Not reached':`${onset.toFixed(1)} dBFS`;els.rCompression.textContent=`${maxComp.toFixed(2)} dB`;els.rSatAsym.textContent=`${maxAsym>=0?'+':''}${maxAsym.toFixed(2)} dB`;els.rSatThd.textContent=`${d.at(-1).thd.toFixed(2)} %`;drawSaturation(d);}
+
+    function drawSaturation(data){const {ctx:c,w,h,dpr}=sizeCanvas(els.saturationChart);grid(c,w,h,dpr,8,6);const pad=38*dpr,x0=pad,x1=w-12*dpr,y0=h-pad,y1=12*dpr;label(c,'pickup output (dBFS)',x0,y1+2*dpr,dpr);label(c,'drive (dBFS)',x1,y0+25*dpr,dpr,'right');if(!data.length){label(c,'Run test to map transfer and asymmetry',w/2,h/2,dpr,'center',cssColor('--muted'));return;}const minX=Math.min(...data.map(p=>p.drive)),maxX=Math.max(...data.map(p=>p.drive)),ys=data.map(p=>db(p.rms)),minY=Math.min(...ys)-2,maxY=Math.max(...ys)+2;const xp=v=>x0+(v-minX)/(maxX-minX||1)*(x1-x0),yp=v=>y0-(v-minY)/(maxY-minY||1)*(y0-y1);c.strokeStyle=cssColor('--canvas-reference');c.setLineDash([5*dpr,4*dpr]);c.beginPath();c.moveTo(xp(minX),yp(ys[0]));c.lineTo(xp(maxX),yp(ys[0]+maxX-minX));c.stroke();c.setLineDash([]);c.strokeStyle=cssColor('--cyan');c.lineWidth=2*dpr;c.beginPath();data.forEach((p,i)=>{const x=xp(p.drive),y=yp(db(p.rms));i?c.lineTo(x,y):c.moveTo(x,y)});c.stroke();for(const p of data){const asym=Math.abs(db((p.pos+1e-12)/(Math.abs(p.neg)+1e-12)));c.fillStyle=cssColor(asym>1?'--red':'--lime');c.beginPath();c.arc(xp(p.drive),yp(db(p.rms)),(3+Math.min(5,asym))*dpr,0,Math.PI*2);c.fill();}label(c,minX.toFixed(0),x0,y0+15*dpr,dpr);label(c,maxX.toFixed(0),x1,y0+15*dpr,dpr,'right');}
+
+    function fft(re,im,inverse=false){const n=re.length;for(let i=1,j=0;i<n;i++){let bit=n>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){[re[i],re[j]]=[re[j],re[i]];[im[i],im[j]]=[im[j],im[i]];}}for(let len=2;len<=n;len<<=1){const ang=2*Math.PI/len*(inverse?1:-1),wr0=Math.cos(ang),wi0=Math.sin(ang);for(let i=0;i<n;i+=len){let wr=1,wi=0;for(let j=0;j<len/2;j++){const uR=re[i+j],uI=im[i+j],vR=re[i+j+len/2]*wr-im[i+j+len/2]*wi,vI=re[i+j+len/2]*wi+im[i+j+len/2]*wr;re[i+j]=uR+vR;im[i+j]=uI+vI;re[i+j+len/2]=uR-vR;im[i+j+len/2]=uI-vI;const nw=wr*wr0-wi*wi0;wi=wr*wi0+wi*wr0;wr=nw;}}}if(inverse)for(let i=0;i<n;i++){re[i]/=n;im[i]/=n;}}
+
+    function makeSweep(seconds,level){const sr=state.ctx.sampleRate,n=Math.floor(seconds*sr),buf=state.ctx.createBuffer(1,n,sr),d=buf.getChannelData(0),f0=500,f1=Math.min(8000,sr*.44),L=Math.log(f1/f0),base=fromDb(level);for(let i=0;i<n;i++){const t=i/sr,frequency=f0*Math.exp(t*L/seconds),octaves=Math.log2(frequency/f0),contour=fromDb(-6*octaves),fade=Math.min(1,i/(sr*.03),(n-i)/(sr*.03));d[i]=Math.sin(2*Math.PI*f0*seconds/L*(Math.exp(t*L/seconds)-1))*fade*base*contour;}return buf;}
+
+    async function runImpulse(){if(state.activeTest)return;stopGenerator();state.activeTest=true;state.testAbort=false;setTestButtons(false);const seconds=+els.sweepDuration.value,level=+els.sweepLevel.value,pre=.12,post=.65,total=seconds+pre+post;els.impulseStatus.textContent='Arming Bode capture…';els.impulseProgress.style.width='8%';try{const buf=makeSweep(seconds,level),src=state.ctx.createBufferSource();src.buffer=buf;src.connect(state.outBus);const capPromise=captureFor(total*1000);src.start(state.ctx.currentTime+pre);els.impulseStatus.textContent='Sweeping 500 Hz–8 kHz at −6 dB/oct…';const timer=setInterval(()=>{const p=parseFloat(els.impulseProgress.style.width)||8;els.impulseProgress.style.width=Math.min(82,p+3)+'%';},100);const recorded=await capPromise;clearInterval(timer);if(state.testAbort)throw new Error('Test aborted');els.impulseStatus.textContent='Calculating transfer magnitude…';els.impulseProgress.style.width='88%';await sleep(30);const stimulus=new Float32Array(recorded.length);stimulus.set(buf.getChannelData(0),Math.floor(pre*state.ctx.sampleRate));state.impulseData=deconvolve(stimulus,recorded,state.ctx.sampleRate);drawImpulse(state.impulseData);computeImpulseResults(state.impulseData);els.impulseProgress.style.width='100%';els.impulseStatus.textContent='Complete. Magnitude is displayed relative to the measured 500 Hz level.';}catch(e){els.impulseStatus.textContent=e.message;}finally{state.activeTest=false;setTestButtons(true);}}
+
+    function deconvolve(x,y,sr){const n=nextPow2(Math.max(x.length,y.length)),xr=new Float64Array(n),xi=new Float64Array(n),yr=new Float64Array(n),yi=new Float64Array(n);xr.set(x);yr.set(y);fft(xr,xi);fft(yr,yi);const mag=new Float32Array(n/2);for(let i=0;i<mag.length;i++){const den=xr[i]*xr[i]+xi[i]*xi[i]+1e-12,real=(yr[i]*xr[i]+yi[i]*xi[i])/den,imag=(yi[i]*xr[i]-yr[i]*xi[i])/den;mag[i]=20*Math.log10(Math.hypot(real,imag)+1e-20);}return {mag,sr,binHz:sr/n};}
+
+    function computeImpulseResults(d){const info=bodePlotInfo(d),endRelative=info.trace.at(-1).level,octaves=Math.log2(8000/500),slope=endRelative/octaves,peak=info.peak;els.rResonance.textContent=`${Math.round(peak.frequency)} Hz · ${peak.level>=0?'+':''}${peak.level.toFixed(1)} dB`;els.rIrBandwidth.textContent=`${endRelative>=0?'+':''}${endRelative.toFixed(1)} dB`;els.rLatency.textContent=`${slope>=0?'+':''}${slope.toFixed(2)} dB/oct`;els.rDecay.textContent='−6.0 dB/oct';}
+
+    function drawImpulse(d){
+      const {ctx:c,w,h,dpr}=sizeCanvas(els.impulseChart);grid(c,w,h,dpr,8,6);
+      const topPad=12*dpr,bottom=h-24*dpr,info=bodePlotInfo(d),xp=f=>Math.log(f/500)/Math.log(8000/500)*w,magY=v=>topPad+(info.magMax-v)/(info.magMax-info.magMin)*(bottom-topPad);
+      label(c,'magnitude · dB relative to 500 Hz · 1/48-oct smoothed',7*dpr,13*dpr,dpr,'left',cssColor('--cyan'));
+      c.strokeStyle=cssColor('--canvas-reference');c.setLineDash([4*dpr,4*dpr]);c.beginPath();c.moveTo(0,magY(0));c.lineTo(w,magY(0));c.stroke();c.setLineDash([]);
+      for(const f of [500,1000,2000,4000,8000])label(c,f>=1000?`${f/1000}k`:`${f}`,xp(f)+3*dpr,h-6*dpr,dpr);
+      if(!d){label(c,'Run Bode measurement to plot magnitude response',w/2,h/2,dpr,'center',cssColor('--muted'));return;}
+      c.strokeStyle=cssColor('--cyan');c.lineWidth=1.8*dpr;c.beginPath();info.trace.forEach((point,index)=>{const x=xp(point.frequency),y=magY(point.level);index?c.lineTo(x,y):c.moveTo(x,y);});c.stroke();
+      const peakX=xp(info.peak.frequency),peakY=magY(info.peak.level),peakText=`${info.peak.level>=0?'+':''}${info.peak.level.toFixed(1)} dB / ${(info.peak.frequency/1000).toFixed(2)} kHz`;
+      c.font=`${10*dpr}px ui-monospace, SFMono-Regular, Menlo, monospace`;const boxW=c.measureText(peakText).width+12*dpr,boxH=21*dpr,labelX=peakX+10*dpr+boxW<=w?peakX+10*dpr:peakX-boxW-10*dpr,labelY=peakY-boxH-8*dpr>=topPad?peakY-boxH-8*dpr:peakY+8*dpr;
+      c.fillStyle=cssColor('--canvas-bg');c.strokeStyle=cssColor('--line');c.lineWidth=dpr;c.beginPath();c.roundRect(labelX,labelY,boxW,boxH,5*dpr);c.fill();c.stroke();
+      c.fillStyle=cssColor('--ink');c.textAlign='left';c.fillText(peakText,labelX+6*dpr,labelY+14*dpr);
+      c.fillStyle=cssColor('--canvas-bg');c.strokeStyle=cssColor('--cyan');c.lineWidth=2*dpr;c.beginPath();c.arc(peakX,peakY,5*dpr,0,Math.PI*2);c.fill();c.stroke();
+      c.fillStyle=cssColor('--cyan');c.beginPath();c.arc(peakX,peakY,2*dpr,0,Math.PI*2);c.fill();
+    }
+
+    function makePulse(level){const sr=state.ctx.sampleRate,dur=.012,n=Math.floor(sr*dur),buf=state.ctx.createBuffer(1,n,sr),d=buf.getChannelData(0),a=fromDb(level);for(let i=0;i<n;i++){const t=i/n;d[i]=a*(t<.08?t/.08:Math.exp(-(t-.08)*5.5));}return buf;}
+
+    async function runPolarity(){
+      if(state.activeTest)return;
+      const generatorWasRunning=!!state.generator;stopGenerator();state.activeTest=true;state.testAbort=false;setTestButtons(false);els.polarityProgress.style.width='0%';
+      const count=+els.pulseAverages.value,level=+els.pulseLevel.value,sr=state.ctx.sampleRate,windowMs=260,avg=new Float64Array(Math.ceil(sr*windowMs/1000));
+      try{
+        if(generatorWasRunning)await sleep(80);
+        for(let k=0;k<count;k++){
+          if(state.testAbort)throw new Error('Test aborted');
+          els.polarityStatus.textContent=`Pulse ${k+1}/${count}…`;
+          const src=state.ctx.createBufferSource();src.buffer=makePulse(level);src.connect(state.outBus);
+          const rec=await captureFor(windowMs,()=>src.start(state.ctx.currentTime+.03));
+          for(let i=0;i<avg.length;i++)avg[i]+=rec[i]/count;
+          els.polarityProgress.style.width=`${(k+1)/count*100}%`;await sleep(80);
+        }
+        const data=Float32Array.from(avg);state.polarityData=data;const noiseEnd=Math.floor(sr*.025),noise=Math.sqrt(data.slice(0,noiseEnd).reduce((s,v)=>s+v*v,0)/noiseEnd),threshold=Math.max(noise*5,Math.max(...Array.from(data,Math.abs))*.08);let first=-1;
+        for(let i=noiseEnd;i<data.length;i++)if(Math.abs(data[i])>threshold){first=i;break;}
+        let peak=0;for(let i=Math.max(noiseEnd,first);i<Math.min(data.length,(first<0?noiseEnd:first)+Math.floor(sr*.03));i++)if(Math.abs(data[i])>Math.abs(data[peak]))peak=i;
+        const sign=first>=0?Math.sign(data[first]):0,pk=Math.abs(data[peak]),confidence=clamp((pk/(noise+1e-12)-3)*6,0,99);
+        els.rPolarity.textContent=sign>0?'POSITIVE ↑':sign<0?'NEGATIVE ↓':'INCONCLUSIVE';els.rPolarity.style.color=sign>0?'var(--lime)':sign<0?'var(--red)':'var(--muted)';els.rPolarityConfidence.textContent=`${Math.round(confidence)} %`;els.rFirstExcursion.textContent=first>=0?`${sign>0?'+':'−'} @ ${(first/sr*1000).toFixed(2)} ms`:'Below noise';els.rPulsePeak.textContent=`${fmtDb(db(pk))} dBFS`;state.polarityFirst=first;state.polarityThreshold=threshold;drawPolarity(data);els.polarityStatus.textContent=first>=0?'Complete. Classification is relative to the documented fixture orientation.':'No pulse detected above the noise floor. Check output channel, driver coil, input channel, and gain.';
+      }catch(e){els.polarityStatus.textContent=e.message;}
+      finally{state.activeTest=false;setTestButtons(state.running);}
+    }
+
+    function drawPolarity(data,first=state.polarityFirst,threshold=state.polarityThreshold){
+      const {ctx:c,w,h,dpr}=sizeCanvas(els.polarityChart);grid(c,w,h,dpr,8,6);if(!data){label(c,'Run pulse average to inspect first excursion',w/2,h/2,dpr,'center');return;}
+      const view=polarityView(data,first),pk=view.peak;c.strokeStyle=cssColor('--cyan');c.lineWidth=1.5*dpr;c.beginPath();
+      for(let x=0;x<w;x++){const i=view.start+Math.floor(x/w*view.span),value=i>=0&&i<data.length?data[i]:0,y=h/2-value/pk*h*.4;x?c.lineTo(x,y):c.moveTo(x,y)}c.stroke();
+      c.save();c.globalAlpha=.7;c.strokeStyle=cssColor('--amber');c.setLineDash([4*dpr,4*dpr]);for(const v of [threshold,-threshold]){const y=h/2-v/pk*h*.4;c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke();}c.restore();
+      const reference=first>=0?first:view.center,centerX=(reference-view.start)/view.span*w;c.strokeStyle=cssColor('--lime');c.beginPath();c.moveTo(centerX,0);c.lineTo(centerX,h);c.stroke();label(c,first>=0?'first excursion':'impulse center',centerX+5*dpr,14*dpr,dpr,'left',cssColor('--lime'));
+      const halfMs=view.span/view.sr*500;label(c,`−${halfMs.toFixed(0)} ms`,4*dpr,h-6*dpr,dpr);label(c,'0 ms',w/2,h-6*dpr,dpr,'center',cssColor('--lime'));label(c,`+${halfMs.toFixed(0)} ms`,w-4*dpr,h-6*dpr,dpr,'right');
+    }
+
+    function hasSummaryValue(value){const v=String(value??'').trim();return !!v&&!['—','−∞','-∞','null','undefined','nan'].includes(v.toLowerCase());}
+
+    function collectResultItems(selector,available){
+      if(!available)return [];
+      return [...document.querySelectorAll(`${selector} .result`)].map(node=>({name:node.querySelector('span')?.textContent.trim()||'',value:node.querySelector('b')?.textContent.trim()||'',unit:''})).filter(item=>item.name&&hasSummaryValue(item.value));
+    }
+
+    function collectMetricItems(){
+      return [...document.querySelectorAll('#metrics .metric')].map(node=>({name:node.querySelector('.metric-name')?.textContent.trim()||'',value:node.querySelector('.metric-value')?.textContent.trim()||'',unit:node.querySelector('.metric-unit')?.textContent.trim()||''})).filter(item=>item.name&&hasSummaryValue(item.value));
+    }
+
+    function createMeasurementSummary(){
+      const sections=[
+        {title:'Magnetic Saturation Mapper',items:collectResultItems('#tab-saturation',state.satData.length>0)},
+        {title:'Bode Plot',items:collectResultItems('#tab-impulse',!!state.impulseData)},
+        {title:'Polarity',items:collectResultItems('#tab-polarity',!!state.polarityData)},
+        {title:'Analyzer Metrics',items:collectMetricItems()}
+      ];
+      state.summaryData={createdAt:new Date(),sections};renderMeasurementSummary();
+    }
+
+    function renderMeasurementSummary(){
+      const summary=state.summaryData;if(!summary)return;let total=0;
+      els.summaryContent.innerHTML=summary.sections.map(section=>{
+        total+=section.items.length;
+        const rows=section.items.length?section.items.map(item=>{const display=item.unit?`${item.value} ${item.unit}`:item.value;return `<div class="summary-row"><span>${escapeHtml(item.name)}</span><b>${escapeHtml(display)}</b></div>`;}).join(''):'<div class="summary-empty">No measured values yet.</div>';
+        return `<section class="summary-section"><h3>${escapeHtml(section.title)}</h3>${rows}</section>`;
+      }).join('');
+      els.summaryState.textContent=`${total} value${total===1?'':'s'}`;els.createSummary.textContent='Refresh summary';els.exportSummaryPng.disabled=total===0;els.exportSummaryCsv.disabled=total===0;
+    }
+
+    function summaryFilename(extension){const stamp=(state.summaryData?.createdAt||new Date()).toISOString().replace(/[:.]/g,'-');return `nicks-pickup-lab-summary-${stamp}.${extension}`;}
+
+    function downloadBlob(blob,filename){const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+
+    function exportSummaryCsv(){
+      if(!state.summaryData)return;
+      const rows=[['Section','Measurement','Value','Unit']];for(const section of state.summaryData.sections)for(const item of section.items)rows.push([section.title,item.name,item.value,item.unit]);
+      const csv='\ufeff'+rows.map(row=>row.map(value=>`"${String(value).replace(/"/g,'""')}"`).join(',')).join('\r\n');downloadBlob(new Blob([csv],{type:'text/csv;charset=utf-8'}),summaryFilename('csv'));
+    }
+
+    function fitCanvasText(ctx,text,maxWidth){let result=String(text);if(ctx.measureText(result).width<=maxWidth)return result;while(result.length>1&&ctx.measureText(`${result}…`).width>maxWidth)result=result.slice(0,-1);return `${result}…`;}
+
+    function exportSummaryPng(){
+      const summary=state.summaryData;if(!summary)return;const width=1600,sectionGap=24,columnGap=28,rowHeight=48,sectionHead=62,padding=72,headerHeight=150,columnWidth=(width-padding*2-columnGap)/2,sectionHeight=section=>sectionHead+Math.max(1,section.items.length)*rowHeight,leftSections=summary.sections.slice(0,3),rightSection=summary.sections[3],leftHeight=leftSections.reduce((height,section,index)=>height+sectionHeight(section)+(index?sectionGap:0),0),rightHeight=sectionHeight(rightSection),totalHeight=headerHeight+Math.max(leftHeight,rightHeight)+padding,canvas=document.createElement('canvas');canvas.width=width;canvas.height=totalHeight;
+      const c=canvas.getContext('2d'),colors={bg:cssColor('--bg'),panel:cssColor('--panel'),line:cssColor('--line'),ink:cssColor('--ink'),muted:cssColor('--muted'),lime:cssColor('--lime')};c.fillStyle=colors.bg;c.fillRect(0,0,width,totalHeight);c.fillStyle=colors.lime;c.font='700 42px system-ui, sans-serif';c.fillText('Nicks Pickup Lab — Measurement Summary',padding,70);c.fillStyle=colors.muted;c.font='24px system-ui, sans-serif';c.fillText(`Created ${summary.createdAt.toLocaleString()}`,padding,112);
+      const drawSection=(section,x,y)=>{const height=sectionHeight(section);c.fillStyle=colors.panel;c.fillRect(x,y,columnWidth,height);c.fillStyle=colors.lime;c.font='700 25px system-ui, sans-serif';c.fillText(section.title,x+24,y+39);c.strokeStyle=colors.line;c.beginPath();c.moveTo(x,y+sectionHead);c.lineTo(x+columnWidth,y+sectionHead);c.stroke();
+        if(section.items.length){section.items.forEach((item,index)=>{const rowY=y+sectionHead+index*rowHeight;c.fillStyle=colors.muted;c.font='22px system-ui, sans-serif';c.fillText(fitCanvasText(c,item.name,columnWidth*.52),x+24,rowY+31);c.fillStyle=colors.ink;c.font='700 22px ui-monospace, monospace';c.textAlign='right';const value=item.unit?`${item.value} ${item.unit}`:item.value;c.fillText(fitCanvasText(c,value,columnWidth*.4),x+columnWidth-24,rowY+31);c.textAlign='left';if(index<section.items.length-1){c.strokeStyle=colors.line;c.beginPath();c.moveTo(x+24,rowY+rowHeight);c.lineTo(x+columnWidth-24,rowY+rowHeight);c.stroke();}});
+        }else{c.fillStyle=colors.muted;c.font='22px system-ui, sans-serif';c.fillText('No measured values yet.',x+24,y+sectionHead+31);}return height;};
+      let leftY=headerHeight;for(const section of leftSections)leftY+=drawSection(section,padding,leftY)+sectionGap;drawSection(rightSection,padding+columnWidth+columnGap,headerHeight);
+      canvas.toBlob(blob=>{if(blob)downloadBlob(blob,summaryFilename('png'));},'image/png');
+    }
+
+    function abortTests(){state.testAbort=true;if(state.capture){state.capture.reject(new Error('Test aborted'));state.capture=null;}state.activeTest=false;els.abortTest.disabled=true;setTestButtons(state.running);}
+    function setTestButtons(on){els.runSaturation.disabled=!on;els.runImpulse.disabled=!on;els.runPolarity.disabled=!on;}
+
+    function bind(){
+      els.themeToggle.onclick=()=>setTheme(document.documentElement.dataset.theme==='light'?'dark':'light');els.grantButton.onclick=requestPermission;els.dismissModal.onclick=()=>els.permissionModal.classList.remove('show');els.startButton.onclick=startAudio;els.stopButton.onclick=()=>stopAudio();els.inputDevice.onchange=replaceStream;
+      els.inputChannel.onchange=()=>{if(state.running)connectChannel()};els.fftSize.onchange=()=>{if(state.analyser){state.analyser.fftSize=+els.fftSize.value;updateArrays()}};els.inputTrim.oninput=()=>{els.inputTrimValue.textContent=`${(+els.inputTrim.value).toFixed(1)} dB`;if(state.inputGain)state.inputGain.gain.setTargetAtTime(fromDb(+els.inputTrim.value),state.ctx.currentTime,.01)};
+      els.smooth.oninput=()=>{els.smoothValue.textContent=`${els.smooth.value}%`;if(state.analyser)state.analyser.smoothingTimeConstant=+els.smooth.value/100};
+      els.averageWindow.oninput=()=>{const value=+els.averageWindow.value;els.averageWindowValue.textContent=value===0?'Realtime':`${value.toFixed(1)} s`;state.metricHistory.length=0;};
+      els.noiseFloorThreshold.oninput=()=>{const value=+els.noiseFloorThreshold.value;els.noiseFloorThresholdValue.textContent=`${value.toFixed(0).replace('-','−')} dBFS`;state.metricHistory.length=0;state.shortRms=0;state.longRms=0;state.heldSpectrum?.fill(-120);};
+      els.monitorToggle.onchange=()=>{if(state.monitorGain)state.monitorGain.gain.setTargetAtTime(els.monitorToggle.checked?1:0,state.ctx.currentTime,.02)};
+      els.freezeButton.onclick=()=>{state.frozen=!state.frozen;els.freezeButton.textContent=state.frozen?'Resume trace':'Freeze trace';els.traceState.textContent=state.frozen?'frozen':'live'};
+      els.generatorButton.onclick=()=>state.generator?stopGenerator():startGenerator();els.muteButton.onclick=stopGenerator;els.generatorType.onchange=()=>{if(state.generator){stopGenerator();startGenerator()}};
+      els.frequency.oninput=()=>{els.frequencyValue.textContent=`${els.frequency.value} Hz`;if(state.generator?.src.frequency)state.generator.src.frequency.setTargetAtTime(+els.frequency.value,state.ctx.currentTime,.01)};els.outputLevel.oninput=()=>{els.outputLevelValue.textContent=`${(+els.outputLevel.value).toFixed(1).replace('-','−')} dBFS`;if(state.generator)state.generator.gain.gain.setTargetAtTime(fromDb(+els.outputLevel.value),state.ctx.currentTime,.01)};
+      els.outputDevice.onchange=async()=>{
+        if(state.ctx?.setSinkId) {
+          try {
+            await state.ctx.setSinkId(els.outputDevice.value);
+            populateOutputChannels();
+            configureOutputRouting();
+          } catch(e) { setStatus(`Output selection failed: ${e.message}`,'warn'); }
+        }
+      };
+      els.loadOutputs.onclick=loadAllOutputDevices;
+      els.outputChannel.onchange=configureOutputRouting;
+      els.createSummary.onclick=createMeasurementSummary;els.exportSummaryPng.onclick=exportSummaryPng;els.exportSummaryCsv.onclick=exportSummaryCsv;
+      els.satFreq.oninput=()=>els.satFreqValue.textContent=`${els.satFreq.value} Hz`;els.satMax.oninput=()=>els.satMaxValue.textContent=`${els.satMax.value.replace('-','−')} dBFS`;els.sweepLevel.oninput=()=>els.sweepLevelValue.textContent=`${els.sweepLevel.value.replace('-','−')} dBFS`;els.pulseLevel.oninput=()=>els.pulseLevelValue.textContent=`${els.pulseLevel.value.replace('-','−')} dBFS`;
+      els.runSaturation.onclick=runSaturation;els.runImpulse.onclick=runImpulse;els.runPolarity.onclick=runPolarity;els.abortTest.onclick=abortTests;
+      document.querySelectorAll('.tab').forEach(btn=>btn.onclick=()=>{document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b===btn));document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id===`tab-${btn.dataset.tab}`));setTimeout(()=>{if(btn.dataset.tab==='saturation')drawSaturation(state.satData);if(btn.dataset.tab==='impulse')drawImpulse(state.impulseData);if(btn.dataset.tab==='polarity')drawPolarity(state.polarityData)},20)});
+      navigator.mediaDevices?.addEventListener('devicechange',populateDevices);
+      [els.scope,els.spectrum,els.saturationChart,els.impulseChart,els.polarityChart].forEach(canvas=>{canvas.addEventListener('pointermove',showGraphTooltip);canvas.addEventListener('pointerleave',hideGraphTooltip);});
+      addEventListener('resize',()=>{if(state.satData)drawSaturation(state.satData);if(state.impulseData)drawImpulse(state.impulseData);if(state.polarityData)drawPolarity(state.polarityData);if(!state.running)drawIdleSpectrum()});
+    }
+
+    bind(); drawSaturation([]); drawImpulse(null); drawPolarity(null); drawIdleSpectrum();
+  })();
+  </script>
+</body>
+</html>

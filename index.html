@@ -32,7 +32,12 @@
       --danger-ink: #ffd9dc;
       --danger-border: #673139;
       --danger-bg: #241215;
-      --logo-ink: #211100;
+      --logo-glass-top: rgba(255,255,255,.14);
+      --logo-glass-bottom: rgba(255,122,61,.045);
+      --logo-border: rgba(255,184,112,.34);
+      --logo-ink: #ffe0c2;
+      --logo-bloom: rgba(255,122,61,.72);
+      --logo-shadow: rgba(255,122,61,.24);
       --status-bg: rgba(17,23,21,.8);
       --dot: #66736d;
       --panel-top: rgba(20,28,25,.96);
@@ -84,7 +89,12 @@
       --danger-ink: #8f2030;
       --danger-border: #d9aab1;
       --danger-bg: #fff1f3;
-      --logo-ink: #ffffff;
+      --logo-glass-top: rgba(255,255,255,.72);
+      --logo-glass-bottom: rgba(11,91,150,.07);
+      --logo-border: rgba(33,79,123,.28);
+      --logo-ink: #173f68;
+      --logo-bloom: rgba(11,91,150,.42);
+      --logo-shadow: rgba(33,79,123,.18);
       --status-bg: rgba(255,255,255,.82);
       --dot: #829088;
       --panel-top: rgba(255,255,255,.98);
@@ -146,10 +156,28 @@
     header { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 18px; }
     .brand { display: flex; gap: 14px; align-items: center; }
     .logo {
+      position: relative; isolation: isolate; overflow: hidden;
       width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center;
-      background: linear-gradient(135deg, var(--primary-fill), var(--cyan)); color: var(--logo-ink); font-weight: 1000;
-      box-shadow: 0 10px 30px var(--accent-shadow); letter-spacing: -.08em;
+      border: 1px solid var(--logo-border);
+      background: linear-gradient(145deg, var(--logo-glass-top), var(--logo-glass-bottom));
+      color: var(--logo-ink);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.22), inset 0 -1px 0 rgba(255,122,61,.08), 0 12px 32px var(--logo-shadow);
+      backdrop-filter: blur(18px) saturate(145%);
+      -webkit-backdrop-filter: blur(18px) saturate(145%);
     }
+    .logo::before {
+      content: ""; position: absolute; z-index: 0; width: 72%; height: 72%; top: -28%; left: -18%;
+      border-radius: 50%; background: var(--logo-bloom); filter: blur(12px); opacity: .78;
+    }
+    .logo::after {
+      content: ""; position: absolute; z-index: 1; inset: 1px; border-radius: inherit; pointer-events: none;
+      background: linear-gradient(132deg, rgba(255,255,255,.2), transparent 36%, rgba(255,255,255,.025) 64%, rgba(255,255,255,.1));
+    }
+    .logo svg { position: relative; z-index: 2; width: 80%; height: 80%; overflow: visible; filter: drop-shadow(0 2px 7px var(--logo-shadow)); }
+    .logo .pickup-cover { fill: rgba(255,255,255,.035); stroke: currentColor; stroke-width: 2.5; }
+    .logo .pickup-detail { fill: none; stroke: currentColor; stroke-width: 1.35; opacity: .48; }
+    .logo .pickup-pole { fill: currentColor; stroke: rgba(255,255,255,.28); stroke-width: .65; }
+    .logo .pickup-screw { fill: none; stroke: currentColor; stroke-width: 1.35; opacity: .72; }
     h1 { font-size: clamp(21px, 2.2vw, 31px); line-height: 1.05; margin: 0; letter-spacing: -.035em; }
     .subtitle { color: var(--muted); margin-top: 5px; }
     .header-tools { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
@@ -238,7 +266,7 @@
     .modal.show { display: grid; }
     .modal-card { max-width: 550px; width: 100%; background: radial-gradient(circle at 88% 2%, rgba(255,122,61,.17), transparent 39%), var(--panel); border: 1px solid rgba(255,142,70,.38); border-radius: 20px; padding: 27px; box-shadow: 0 24px 80px rgba(255,122,61,.18), var(--shadow); }
     .splash-brand { display: flex; align-items: center; gap: 15px; }
-    .splash-brand .logo { width: 62px; height: 62px; border-radius: 19px; flex: 0 0 auto; font-size: 19px; box-shadow: 0 12px 38px rgba(255,122,61,.36); }
+    .splash-brand .logo { width: 62px; height: 62px; border-radius: 19px; flex: 0 0 auto; font-size: 19px; box-shadow: inset 0 1px 0 rgba(255,255,255,.24), inset 0 -1px 0 rgba(255,122,61,.1), 0 16px 46px var(--logo-shadow); }
     .splash-brand h1 { font-size: clamp(31px, 7vw, 42px); line-height: 1; }
     .splash-description { max-width: 500px; margin: 19px 0 24px; color: var(--ink) !important; font-size: clamp(16px, 2.5vw, 18px); line-height: 1.55; }
     .splash-permission { padding-top: 19px; border-top: 1px solid var(--line); }
@@ -293,7 +321,14 @@
   <div class="modal show" id="permissionModal" role="dialog" aria-modal="true" aria-labelledby="splashTitle permissionTitle">
     <div class="modal-card">
       <div class="splash-brand">
-        <div class="logo" aria-hidden="true">PL</div>
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 64 64" focusable="false">
+            <path class="pickup-cover" d="M14 19h36c4.4 0 8 3.6 8 8v10c0 4.4-3.6 8-8 8H14c-4.4 0-8-3.6-8-8V27c0-4.4 3.6-8 8-8Z"/>
+            <path class="pickup-detail" d="M14 23h36c2.2 0 4 1.8 4 4v10c0 2.2-1.8 4-4 4H14c-2.2 0-4-1.8-4-4V27c0-2.2 1.8-4 4-4Z"/>
+            <path class="pickup-screw" d="M6 28H3v8h3M58 28h3v8h-3M3 32h3M58 32h3"/>
+            <circle class="pickup-pole" cx="17" cy="32" r="2.25"/><circle class="pickup-pole" cx="23" cy="32" r="2.25"/><circle class="pickup-pole" cx="29" cy="32" r="2.25"/><circle class="pickup-pole" cx="35" cy="32" r="2.25"/><circle class="pickup-pole" cx="41" cy="32" r="2.25"/><circle class="pickup-pole" cx="47" cy="32" r="2.25"/>
+          </svg>
+        </div>
         <div>
           <div class="kicker">Pickup measurement workbench</div>
           <h1 id="splashTitle">Nicks Pickup Lab</h1>
@@ -318,7 +353,14 @@
   <main class="shell">
     <header>
       <div class="brand">
-        <div class="logo">PL</div>
+        <div class="logo" role="img" aria-label="Single-coil pickup">
+          <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+            <path class="pickup-cover" d="M14 19h36c4.4 0 8 3.6 8 8v10c0 4.4-3.6 8-8 8H14c-4.4 0-8-3.6-8-8V27c0-4.4 3.6-8 8-8Z"/>
+            <path class="pickup-detail" d="M14 23h36c2.2 0 4 1.8 4 4v10c0 2.2-1.8 4-4 4H14c-2.2 0-4-1.8-4-4V27c0-2.2 1.8-4 4-4Z"/>
+            <path class="pickup-screw" d="M6 28H3v8h3M58 28h3v8h-3M3 32h3M58 32h3"/>
+            <circle class="pickup-pole" cx="17" cy="32" r="2.25"/><circle class="pickup-pole" cx="23" cy="32" r="2.25"/><circle class="pickup-pole" cx="29" cy="32" r="2.25"/><circle class="pickup-pole" cx="35" cy="32" r="2.25"/><circle class="pickup-pole" cx="41" cy="32" r="2.25"/><circle class="pickup-pole" cx="47" cy="32" r="2.25"/>
+          </svg>
+        </div>
         <div><h1>Nicks Pickup Lab</h1><div class="subtitle">Single-file pickup measurement workbench</div></div>
       </div>
       <div class="header-tools">

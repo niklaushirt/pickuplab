@@ -1,15 +1,46 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
   <title id="title">Nicks Pickup Lab</title>
+  <desc id="description">Stylized single-coil guitar pickup with six pole pieces</desc>
   <defs>
-    <linearGradient id="orange" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#f28c28"/>
-      <stop offset="1" stop-color="#ff7a3d"/>
+    <linearGradient id="glass" x1="48" y1="36" x2="464" y2="476" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff" stop-opacity=".18"/>
+      <stop offset=".46" stop-color="#ff9a57" stop-opacity=".10"/>
+      <stop offset="1" stop-color="#ff7a3d" stop-opacity=".035"/>
     </linearGradient>
+    <radialGradient id="bloom" cx="0" cy="0" r="1" gradientTransform="translate(120 92) rotate(44) scale(250)">
+      <stop stop-color="#ff7a3d" stop-opacity=".88"/>
+      <stop offset="1" stop-color="#f28c28" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sheen" x1="86" y1="48" x2="358" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff" stop-opacity=".24"/>
+      <stop offset=".34" stop-color="#fff" stop-opacity="0"/>
+      <stop offset=".72" stop-color="#fff" stop-opacity=".025"/>
+      <stop offset="1" stop-color="#fff" stop-opacity=".12"/>
+    </linearGradient>
+    <filter id="blur" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="28"/>
+    </filter>
+    <filter id="pickupShadow" x="-40%" y="-60%" width="180%" height="220%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#ff7a3d" flood-opacity=".24"/>
+    </filter>
   </defs>
-  <rect width="512" height="512" rx="112" fill="url(#orange)"/>
-  <rect x="10" y="10" width="492" height="492" rx="102" fill="none" stroke="#ffbd72" stroke-opacity=".32" stroke-width="12"/>
-  <rect x="84" y="134" width="214" height="192" rx="50" fill="#211100"/>
-  <rect x="84" y="230" width="70" height="148" fill="#211100"/>
-  <rect x="154" y="194" width="78" height="72" rx="18" fill="url(#orange)"/>
-  <path fill="#211100" d="M320 134h70v178h74v66H320V134Z"/>
+
+  <rect x="18" y="18" width="476" height="476" rx="118" fill="#0d1411" fill-opacity=".82"/>
+  <circle cx="112" cy="86" r="166" fill="url(#bloom)" filter="url(#blur)"/>
+  <rect x="18" y="18" width="476" height="476" rx="118" fill="url(#glass)" stroke="#ffb870" stroke-opacity=".38" stroke-width="8"/>
+  <rect x="29" y="29" width="454" height="454" rx="107" fill="none" stroke="url(#sheen)" stroke-width="5"/>
+
+  <g filter="url(#pickupShadow)">
+    <path d="M100 179h312c35.3 0 64 28.7 64 64v26c0 35.3-28.7 64-64 64H100c-35.3 0-64-28.7-64-64v-26c0-35.3 28.7-64 64-64Z" fill="#fff" fill-opacity=".035" stroke="#ffe0c2" stroke-width="18"/>
+    <path d="M104 204h304c22.1 0 40 17.9 40 40v24c0 22.1-17.9 40-40 40H104c-22.1 0-40-17.9-40-40v-24c0-22.1 17.9-40 40-40Z" fill="none" stroke="#ffe0c2" stroke-opacity=".42" stroke-width="8"/>
+    <path d="M38 226H17v60h21M474 226h21v60h-21M17 256h21M474 256h21" fill="none" stroke="#ffe0c2" stroke-opacity=".78" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <g fill="#ffe0c2" stroke="#fff" stroke-opacity=".34" stroke-width="5">
+      <circle cx="141" cy="256" r="17"/>
+      <circle cx="187" cy="256" r="17"/>
+      <circle cx="233" cy="256" r="17"/>
+      <circle cx="279" cy="256" r="17"/>
+      <circle cx="325" cy="256" r="17"/>
+      <circle cx="371" cy="256" r="17"/>
+    </g>
+  </g>
 </svg>

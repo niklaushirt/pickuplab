@@ -39,7 +39,7 @@ The application itself must be completely contained in **one HTML file**. Do not
 4. The **Not now** button only dismisses the modal.
 5. Clicking **Start analyzer** without a previously granted stream must reopen the modal without triggering permission itself.
 6. Dark theme is always the initial/default theme.
-7. Preserve the `PL` icon while using the title **Nicks Pickup Lab**.
+7. Use a stylized single-coil pickup icon with no letters or text while keeping the title **Nicks Pickup Lab**.
 8. Keep graph and oscilloscope containers fixed in size while measuring; they must never grow with data.
 9. Use responsive, accessible native buttons, sliders, selects, and checkboxes.
 10. Use canvas for all plots, scaled for device pixel ratio and capped at `2×` DPR.
@@ -56,6 +56,7 @@ Use a refined technical-instrument aesthetic:
 - Warm orange accents throughout dark mode
 - Light neutral surfaces with dark-blue accents in light mode
 - Rounded panels, fine borders, restrained shadows, monospaced values, and compact controls
+- Use a translucent, blurred glass treatment for both single-coil pickup icon tiles; do not use a solid two-color gradient block or text as the icon
 - Maximum shell width: `1580px`
 - Desktop shell padding: `22px`; mobile padding: `12px`
 - Panel radius: approximately `16px`
@@ -164,7 +165,10 @@ Show on page load:
 
 - A centered card with a maximum width of approximately `550px`, `27px` padding, a `20px` radius, and a subtle orange-tinted border
 - An orange radial glow behind the modal card plus a softer orange glow inside the card near its upper-right corner
-- A branded opening row containing the existing rounded gradient `PL` icon at approximately `62 × 62px`
+- A branded opening row containing the shared translucent glass single-coil pickup icon at approximately `62 × 62px`
+- Build the tile with a semi-transparent diagonal glass fill, fine tinted border, `backdrop-filter: blur(18px) saturate(145%)`, inset highlight, blurred corner bloom, and subtle sheen overlay
+- Draw the pickup as an inline SVG—never text—with a rounded contoured cover, inset cover line, mounting tabs/screws, and six evenly spaced circular pole pieces
+- Keep its tint theme-aware: warm orange glass/bloom with pale warm pickup linework in dark mode, and cool dark-blue glass/bloom with dark-blue linework in light mode
 - Brand kicker: `Pickup measurement workbench`
 - Large title: `Nicks Pickup Lab`, responsive from approximately `31px` to `42px`
 - Prominent description, responsive from approximately `16px` to `18px`:
@@ -184,7 +188,7 @@ The visual refresh must not alter permission behavior or element IDs. The access
 
 ### Header
 
-- Square rounded gradient icon containing `PL`
+- Rounded translucent glass single-coil pickup icon with no text, using the same SVG, blur, bloom, sheen, and theme-aware tint as the splash mark at approximately `46 × 46px`
 - Heading: `Nicks Pickup Lab`
 - Subtitle: `Single-file pickup measurement workbench`
 - Theme button
@@ -838,7 +842,9 @@ Before handing off:
 - Page load does not call `getUserMedia()`
 - Not now dismisses without requesting permission
 - Allow audio input is the only initial permission trigger
-- Splash shows the PL icon, large `Nicks Pickup Lab` title, measurement description, and orange ambient/button glows
+- Splash shows the stylized single-coil pickup icon, large `Nicks Pickup Lab` title, measurement description, and orange ambient/button glows
+- Both pickup icons use identical inline SVG geometry with six pole pieces and contain no text
+- Both icon tiles use transparent glass layers and blur rather than an opaque gradient tile
 - The refreshed splash retains the original permission copy, button IDs, and click handlers
 
 ### UI/default checks

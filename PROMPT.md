@@ -109,7 +109,7 @@ Use theme variables. The important current palette is:
 --canvas-grid: #d9e1dd;
 ```
 
-Use theme variables for every canvas fill, grid, trace, marker, tooltip, panel, export, glow, and label. Dark mode background glows must be orange; light mode background glows must be blue.
+Use theme variables for every canvas fill, grid, trace, marker, tooltip, panel, export, glow, and label. Dark mode background glows must be orange; light mode background glows must be blue. The branded permission splash is the deliberate exception: its ambient card and button glows remain warm orange in both themes.
 
 ### Responsive layout
 
@@ -162,12 +162,25 @@ The combined scope/spectrum panel must retain a fixed internal layout:
 
 Show on page load:
 
-- Kicker: `Audio permission`
-- Heading: `Connect your audio interface`
+- A centered card with a maximum width of approximately `550px`, `27px` padding, a `20px` radius, and a subtle orange-tinted border
+- An orange radial glow behind the modal card plus a softer orange glow inside the card near its upper-right corner
+- A branded opening row containing the existing rounded gradient `PL` icon at approximately `62 × 62px`
+- Brand kicker: `Pickup measurement workbench`
+- Large title: `Nicks Pickup Lab`, responsive from approximately `31px` to `42px`
+- Prominent description, responsive from approximately `16px` to `18px`:
+
+  `Analyze pickup response, resonance, polarity, and magnetic saturation directly through your audio interface—all locally in the browser.`
+
+- A divider below the description, followed by the original permission content
+- Permission kicker: `Audio permission`
+- Permission heading: `Connect your audio interface`
 - Explain that the app needs microphone access for the Hi-Z/instrument input and does not upload audio
 - Safety notice recommending an interface Hi-Z input and low monitoring/gain
 - Buttons: **Allow audio input**, **Not now**
+- Give both buttons orange borders and soft orange shadows, with a stronger glow on hover; keep the secondary button's background lightly orange-tinted
 - Text: `The browser permission prompt appears only after you click “Allow audio input”.`
+
+The visual refresh must not alter permission behavior or element IDs. The accessible dialog name should include both the application title and permission heading.
 
 ### Header
 
@@ -825,6 +838,8 @@ Before handing off:
 - Page load does not call `getUserMedia()`
 - Not now dismisses without requesting permission
 - Allow audio input is the only initial permission trigger
+- Splash shows the PL icon, large `Nicks Pickup Lab` title, measurement description, and orange ambient/button glows
+- The refreshed splash retains the original permission copy, button IDs, and click handlers
 
 ### UI/default checks
 

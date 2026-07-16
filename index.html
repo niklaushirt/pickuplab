@@ -229,9 +229,17 @@
     .summary-row b { text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
     .summary-empty, .summary-placeholder { color: var(--muted); padding: 13px; }
     footer { display: flex; justify-content: space-between; gap: 16px; color: var(--unit); font-size: 11px; margin: 18px 3px 3px; }
-    .modal { position: fixed; inset: 0; z-index: 10; display: none; place-items: center; padding: 20px; background: var(--modal-overlay); backdrop-filter: blur(12px); }
+    .modal { position: fixed; inset: 0; z-index: 10; display: none; place-items: center; padding: 20px; background: radial-gradient(circle at 50% 42%, rgba(255,122,61,.23) 0, rgba(242,140,40,.09) 28%, transparent 57%), var(--modal-overlay); backdrop-filter: blur(12px); }
     .modal.show { display: grid; }
-    .modal-card { max-width: 510px; width: 100%; background: var(--panel); border: 1px solid var(--modal-border); border-radius: 20px; padding: 23px; box-shadow: var(--shadow); }
+    .modal-card { max-width: 550px; width: 100%; background: radial-gradient(circle at 88% 2%, rgba(255,122,61,.17), transparent 39%), var(--panel); border: 1px solid rgba(255,142,70,.38); border-radius: 20px; padding: 27px; box-shadow: 0 24px 80px rgba(255,122,61,.18), var(--shadow); }
+    .splash-brand { display: flex; align-items: center; gap: 15px; }
+    .splash-brand .logo { width: 62px; height: 62px; border-radius: 19px; flex: 0 0 auto; font-size: 19px; box-shadow: 0 12px 38px rgba(255,122,61,.36); }
+    .splash-brand h1 { font-size: clamp(31px, 7vw, 42px); line-height: 1; }
+    .splash-description { max-width: 500px; margin: 19px 0 24px; color: var(--ink) !important; font-size: clamp(16px, 2.5vw, 18px); line-height: 1.55; }
+    .splash-permission { padding-top: 19px; border-top: 1px solid var(--line); }
+    #permissionModal .actions button { border-color: rgba(255,142,70,.62); box-shadow: 0 8px 25px rgba(255,122,61,.22), 0 0 0 1px rgba(255,178,74,.08); }
+    #permissionModal .actions button:hover { border-color: #ff9a57; box-shadow: 0 11px 32px rgba(255,122,61,.34), 0 0 18px rgba(255,178,74,.13); }
+    #permissionModal .actions .ghost { background: rgba(255,122,61,.07); }
     .modal h2 { margin: 0 0 8px; }
     .modal p { color: var(--muted); }
     .tiny { font-size: 11px; color: var(--muted); }
@@ -277,17 +285,27 @@
   </style>
 </head>
 <body>
-  <div class="modal show" id="permissionModal" role="dialog" aria-modal="true" aria-labelledby="permissionTitle">
+  <div class="modal show" id="permissionModal" role="dialog" aria-modal="true" aria-labelledby="splashTitle permissionTitle">
     <div class="modal-card">
-      <div class="kicker">Audio permission</div>
-      <h2 id="permissionTitle">Connect your audio interface</h2>
-      <p>Nicks Pickup Lab needs microphone access to read the high-impedance/instrument input. Audio stays in this page and is never uploaded.</p>
-      <div class="notice">Use an interface's <b>Hi-Z / Instrument</b> input. Keep monitoring off and gain low until levels are visible.</div>
-      <div class="actions">
-        <button class="primary" id="grantButton">Allow audio input</button>
-        <button class="ghost" id="dismissModal">Not now</button>
+      <div class="splash-brand">
+        <div class="logo" aria-hidden="true">PL</div>
+        <div>
+          <div class="kicker">Pickup measurement workbench</div>
+          <h1 id="splashTitle">Nicks Pickup Lab</h1>
+        </div>
       </div>
-      <p class="tiny" id="permissionHint">The browser permission prompt appears only after you click “Allow audio input”.</p>
+      <p class="splash-description">Analyze pickup response, resonance, polarity, and magnetic saturation directly through your audio interface—all locally in the browser.</p>
+      <div class="splash-permission">
+        <div class="kicker">Audio permission</div>
+        <h2 id="permissionTitle">Connect your audio interface</h2>
+        <p>Nicks Pickup Lab needs microphone access to read the high-impedance/instrument input. Audio stays in this page and is never uploaded.</p>
+        <div class="notice">Use an interface's <b>Hi-Z / Instrument</b> input. Keep monitoring off and gain low until levels are visible.</div>
+        <div class="actions">
+          <button class="primary" id="grantButton">Allow audio input</button>
+          <button class="ghost" id="dismissModal">Not now</button>
+        </div>
+        <p class="tiny" id="permissionHint">The browser permission prompt appears only after you click “Allow audio input”.</p>
+      </div>
     </div>
   </div>
   <div class="graph-tooltip" id="graphTooltip" role="status" aria-live="polite"></div>

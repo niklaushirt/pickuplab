@@ -23,6 +23,12 @@ Everything runs locally in [`pickup-lab.html`](./pickup-lab.html). No samples or
 
 Audio permission is requested only after the **Allow audio input** button is clicked. Output-device enumeration and routing depend on browser and operating-system support.
 
+### Opening splash
+
+The application opens with a branded **Nicks Pickup Lab** splash featuring the `PL` icon and a short overview of its response, resonance, polarity, and magnetic-saturation measurements. A warm orange ambient glow highlights the card and both permission controls.
+
+The visual presentation does not change the privacy flow: loading the page never opens the browser's audio prompt. **Allow audio input** is the only button that requests microphone access; **Not now** simply dismisses the splash. Audio remains local to the page.
+
 ## What it measures
 
 ### Live Measurements

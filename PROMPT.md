@@ -1,94 +1,66 @@
-# Reconstruction Prompt — Nicks Pickup Lab
+# Reconstruction Prompt: Nicks Pickup Lab v1.1
 
-Use this document as the complete implementation brief for rebuilding the current application from scratch. Do not rely on prior conversation history.
+Rebuild the current application exactly from this specification. Do not depend on an existing implementation.
 
-## Objective
+## Product objective
 
-Build **Nicks Pickup Lab**, a polished, responsive, single-file browser application for measuring passive or active guitar/bass pickups through an audio interface and a repeatable magnetic driver coil.
+Create **Nicks Pickup Lab**, a polished, responsive, single-file browser application for comparative passive or active guitar/bass pickup measurement through an audio interface and a repeatable magnetic driver or tap fixture.
 
-The application must provide:
+The current app provides:
 
-- Live time-domain and frequency-domain analysis
-- Input and output meters
-- Input/output device and channel routing
-- A controllable excitation generator
-- Magnetic saturation mapping
-- A 500 Hz–8 kHz Bode magnitude measurement
-- Relative pickup polarity detection
-- A measurement summary with PNG and CSV export
-- Dark and light themes
-- A detailed README explaining use and magnetic-driver construction
+- Input-device and input-channel selection plus live input metering
+- Fixed operating-system-default output with no output selector
+- One manually toggled 440 Hz sine test tone
+- Multi-tap impulse response that captures 3, 5, or 7 events, scores them, and retains the cleanest
+- Captured impulse waveform, logarithmic decay envelope, and resonant-ring FFT
+- Ring frequency, T60 estimate, damping ratio ζ, Q, first-swing polarity, and rise time
+- Band-selectable white-noise response for 2.5, 5, or 10 seconds
+- 24 spectrum/time-domain metrics with detailed accessible tooltips
+- Stepped magnetic saturation, 500 Hz–8 kHz Bode magnitude, and five-pulse relative polarity
+- Version-2 JSON project save/load, CSV export, and current-theme PNG summary
+- Four session-only themes: Light, Dark orange, Dark green, and Dark blue; Dark blue is the default
+
+There is **no live oscilloscope/spectrum tab** and **no free-form excitation generator**. Do not reintroduce either.
 
 ## Deliverables
 
 Create these files in one folder:
 
 ```text
-pickup-lab.html   Entire application, including CSS and JavaScript
-README.md         User guide, safety notes, workflows, and magnetic-driver instructions
-PROMPT.md         This reconstruction specification
+index.html
+README.md
+PROMPT.md
 ```
 
-The application itself must be completely contained in **one HTML file**. Do not use a build system, framework, package manager, external JavaScript library, remote font, image, stylesheet, module, server API, upload endpoint, or telemetry service.
+All runtime HTML, CSS, JavaScript, SVG, favicons, and home-screen icon data must be in `index.html`. Do not use a framework, dependency, module, package manager, build process, external script, stylesheet, font, image, network request, upload, server API, analytics service, telemetry, cookie, localStorage, sessionStorage, or IndexedDB.
 
-## Non-negotiable behavior
+## Permission and privacy contract
 
-1. All audio processing is local in the browser.
-2. Never request microphone/audio-input permission automatically.
-3. Show a splash permission modal on load, but call `getUserMedia()` only when the user clicks **Allow audio input**.
-4. The **Not now** button only dismisses the modal.
-5. Clicking **Start analyzer** without a previously granted stream must reopen the modal without triggering permission itself.
-6. Dark theme is always the initial/default theme.
-7. Use a stylized single-coil pickup icon with no letters or text while keeping the title **Nicks Pickup Lab**.
-8. Keep graph and oscilloscope containers fixed in size while measuring; they must never grow with data.
-9. Use responsive, accessible native buttons, sliders, selects, and checkboxes.
-10. Use canvas for all plots, scaled for device pixel ratio and capped at `2×` DPR.
+- All audio processing is local.
+- Never request input permission automatically.
+- Show a branded splash immediately on load with theme-colored blurry ambient light and accents, a fancy two-line title, explanatory copy, and a translucent glass pickup icon.
+- Splash actions are **Allow audio access** and **Explore first**.
+- Only the splash's **Allow audio access** button may call `getUserMedia()`; there is no persistent Connect input button.
+- Explain that no recordings are automatically saved and system output remains silent until explicitly armed.
+- Input is never routed to audible output.
 
----
+## Visual system
 
-## Visual design
+Use a refined technical-instrument aesthetic. Maximum shell width is `1580px`; desktop padding is `22px`, mobile padding `12px`; panel radius about `16px`. Use an Inter-style system sans-serif stack and a system monospace stack for measurements.
 
-### General style
-
-Use a refined technical-instrument aesthetic:
-
-- Near-black green/neutral surfaces in dark mode
-- Warm orange accents throughout dark mode
-- Light neutral surfaces with dark-blue accents in light mode
-- Rounded panels, fine borders, restrained shadows, monospaced values, and compact controls
-- Use a translucent, blurred glass treatment for both single-coil pickup icon tiles; do not use a solid two-color gradient block or text as the icon
-- Maximum shell width: `1580px`
-- Desktop shell padding: `22px`; mobile padding: `12px`
-- Panel radius: approximately `16px`
-- Body font: Inter-style system sans-serif stack
-- Numeric values and graph labels: system monospace stack
-
-### Theme toggle
-
-Place a compact theme button in the header beside the status pill.
-
-- Dark-state label: `☀ Light theme`
-- Light-state label: `☾ Dark theme`
-- Update `aria-pressed`
-- Do not persist the selection; reloading starts in dark mode
-- Redraw all visible canvases after a theme change
-- PNG summary export uses the currently selected theme
-
-### Core colors
-
-Use theme variables. The important current palette is:
+Required variables:
 
 ```css
-/* Dark, default */
+/* Dark orange */
 --bg: #0a0d0c;
 --panel: #111715;
 --panel-2: #151d1a;
 --line: #28342f;
 --ink: #e7eee9;
 --muted: #93a29a;
---lime: #ffb24a;          /* secondary orange accent */
---primary-fill: #f28c28;  /* primary orange */
---cyan: #ff7a3d;          /* graph-trace orange */
+--lime: #ffb24a;
+--primary-fill: #f28c28;
+--cyan: #ff7a3d;
 --amber: #ffd166;
 --red: #ff6470;
 --canvas-bg: #090d0b;
@@ -101,790 +73,384 @@ Use theme variables. The important current palette is:
 --line: #c9d4ce;
 --ink: #17231e;
 --muted: #5b6c64;
---lime: #173f68;          /* secondary dark blue */
---primary-fill: #214f7b;  /* primary dark blue */
---cyan: #0b5b96;          /* graph-trace blue */
+--lime: #173f68;
+--primary-fill: #214f7b;
+--cyan: #0b5b96;
 --amber: #a75b00;
 --red: #cb3449;
 --canvas-bg: #f8faf9;
 --canvas-grid: #d9e1dd;
+
+/* Dark green */
+--bg: #080c09;
+--panel: #101712;
+--panel-2: #151e17;
+--line: #2b3a2f;
+--ink: #edf4ee;
+--muted: #93a497;
+--lime: #d5fe42;
+--primary-fill: #9ecb2e;
+--cyan: #b7ef38;
+--canvas-bg: #070b08;
+--canvas-grid: #202e24;
+
+/* Dark blue */
+--bg: #070b12;
+--panel: #0d1420;
+--panel-2: #111b2b;
+--line: #263751;
+--ink: #e9f1ff;
+--muted: #90a3bd;
+--lime: #4d9dff;
+--primary-fill: #147cff;
+--cyan: #00b8ff;
+--canvas-bg: #060a10;
+--canvas-grid: #1d2b40;
 ```
 
-Use theme variables for every canvas fill, grid, trace, marker, tooltip, panel, export, glow, and label. Dark mode background glows must be orange; light mode background glows must be blue. The branded permission splash is the deliberate exception: its ambient card and button glows remain warm orange in both themes.
+Use variables for every surface, canvas, grid, trace, point, export, label, page glow, permission splash, toaster, and large explanation tooltip. Dark orange glows and accents are orange, Dark green uses acid green, and Dark blue and Light use blue. Theme changes must recolor the visible permission splash immediately.
 
-### Responsive layout
+Create two translucent, blurred, inline-SVG single-coil pickup tiles—one in the header and one in the splash. Embed a graphical, no-text single-coil SVG favicon, a 32×32 PNG favicon fallback, and an opaque 180×180 PNG Apple touch icon as data URIs. Include `mobile-web-app-capable`, `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`, and `apple-mobile-web-app-title` metadata. Keep every asset inside `index.html`; do not create external icon files.
 
-Desktop top row:
+## Header, hero, and layout
 
-```css
-grid-template-columns:
-  minmax(300px, 1.2fr)
-  minmax(390px, 2.4fr)
-  minmax(64px, .18fr);
-```
+Header contains product identity, live status pill, and an accessible theme cycle button.
 
-The columns are:
+The four theme labels are:
 
-1. Input
-2. Oscilloscope + spectrum
-3. Meters
+- `Light`
+- `Dark orange`
+- `Dark green`
+- `Dark blue`
 
-The meter panel is intentionally about one-third of its former width. On desktop, stack the Input and Output meters vertically in the narrow column. Put each `Input` or `Output` label above its meter bar and its dBFS value below.
+Use values `light`, `dark-orange`, `dark-green`, and `dark-blue`. The button displays the active label and advances through the circular order Light → Dark orange → Dark green → Dark blue → Light. Never persist selection, always start in Dark blue, update the button's accessible label and browser `theme-color`, redraw every visible canvas on change, and use the current palette and theme name for PNG/CSV export.
 
-At `1120px` and below:
-
-- Use two top columns for Input and Oscilloscope + spectrum
-- Move the Meters panel to a full-width row
-- Put Input and Output meters side by side
-- Render them as horizontal meters
-- Display live measurements in four columns
-
-At `760px` and below:
-
-- Use one column for the main and lower layouts
-- Display live measurements in two columns
-- Stack summary sections
-- Use two columns for measurement result strips
-
-### Fixed graph sizing
-
-The combined scope/spectrum panel must retain a fixed internal layout:
-
-- Minimum combined plot height: about `332px`
-- Oscilloscope height: exactly `208px`
-- Spectrum takes the remaining height, with a minimum near `124px`
-- Use CSS containment so canvas backing-store changes cannot grow the layout
-
----
-
-## Page hierarchy and exact labels
-
-### Permission modal
-
-Show on page load:
-
-- A centered card with a maximum width of approximately `550px`, `27px` padding, a `20px` radius, and a subtle orange-tinted border
-- An orange radial glow behind the modal card plus a softer orange glow inside the card near its upper-right corner
-- A branded opening row containing the shared translucent glass single-coil pickup icon at approximately `62 × 62px`
-- Build the tile with a semi-transparent diagonal glass fill, fine tinted border, `backdrop-filter: blur(18px) saturate(145%)`, inset highlight, blurred corner bloom, and subtle sheen overlay
-- Draw the pickup as an inline SVG—never text—with a rounded contoured cover, inset cover line, mounting tabs/screws, and six evenly spaced circular pole pieces
-- Keep its tint theme-aware: warm orange glass/bloom with pale warm pickup linework in dark mode, and cool dark-blue glass/bloom with dark-blue linework in light mode
-- Brand kicker: `Pickup measurement workbench`
-- Large title: `Nicks Pickup Lab`, responsive from approximately `31px` to `42px`
-- Prominent description, responsive from approximately `16px` to `18px`:
-
-  `Analyze pickup response, resonance, polarity, and magnetic saturation directly through your audio interface—all locally in the browser.`
-
-- A divider below the description, followed by the original permission content
-- Permission kicker: `Audio permission`
-- Permission heading: `Connect your audio interface`
-- Explain that the app needs microphone access for the Hi-Z/instrument input and does not upload audio
-- Safety notice recommending an interface Hi-Z input and low monitoring/gain
-- Buttons: **Allow audio input**, **Not now**
-- Give both buttons orange borders and soft orange shadows, with a stronger glow on hover; keep the secondary button's background lightly orange-tinted
-- Text: `The browser permission prompt appears only after you click “Allow audio input”.`
-
-The visual refresh must not alter permission behavior or element IDs. The accessible dialog name should include both the application title and permission heading.
-
-### Header
-
-- Rounded translucent glass single-coil pickup icon with no text, using the same SVG, blur, bloom, sheen, and theme-aware tint as the splash mark at approximately `46 × 46px`
-- Heading: `Nicks Pickup Lab`
-- Subtitle: `Single-file pickup measurement workbench`
-- Theme button
-- Status pill with dot and status text
-
-### Top row: Input
-
-Panel title: **Input**
-
-Controls, in this order:
-
-| Control | Values/default |
-| --- | --- |
-| Input device | Permission required until access is granted; then enumerate all audio inputs |
-| Channel | `Input 1`, `Input 2`, `1 + 2 mono`, `1 − 2`; default Input 1 |
-| FFT size | `4096`, `8192`, `16384`, `32768`; default `16384` |
-| Input trim | −24 to +24 dB, step 0.5, default 0.0 dB |
-| Analysis smoothing | 0–95%, step 1, default 65% |
-| Measurement averaging | 0–30 seconds, step 0.5, default 30.0 seconds; show `Realtime` at 0 |
-| Noise floor threshold | −90 to 0 dBFS, step 1, default −80 dBFS |
-| Monitor input to output | Off by default; label includes `(feedback risk)` |
-
-Buttons:
-
-- **Start analyzer** — primary accent
-- **Stop** — danger styling, initially disabled
-- **Freeze trace** — initially disabled; toggles to `Resume trace`
-
-Include the notice:
-
-`Microphone DSP is requested off. The OS or interface driver can still apply processing; use a raw audio interface input where possible.`
-
-### Top row: Oscilloscope + spectrum
-
-Panel title: **Oscilloscope + spectrum**
-
-- Header state: `live` or `frozen`
-- Legend: `input`, `held peak`
-- Top canvas: Input waveform, fixed 208 px height, Y labels +1.0, 0, −1.0
-- Bottom canvas: normalized log-frequency spectrum from 20 Hz to 20 kHz or Nyquist, whichever is lower
-- Spectrum Y display: normalized 0 to −72 dB relative to the current peak
-- Current trace and decaying held trace
-- Vertical marker at detected peak frequency
-- Annotation: `normalized · 0 dB = <absolute peak dBFS> dBFS peak`
-
-When no spectrum bin is above the selected threshold, show a prominent centered rounded callout inside the spectrum graph:
+Hero copy:
 
 ```text
-No Signal
-Select input and launch generator or measurement
+See what the magnet
+is really doing.
 ```
 
-The box must:
+The supporting sentence ends with: `with your interface and exciter coil.`
 
-- Be visible before audio starts, after stopping, and whenever no signal exceeds the threshold
-- Use the theme panel background
-- Use the primary accent border, glow, and title
-- Scale the second line down if required so it fits on narrow screens
+Accent the second heading line. Use a two-column workspace:
 
-### Top row: Meters
+- Left stack: **01 Audio routing**, **02 Project**
+- Wide right panel: **03 Analyze pickup health**, with a glowing theme-accented **Measure All** button immediately left of **Clear measurements**
 
-Panel title: **Meters**, kicker `dBFS`
+Stack below roughly 1100 px and use single-column mobile layout below roughly 760 px.
 
-- Very narrow desktop panel: computed desktop width around `64px` at the tested viewport
-- Stack Input and Output meters vertically on desktop
-- Label each meter **Input** or **Output** above the bar
-- Show dBFS readout below
-- Scale −60 to 0 dBFS
-- Solid `--primary-fill` only; no fill gradient
-- Separate held-peak line
-- Input meter follows the threshold-filtered input
-- Output meter shows the output bus
-- On narrower layouts, change the bars to horizontal using width and left-position updates
+## Audio routing
 
-### Live Measurements
+Provide:
 
-Put all metric cards inside one outer panel titled **Live Measurements**, with kicker `real-time analyzer`.
+- Live input dBFS meter
+- Input-device select
+- Input-channel select derived from actual channel count
+- Digital input trim from −18 to +18 dB
+- Test-output meter labelled `TEST OUTPUT / SYSTEM DEFAULT`
+- Test-output level slider from −48 to −6 dBFS, default −30 dBFS
+- Driver/amplifier safety checkbox
+- **Play 440 Hz test tone** and **Stop output**
+- Note explaining fixed system-default output and no input monitoring
 
-There are exactly 24 cards in this order:
+Do not render output-device or output-channel controls. Connect the output gain directly to `AudioContext.destination`; do not call `setSinkId()`.
 
-| # | Label | Unit |
-| --- | --- | --- |
-| 1 | Peak frequency | Hz |
-| 2 | Fundamental | Hz |
-| 3 | RMS level | dBFS |
-| 4 | Sample peak | dBFS |
-| 5 | Crest factor | dB |
-| 6 | DC offset | % FS |
-| 7 | Noise floor | dBFS |
-| 8 | SNR estimate | dB |
-| 9 | Spectral centroid | Hz |
-| 10 | 85% roll-off | Hz |
-| 11 | Spectral bandwidth | Hz |
-| 12 | Spectral flatness | 0…1 |
-| 13 | Spectral slope | dB/oct |
-| 14 | THD estimate | % |
-| 15 | Even / odd | dB |
-| 16 | Peak asymmetry | dB |
-| 17 | Zero crossings | / sec |
-| 18 | Clipped samples | % |
-| 19 | Transient index | dB |
-| 20 | Nearest note | cents |
-| 21 | Low band | % |
-| 22 | Mid band | % |
-| 23 | High band | % |
-| 24 | Tone confidence | % |
+Use `getUserMedia()` with audio only and request two channels where possible. Disable echo cancellation, noise suppression, and automatic gain control. Build:
 
-Use tooltips on cards to explain each measurement. Render unavailable/rejected values as `—` and do not let old averaged values leak through after the current value is rejected by the noise threshold.
+```text
+MediaStreamAudioSourceNode
+  → ChannelSplitterNode
+  → selected channel
+  → digital trim GainNode
+  → AnalyserNode for input meter
+  → ScriptProcessorNode or equivalent local sample ring
+  → zero-gain destination branch only to keep capture callbacks active
+```
 
-### Lower left: Output Generator
+Retain approximately 15 seconds of selected-channel PCM. Rebuild the graph after input-channel change. Never connect input audibly to output.
 
-Panel title: **Output Generator**, kicker `use with driver coil`
+## 440 Hz test tone
 
-| Control | Values/default |
-| --- | --- |
-| Signal | Off, Sine, Square, White noise, Pink noise; default White noise |
-| Output device | System default plus every browser-exposed audio output |
-| Output channel | Dynamically generated from the destination channel count; `Outputs 1 + 2` plus individual channels |
-| Frequency | 20–12000 Hz, step 1, default 440 Hz |
-| Output level | −60 to 0 dBFS, step 0.5, default −3.0 dBFS |
+The only manual output generator is a fixed 440 Hz sine. It requires input connection and safety confirmation. Use short output ramps, toggle the button label between play/stop, update output meter and status, and allow **Stop output** at all times. Disable it while automated measurements run.
 
-Buttons:
+## Analysis tabs
 
-- **Find devices** / `Refresh (N)`
-- **Start generator** — primary style, orange in dark mode like Start analyzer
-- **Mute** — danger style
+Use accessible `role="tab"` controls in this order:
 
-Include this safety notice:
+1. Bode response
+2. Noise spectrum
+3. Saturation
+4. Polarity
+5. Impulse / tap
+6. Summary
 
-`Fixture: interface line/headphone out → current-limited driver coil → magnetic field → pickup → Hi-Z input. Do not connect an interface output directly to the pickup. The requested −3 dBFS default is hot: reduce the interface/headphone gain before starting.`
+The first tab is active. There is no Live scope tab.
 
-### Lower right: measurement tabs
+The first five tabs are complete measurement workspaces: each keeps its description, native setup controls, run button, progress indicator, and its own result graphs and measurement cards. Do not add an Open Summary shortcut box to these tabs. Give each top measurement-action row approximately 18 px of space above and 20 px below; apply this independently of the Summary export toolbar.
 
-Tabs:
+**Measure All** runs the five measurements sequentially in visible tab order: Bode response → Noise spectrum → Saturation → Polarity → Impulse / tap. Activate each source tab when its test starts, await its real completion before continuing, keep Stop available, suppress per-test completion toasts during the batch, and show one centered `All five measurements complete.` toaster after full success. The final impulse stage continues to request the configured physical taps. On completion, cancellation, or failure, return to the first Bode tab and restore every control. A failed stage stops the remaining sequence and identifies the error in a toaster.
 
-1. Magnetic Saturation Mapper
-2. Bode plot
-3. Polarity
-4. Test setup
+The Summary tab is a complete export dashboard. After the overview cards, create five semantic sections in the same order and with the same names as the source tabs. During startup, clone each source tab's graph and result DOM into its Summary section, rewrite cloned IDs with a `summary-` prefix, synchronize displayed values from the authoritative source elements, and render the cloned canvases from the same project data. The source results must remain in place. Project loading, clearing, theme redraws, and new measurements update both sets without recalculating measurements twice.
 
-Only one tab panel is visible at a time. Redraw its canvas after selection.
+At the top of Summary, place **Export PNG** and **Export CSV** on one non-wrapping horizontal line. Do not include the word “complete” in either label. Give the toolbar clear breathing room above and below, approximately 18–20 px of vertical padding.
 
-### Measurement summary
+## Canvas requirements
 
-Full-width panel below the lower section:
+All graphs use `<canvas>` with backing-store scale capped at `min(devicePixelRatio, 2)`. Use `ResizeObserver`. Every `.canvas-box` must set equal `height`, `min-height`, and `max-height`, plus `overflow:hidden`, so data can never enlarge the graph.
 
-- Title: **Measurement summary**
-- Initial state: `not created`
-- Buttons: **Create summary**, **Export PNG**, **Export CSV**
-- Export buttons disabled until at least one valid value exists
-- Placeholder: `Run measurements, then create a snapshot containing every available non-null result.`
+Every graph supports pointer hover/drag:
 
-### Footer
+- Map cursor position to plot coordinates.
+- Find the closest data value.
+- Draw a vertical marker.
+- Render a theme-aware tooltip inside the canvas.
+- Clear it on pointer leave.
 
-Left:
+Use logarithmic x mapping for FFT/spectrum plots and appropriate log-dB y scales.
 
-`Nicks Pickup Lab · local processing only · no uploads · no external libraries`
+## Impulse / tap test
 
-Right:
+UI includes:
 
-`Measurements are dBFS/referenced to the fixture unless calibrated externally.`
+- Description emphasizing repeated taps and cleanest-capture selection
+- Impulse-count select: 3, 5, or 7; default 5
+- Detector-state surface using live status text
+- Progress bar
+- **Capture tap series**
+- Captured waveform canvas
+- Log decay-envelope canvas with fitted line
+- Resonant-ring FFT canvas
+- Result fields for ring frequency, T60, ζ, Q, first-swing polarity, and rise time
 
----
+The impulse test is input-only and does not require the safety checkbox.
 
-## Audio permission and device routing
+For each tap:
 
-### Input permission
+1. Display a short `KEEP QUIET` period of about 550 ms.
+2. Measure roughly 400 ms of quiet RMS.
+3. Use a trigger threshold of `max(0.0025, quietRms × 8)`.
+4. Display `TAP NOW` and wait up to 15 seconds.
+5. After detection, capture enough ring to retain about 1.5 seconds aligned around the event.
+6. Measure peak, quiet noise, clipping, and strong secondary impacts.
+7. Score roughly as `20log10(peak/noise) − secondaryPenalty − clippingPenalty`.
 
-On **Allow audio input**, call:
+After all events, sort by score and retain/analyze the highest score. Save compact metadata for every capture, including original tap number, score, peak dB, noise dB, and clipped count. Save full derived data only for the winner.
+
+### Impulse derivation
+
+- Remove DC mean.
+- Locate absolute peak.
+- Find 10% and 90% threshold crossings before the first peak; rise time is their interval.
+- Find the strongest signed excursion in approximately the first 12 ms after onset; report POSITIVE or NEGATIVE.
+- Build 5 ms RMS envelope blocks from the peak.
+- Normalize envelope peak to 0 dB and clamp plot floor near −100 dB.
+- Fit a line primarily to envelope points from −5 to −40 dB; fall back to approximately −3 to −25 dB.
+- If no meaningful negative slope exists, show T60/Q/ζ as unresolved.
+- Otherwise `T60 = −60 / slope`.
+- FFT the early ring with an 8192-point Hann window.
+- Search approximately 60 Hz–10 kHz for the strongest ring component.
+- `Q = π × ringFrequency × T60 / 6.907755`.
+- `ζ = 1 / (2Q)`.
+- Downsample the plotted waveform by keeping the maximum-magnitude sample per bucket so narrow transients survive.
+
+Save:
 
 ```js
-navigator.mediaDevices.getUserMedia({
-  audio: {
-    echoCancellation: false,
-    noiseSuppression: false,
-    autoGainControl: false,
-    channelCount: { ideal: 2 },
-    sampleRate: { ideal: 48000 }
+{
+  sampleRate, captures, selectedIndex, score, peakDb,
+  ringFrequency, t60, q, damping, polarity, riseMs,
+  wave: [{x, y}],
+  envelope: [{x, y}],
+  decayFit: [{x, y}],
+  spectrum: [{x, y}]
+}
+```
+
+## White-noise spectrum
+
+UI includes:
+
+- Presets: Pickup focus 500–8,000 Hz; Guitar/bass 40–8,000 Hz; Full audio 20–20,000 Hz; Custom
+- Editable numeric low/high Hz controls
+- Durations: 2.5, 5, or 10 seconds; default 5
+- **Measure white-noise spectrum**
+- Progress bar
+- One fixed-height logarithmic selected-spectrum canvas
+- 24 metric cards
+
+Changing numeric endpoints switches the preset to Custom. Clamp high frequency below Nyquist. Generate local white noise and pass it through high-pass and low-pass biquads with Q about 0.707, then through test-level gain to the system-default output. Capture selected-channel input during the run. Stop safely on cancellation.
+
+Average several 8192-point Hann FFT power frames (roughly 4–16 depending on duration). Store a plot downsampled to at most about 1200 points, normalized so the strongest selected-band point is 0 dB.
+
+### Required metrics
+
+Compute and display all of these:
+
+1. Peak frequency — strongest averaged selected-band bin.
+2. Fundamental — lowest candidate maximizing weighted power at itself and harmonics.
+3. RMS level — DC-removed time-domain RMS in dBFS.
+4. Sample peak — absolute time-domain maximum in dBFS.
+5. Crest factor — `20log10(peak/RMS)`.
+6. DC offset — raw sample mean as percent full scale.
+7. Noise floor — median selected-band spectral-bin dB.
+8. SNR estimate — peak spectral dB minus median spectral floor.
+9. Spectral centroid — power-weighted mean frequency.
+10. 85% roll-off — frequency at cumulative 85% selected-band power.
+11. Spectral bandwidth — power-weighted standard deviation around centroid.
+12. Spectral flatness — geometric/arithmetic mean power ratio as percent.
+13. Spectral slope — least-squares spectral dB versus log2 frequency in dB/octave.
+14. THD estimate — RMS harmonics 2–8 relative to estimated fundamental.
+15. Even / odd — even-harmonic to odd-harmonic power ratio in dB.
+16. Peak asymmetry — positive/negative peak ratio in dB.
+17. Zero crossings — DC-removed sign changes per second.
+18. Clipped samples — count with absolute raw value at least 0.999.
+19. Transient index — maximum 20 ms RMS block divided by median block RMS.
+20. Nearest note — equal-tempered note and cent offset, A4 = 440 Hz.
+21. Low band — integrated selected spectral power below 250 Hz.
+22. Mid band — integrated selected spectral power from 250 Hz to 2 kHz.
+23. High band — integrated selected spectral power above 2 kHz.
+24. Tone confidence — map harmonic-score prominence over the median floor to 0–100%.
+
+The UI must explain that broadband excitation makes fundamental, THD, even/odd, and nearest note lower-authority when tone confidence is low.
+
+### Result and graph tooltips
+
+Every result value in Impulse, Noise spectrum, Saturation, Bode response, and Polarity includes a keyboard-focusable `?` button with detailed explanation text. Every graph heading also includes a `?` button explaining the graph's role, how to read it, and its main confounder. The Summary copies retain these controls. Use one global, theme-aware, fixed-position `role="tooltip"` element. Show it on `mouseenter`, `focus`, and `click` so it works on touch screens; position it above or below without leaving the viewport. Hide it on `mouseleave`, `blur`, outside pointer press, or Escape. Style the tooltip as a large panel up to roughly 520 px wide with about 18 × 22 px padding, 14 px text, a 15 px radius, translucent blurred glass, and the same warm-orange border and glow treatment as the centered toaster message in all four themes.
+
+Each tooltip explains:
+
+- What is calculated
+- What it indicates about a pickup or measurement chain
+- The main caveat or confounder
+
+Do not rely only on abbreviated labels or native `title` attributes.
+
+## Existing tests retained
+
+### Saturation
+
+Keep eight relative 1 kHz drive steps:
+
+```js
+[-42, -36, -30, -24, -18, -12, -6, 0]
+```
+
+Actual drive is `testOutputLevel + relativeStep`. Store output RMS, fundamental, even harmonics, odd harmonics, asymmetry, and peak. Plot harmonic groups and transfer response.
+
+### Bode magnitude
+
+Keep 30 log-spaced sine points from 500 to 8000 Hz. Normalize to the strongest point, detect peak resonance, and show peak level, endpoint tilt, and count. This is magnitude-only.
+
+### Relative polarity
+
+Keep five shaped low-level pulses. Capture enough pre/post time for common interface latency, locate strongest excursion, keep a normalized 30 ms view, and vote on sign. Report POSITIVE, NEGATIVE, or INDETERMINATE when response is below about −80 dBFS or fewer than four votes agree.
+
+All output-producing tests require input plus safety confirmation.
+
+## Project schema
+
+Use version 2:
+
+```js
+{
+  version: 2,
+  id, name, notes, created, updated,
+  settings: {
+    inputTrim, masterLevel, inputChannel,
+    noiseLow, noiseHigh, noiseDuration, tapCount
   },
-  video: false
-});
+  impulse: null | { /* complete cleanest-tap result */ },
+  noise: null | { low, high, duration, sampleRate, spectrum, metrics },
+  saturation: [],
+  bode: [],
+  polarity: []
+}
 ```
 
-After permission:
+Save as pretty JSON data named `<safe-name>.pickup-health`, using no additional `.json` suffix. Load version 2 and migrate compatible version-1 projects by setting missing impulse/noise fields to null. Restore all relevant controls and redraw every result.
 
-- Store the stream
-- Enumerate inputs and outputs
-- Select the stream's current input device
-- Hide the modal
-- Update status to permission granted
-- Do not start the analyzer automatically
+CSV export includes project metadata and notes, the complete Summary overview, every displayed measurement, and raw data for all eight graphs: impulse waveform/envelope/fit/FFT, white-noise spectrum, saturation harmonic/transfer rows, Bode magnitude, and all polarity pulse waveforms.
 
-Changing the input device must reacquire the stream with the selected exact `deviceId`. If the analyzer was running, stop without closing the reusable context, replace the stream, and restart.
+## Summary and PNG
 
-Listen for `navigator.mediaDevices.devicechange` and refresh device lists.
+Summary cards include:
 
-### Output devices
+- Bode resonance
+- Saturation signature
+- Relative polarity
+- Measurement record
 
-Always include `System default`.
+Do not place Impulse ring or Noise spectrum overview cards at the top of Summary; their detailed measurements remain available in their sections below.
 
-After permission, use `enumerateDevices()` to add every `audiooutput` exposed by the browser. The **Find devices** button should:
+Below the cards, Summary contains five separated, labelled result sections in this order: Bode response, Noise spectrum, Saturation, Polarity, and Impulse / tap. Together they contain synchronized copies of all eight graphs and every detailed measurement. The original graphs and measurements remain visible in their source tabs.
 
-1. Call `navigator.mediaDevices.selectAudioOutput()` when available
-2. Refresh the full output list
-3. Select the returned device
-4. Call `AudioContext.setSinkId()` when supported
-5. Show a useful status if the browser exposes only the system default or denies access
+PNG is a tall, complete report canvas at 2× backing scale using the current theme. It contains the four remaining overview cards and their notes, project notes, all 42 detailed measurement values, and all eight graphs in Summary order: Bode magnitude, noise spectrum, harmonics versus drive, transfer curve, five polarity pulse responses, impulse waveform, decay envelope/fit, and impulse FFT.
 
-Changing output device must call `setSinkId()` and rebuild output-channel routing.
+CSV contains every item represented by Summary and the raw series needed to reconstruct every graph in Summary order: overview values and notes; Bode rows; raw white-noise metrics and spectrum; saturation harmonic/transfer rows; polarity votes and pulse waveform samples; impulse waveform, envelope, decay fit, and FFT.
 
-### Output channels
+## Error handling and cancellation
 
-Read `destination.maxChannelCount` or `channelCount`, clamp to 1–32, and create:
+- Refuse output without input and safety confirmation.
+- Allow input-only tap capture without safety confirmation.
+- Disable all run buttons, **Measure All**, **Clear measurements**, and the 440 Hz button during a test or Measure All sequence. Keep Stop available; stopping a batch cancels its remaining stages.
+- Keep Stop available.
+- Cancellation clears the active-test marker; loops check it after every short wait.
+- Always ramp output down in `finally` and on `beforeunload`.
+- Show concise toasts for permission denial, missing input, safety confirmation, tap timeout, absent response, invalid project, completion, and cancellation. Toasts are large and centered in the viewport, with a translucent blurred panel, theme-colored border/dot/glow accents, centered text, and a subtle scale/vertical entrance transition.
+- Never manufacture or simulate results when signal is absent.
 
-- `Outputs 1 + 2` when at least two channels exist
-- `Output 1` through `Output N`
+## Accessibility and responsive behavior
 
-Use a `ChannelMerger` in explicit/discrete mode. Route the mono output analyzer to both channels for stereo or only the selected discrete channel.
-
----
-
-## Web Audio graph
-
-Create the `AudioContext` only after the user starts the analyzer and a stream exists. Use `latencyHint: "interactive"`.
-
-### Input graph
-
-```text
-MediaStreamSource
-  → ChannelSplitter(2)
-  → selected channel / sum / difference
-  → Input Gain
-      ├─→ Input Analyser
-      ├─→ ScriptProcessor capture path
-      └─→ Monitor Gain → Output Bus
-```
-
-Channel modes:
-
-- Input 1: splitter channel 0
-- Input 2: splitter channel 1
-- `1 + 2 mono`: two gains of +0.5 summed
-- `1 − 2`: channel 0 at +0.5 and channel 1 at −0.5
-
-### Analyzer settings
-
-Input analyzer:
-
-- FFT size from UI
-- Smoothing from UI
-- `minDecibels = -120`
-- `maxDecibels = 0`
-
-Output analyzer:
-
-- FFT size 2048
-- Smoothing 0.55
-
-Use a deprecated `ScriptProcessorNode(2048, 1, 1)` only for measurement capture compatibility in this single-file implementation. Connect it through a zero-gain node to the destination so processing callbacks continue.
-
-### Monitor safety
-
-Monitoring is off by default. Toggle the monitor gain with a short `setTargetAtTime` ramp. Clearly label feedback risk.
-
----
-
-## Live analysis algorithms
-
-Use float time-domain and frequency-domain analyzer data on each animation frame.
-
-### Noise-floor filtering
-
-The threshold slider is globally visible in the Input panel.
-
-- Time-domain gate: calculate raw frame RMS; if its dBFS is below the threshold, replace the entire analysis/scope frame with zeros
-- Spectrum gate: keep only bins whose absolute analyzer dBFS is at or above the threshold; replace others with −120 dB
-- Determine `hasSpectrum` only from 20 Hz to the lower of 20 kHz or Nyquist
-- Input meter displays zero when the time gate is closed
-- If time stats are gated, set RMS, peak, DC, clipping, ZCR, crest, asymmetry, and transient values to `NaN`
-- If no spectrum exists, set spectral metrics to `NaN`
-- Clear measurement history, RMS envelopes, and held spectrum whenever the threshold changes
-
-### Averaging
-
-- Slider range 0–30 seconds, default 30
-- Keep a timestamped history of measurement objects
-- Remove frames older than the selected window
-- Average every finite numeric metric independently
-- Do not average `peakBin`, `binHz`, booleans, or non-numbers
-- If the current metric is non-finite, keep it non-finite rather than showing older history
-- Clear history when the window changes
-
-### Time-domain measurements
-
-Calculate:
-
-- RMS: square root of mean squared samples
-- Sample peak: largest absolute sample
-- Positive and negative waveform peaks
-- DC offset: arithmetic mean
-- Clipped samples: percentage with absolute value ≥ 0.995
-- Zero-crossing rate: sign changes × sample rate / frame length
-- Crest factor: `20 log10(peak / RMS)`
-- Peak asymmetry: `20 log10(positivePeak / abs(negativePeak))`
-- Transient index: short RMS envelope versus long RMS envelope in dB
-
-Envelope constants:
-
-```js
-short = 0.82 * short + 0.18 * rms;
-long  = 0.985 * long + 0.015 * rms;
-```
-
-### Spectral measurements
-
-Analyze 20 Hz through `min(16000, sampleRate * 0.48)`.
-
-- Find largest FFT bin
-- Apply three-point parabolic interpolation around the peak
-- Estimate the fundamental by scoring possible subharmonics `peakBin / 1…6` against up to six harmonics
-- Convert dB bins to power with `10^(dB/10)`
-- Noise floor: median spectrum bin from 80 Hz through analysis maximum
-- SNR: peak-bin dB minus estimated noise-floor dB
-- Spectral centroid: power-weighted frequency mean
-- Spectral bandwidth: power-weighted standard deviation around centroid
-- 85% roll-off: first frequency reaching 85% cumulative power
-- Spectral flatness: geometric mean divided by arithmetic mean of power
-- Spectral slope: least-squares dB slope versus `log2(f / 1000)`
-- THD estimate: harmonics 2–8 relative to fundamental amplitude
-- Even/odd balance: `10 log10(even harmonic power / odd harmonic power)`
-- Low band: 20–150 Hz
-- Mid band: 150 Hz–2 kHz
-- High band: 2–16 kHz
-- Tone confidence: clamp `(peak dB − noise dB − 6) × 2.2` to 0–100
-- Nearest note: MIDI note calculation using A4 = 440 Hz, including cents offset
-
-### Scope and spectrum drawing
-
-- Scope uses the filtered frame
-- Spectrum X axis is logarithmic, 20 Hz–20 kHz
-- Spectrum Y axis is normalized to its highest surviving bin
-- Display range is 0 to −72 dB relative to peak
-- Held spectrum decays by approximately 0.12 dB per animation frame and is independently normalized
-- Freeze prevents analyzer buffers and held trace from updating but keeps rendering
-
-### Meters
-
-- Meter scale: −60 to 0 dBFS
-- Input/output peak-hold decay multiplier: approximately `0.986` each animation frame
-- Fill is a single accent color
-- Peak marker is a thin theme-ink line
-
----
-
-## Generator
-
-All generated test signals connect through a gain node to the common output bus.
-
-### Sine and square
-
-Use an oscillator with UI-selected type and frequency. Smooth frequency and level changes using short `setTargetAtTime` ramps.
-
-### White noise
-
-Create a reusable two-second looping audio buffer with random samples scaled to about `0.35`.
-
-### Pink noise
-
-Use a standard multi-pole filtered white-noise approximation with state variables and output scaling around `0.11`. Loop a two-second buffer.
-
-The start button toggles to `Stop generator`. The separate Mute button stops the source.
-
----
-
-## Magnetic Saturation Mapper
-
-### UI
-
-- Description: increasing-field transfer test
-- Test frequency: 80–3000 Hz, default 440 Hz
-- Maximum drive: −30 to −3 dBFS, default −6 dBFS
-- Drive steps: 8, 12, 16; default 12
-- Buttons: **Run saturation map**, shared **Abort active test**
-- Progress bar and status
-- Canvas: magnetic saturation transfer plot
-- Results:
-  - Onset
-  - Max compression
-  - Max asymmetry
-  - THD at max
-
-### Procedure
-
-1. Stop any continuous generator.
-2. Create a sine oscillator at the selected frequency.
-3. Generate linearly spaced drive values from −42 dBFS to selected maximum.
-4. At each step:
-   - Ramp gain with time constant about 25 ms
-   - Wait 260 ms
-   - Capture 360 ms
-   - Calculate RMS, positive peak, negative peak, Goertzel fundamental, and harmonics 2–8
-5. Low-level reference gain is `dB(RMS at first point) − first drive`.
-6. Compression at each point is measured gain minus reference gain.
-7. Onset is the first drive with compression below −1 dB.
-8. Asymmetry is positive versus absolute negative peak in dB.
-9. Report most negative compression, largest absolute asymmetry, and last-point THD.
-
-Plot pickup output dBFS versus drive dBFS, plus a dashed ideal linear reference. Make markers red when absolute asymmetry exceeds 1 dB; otherwise use the secondary accent.
-
-State clearly that output dBFS is a repeatable field-strength proxy, not gauss.
-
----
-
-## Bode plot
-
-### UI
-
-- Heading: `500 Hz–8 kHz magnitude response`
-- Level at 500 Hz: −48 to −6 dBFS, default −6 dBFS
-- Sweep duration choices: 2.5 s, 5 s, 10 s; default 2.5 s
-- Explain that excitation falls by 6 dB/octave, approximately half voltage per octave
-- Button: **Measure Bode plot**
-- Progress/status
-- Results:
-  - Peak magnitude
-  - 8 kHz / 500 Hz
-  - Measured slope
-  - Excitation slope (`−6.0 dB/oct`)
-
-### Sweep generation
-
-- Logarithmic sweep only from 500 Hz to `min(8000, sampleRate × 0.44)`
-- Base level is selected at 500 Hz
-- Apply `−6 dB × log2(f / 500)` amplitude contour
-- Use approximately 30 ms fade-in/out
-- Capture with about 120 ms pre-roll and 650 ms post-roll
-
-### Deconvolution
-
-- Build a stimulus array aligned at pre-roll
-- Zero-pad stimulus and recording to next power of two
-- Implement an in-file radix-2 complex FFT
-- Divide recorded FFT by stimulus FFT with a small denominator regularizer
-- Store magnitude in dB
-
-### Display trace
-
-- Generate 600 logarithmically spaced points from 500 Hz to 8 kHz
-- Apply light 1/48-octave smoothing by amplitude-averaging within ±1/96 octave
-- Normalize all values to the smoothed 500 Hz point
-- Auto-scale Y range in 6 dB increments
-- Keep at least 24 dB and at most 72 dB visible range
-- X ticks: 500, 1k, 2k, 4k, 8k
-- Draw a 0 dB reference line
-- Find the highest smoothed value
-- Mark the peak with a highlighted circle and a theme-aware label formatted like:
-
-  ```text
-  +3.2 dB / 2.45 kHz
-  ```
-
-- Place the annotation on whichever side avoids clipping
-
----
-
-## Relative polarity
-
-### UI
-
-- Pulse level: −48 to −9 dBFS, default −9 dBFS
-- Averages: 4, 8, 16; default 8
-- Button: **Determine relative polarity**
-- Progress/status
-- Centered polarity-response graph
-- Results:
-  - Relative polarity
-  - Confidence
-  - First excursion
-  - Peak response
-
-Use only these classification labels:
-
-- `POSITIVE ↑`
-- `NEGATIVE ↓`
-- `INCONCLUSIVE`
-
-Do not use the word `REVERSED`.
-
-### Pulse and detection
-
-- Pulse duration about 12 ms
-- Positive-leading shape: linear rise over first 8% followed by exponential decay with factor about 5.5
-- Capture window: 260 ms
-- Start pulse approximately 30 ms into capture
-- Average selected number of captures
-- Wait approximately 80 ms between pulses
-- Estimate noise RMS from first 25 ms
-- Detection threshold: maximum of `noise × 5` and `8% of full captured peak`
-- Find first sample beyond threshold after noise window
-- Search for peak within the next 30 ms
-- Confidence: clamp `(peak / noise − 3) × 6` to 0–99
-- Positive first excursion → POSITIVE; negative → NEGATIVE
-- Positive result uses positive accent; negative uses red
-
-Center the impulse in the graph. Show approximately a 100 ms span centered on the detected first excursion, or on the largest impulse when detection is inconclusive. Draw positive and negative detection thresholds and a vertical impulse-center marker.
-
-Explain that polarity is relative to driver winding, driver face, output wiring, magnet face, and pickup leads.
-
----
-
-## Test setup tab
-
-Show five numbered instructions:
-
-1. **Build a repeatable magnetic driver** — fix a small coil above the pickup at a recorded height/orientation and add suitable current limiting.
-2. **Define positive** — mark coil winding direction, face toward pickup, cable polarity, magnet face, and pickup hot lead.
-3. **Set clean gain** — use Hi-Z, disable DSP/AGC, avoid interface clipping, and run low-level first.
-4. **Validate with loopback** — use an attenuated electrical loopback to detect interface compression/asymmetry.
-5. **Control the load** — record cable capacitance, pot values, tone network, and input impedance.
-
----
-
-## Graph pointer tooltips
-
-Attach pointer-move and pointer-leave handlers to every canvas:
-
-- Oscilloscope: time in ms and full-scale amplitude
-- Spectrum: logarithmic frequency and relative dB
-- Saturation: drive dBFS and output dBFS
-- Bode: frequency and dB relative to 500 Hz
-- Polarity: time from impulse center and full-scale response
-
-Show a floating theme-aware tooltip next to the pointer and clamp it inside the viewport.
-
----
-
-## Measurement capture and test coordination
-
-- Only one active measurement test at a time
-- Stop the continuous generator before each measurement
-- Disable all test buttons during a test
-- Shared abort button rejects an active capture and restores buttons
-- Capture samples through the input `ScriptProcessorNode`
-- Use progress bars and descriptive status messages
-- Stopping the analyzer aborts tests and generator
-
----
-
-## Summary and export
-
-### Collection
-
-Create a snapshot with four sections:
-
-1. Magnetic Saturation Mapper
-2. Bode Plot
-3. Polarity
-4. Analyzer Metrics
-
-Only include displayed values that are not empty, null, undefined, NaN, `—`, or negative infinity.
-
-### On-page layout
-
-At desktop:
-
-- Left column: Magnetic Saturation Mapper, Bode Plot, Polarity stacked vertically
-- Right column: Analyzer Metrics spanning the height
-
-At mobile, stack all sections.
-
-### CSV
-
-- UTF-8 BOM
-- Header: `Section, Measurement, Value, Unit`
-- Quote and escape every cell
-- CRLF line endings
-- Timestamped filename: `nicks-pickup-lab-summary-<ISO timestamp>.csv`
-
-### PNG
-
-- Render a new 1600 px-wide canvas
-- Use currently selected theme colors
-- Header: `Nicks Pickup Lab — Measurement Summary`
-- Include local creation date/time
-- Left column: first three measurement sections
-- Right column: Analyzer Metrics
-- Dynamically calculate height
-- Truncate overlong labels with an ellipsis
-- Timestamped PNG filename matching CSV convention
-
----
+- Use semantic headings, labels, native inputs/selects/buttons, tab roles, status regions, and visible focus.
+- Buttons have a minimum practical height of about 38 px. Every native dropdown and single-line text or number input has an explicit, matching 40 px height; multiline textareas remain vertically resizable.
+- Measurement and graph explanation tooltips work by keyboard focus, hover, and touch click; outside press and Escape dismiss them.
+- Respect `prefers-reduced-motion`.
+- Avoid horizontal page overflow down to 300 px.
+- Metric grid is four columns on wide screens, three at medium width, two on tablets, and one on narrow phones.
+- Noise options and tap controls stack responsively.
+- Plot heights remain fixed on every breakpoint.
 
 ## README requirements
 
-Create a polished `README.md` containing:
+Document:
 
-- Project overview
-- Localhost quick start using `python3 -m http.server 8000`
-- Permission and browser notes
-- Feature/measurement descriptions
-- Safety warnings
-- Recommended measurement order
-- Limitations and privacy statement
-- A full section titled **Build a repeatable magnetic driver**
+- Local-server startup and privacy
+- Fixed system-output behavior
+- 440 Hz workflow
+- Electrical, thermal, feedback, hearing, and instrument-finish safety
+- Air-core driver construction using a nonmagnetic former, roughly 0.25–0.35 mm wire, 220–350 turns, commonly 6–12 Ω measured DCR, twisted strain-relieved leads, optional gapped shield, and strict amplifier-load caveats
+- Input preparation and repeatable geometry
+- Detailed tap workflow, scoring, plots, formulas, and limitations
+- Noise spans, durations, FFT averaging, all 24 metrics, and caveats
+- Retained saturation/Bode/polarity tests
+- Projects, CSV, PNG, themes, accessibility, quality checklist, limitations, and troubleshooting
 
-The magnetic-driver section must include:
+## Validation checklist
 
-- Signal-chain diagram
-- Suggested air-core coil, non-magnetic former, enamelled wire, current-limiting resistor, cable, and fixture materials
-- Conservative starting ranges: roughly 8–15 mm former, 300–600 turns of 0.15–0.25 mm wire, and initially a 1 kΩ / 0.5 W or larger series resistor
-- Coil winding documentation: turns, wire, DCR, inductance, face, start/finish leads
-- Current and resistor-power formulas
-- Warning that dBFS is not volts and actual voltage/current may need measurement
-- Fixed non-magnetic mechanical jig with recorded X/Y/Z position, gap, angle, face, and rotation
-- Wiring steps and strain relief
-- Polarity convention
-- Continuity, safe-load, low-level, loopback, repeatability, and reference-pickup checks
-- Notes about pickup load, cable capacitance, temperature, fixture drift, and driver-current monitoring
-
-Use strong warnings against direct output-to-pickup connection, shorts, power amplifiers, and mains voltage.
-
----
-
-## Accessibility and interaction details
-
-- Use semantic headings, articles, labels, buttons, tablist, dialog roles, and `aria-live` for status/summary updates
-- Every input must have a visible label
-- Native keyboard focus must remain visible
-- Buttons must expose disabled state while unavailable
-- Canvas elements need descriptive `aria-label` values
-- Graph tooltips must not capture pointer events
-- Escape device labels and summary content before inserting HTML
-
----
-
-## Verification checklist
-
-Before handing off:
-
-### Static checks
-
-- The HTML is a single standalone file
-- JavaScript passes syntax checking
-- No external network resources exist
-- Every queried element ID exists
-- Dark mode is default
-- Theme toggle works both directions
-
-### Permission checks
-
-- Page load does not call `getUserMedia()`
-- Not now dismisses without requesting permission
-- Allow audio input is the only initial permission trigger
-- Splash shows the stylized single-coil pickup icon, large `Nicks Pickup Lab` title, measurement description, and orange ambient/button glows
-- Both pickup icons use identical inline SVG geometry with six pole pieces and contain no text
-- Both icon tiles use transparent glass layers and blur rather than an opaque gradient tile
-- The refreshed splash retains the original permission copy, button IDs, and click handlers
-
-### UI/default checks
-
-- White noise selected by default
-- Output level −3.0 dBFS
-- Measurement averaging 30.0 s
-- Noise threshold −80 dBFS
-- Saturation maximum −6 dBFS and 12 steps
-- Bode level −6 dBFS and duration 2.5 s
-- Polarity pulse −9 dBFS and 8 averages
-- Input and Output labels appear above the meter bars
-- Meter fills are solid accent colors
-- Live Measurements contains exactly 24 cards, Peak frequency first and Tone confidence last
-
-### Plot checks
-
-- Oscilloscope remains 208 px high
-- Plot container does not grow while measuring
-- Spectrum is normalized and visible
-- No-signal box is centered and prominent
-- Bode covers only 500 Hz–8 kHz and marks peak dB/kHz
-- Polarity graph is centered around impulse
-- Hovering every graph shows useful X/Y coordinates
-
-### Routing checks
-
-- All browser-exposed outputs appear after access
-- Output device selection uses `setSinkId` where supported
-- Output channel list reflects destination channel count
-- Stereo routes to outputs 1+2; discrete selection routes only to selected channel
-
-### Result/export checks
-
-- Polarity reports POSITIVE, NEGATIVE, or INCONCLUSIVE
-- Summary excludes null/unavailable values
-- Summary layout uses measurement sections on the left and Analyzer Metrics on the right
-- PNG and CSV exports work and contain all valid values
-- PNG reflects selected theme
-
-## Final implementation standard
-
-Do not stop at a mockup. Implement the full Web Audio routing, real-time analysis, measurement capture, algorithms, canvas rendering, interactions, device selection, responsive layout, and exports. Test the file from localhost in a current browser, inspect both themes, and fix console errors and layout overflow before considering the task complete.
+1. Only `index.html`, `README.md`, and `PROMPT.md` are primary deliverables.
+2. Inline script passes `node --check` after extraction.
+3. No external runtime or network/storage APIs exist.
+4. There is no Live scope tab, free-form generator, waveform selector, frequency slider, output device selector, output channel selector, or `setSinkId()`.
+5. A fixed 440 Hz button is present.
+6. Output connects only to system-default `AudioContext.destination`.
+7. Splash is visible on Dark blue reload and does not call `getUserMedia()` automatically.
+8. Impulse count offers exactly 3, 5, and 7 and defaults to 5.
+9. Impulse result includes all three requested plots and six requested values.
+10. White-noise duration offers exactly 2.5, 5, and 10 seconds.
+11. Frequency span is selectable and custom endpoints are editable.
+12. All 24 noise metrics and all 18 scalar results from the other tests exist with nonempty detailed explanation text.
+13. Every graph heading has a detailed explanation button; the single global tooltip is accessible by focus, hover, and touch click and dismisses on outside press or Escape.
+14. Every plot has cursor inspection and fixed height.
+15. Canvas DPR is capped at 2.
+16. Project version 2 contains complete impulse/noise data.
+17. CSV and PNG include the new measurements.
+18. One button cycles through Light, Dark orange, Dark green, and Dark blue; Dark blue is the reload default, theme changes redraw every plot, and exports use the current theme.
+19. Desktop and mobile layouts have no horizontal overflow.
+20. At runtime the five source tabs retain eight original canvases and all result cards; Summary contains eight additional synchronized canvases and copied result cards grouped into five sections.
+21. No measurement tab contains an Open Summary copy box; Summary export buttons read **Export PNG** and **Export CSV**, remain on one horizontal line, and have space above and below.
+22. A glowing, theme-accented **Measure All** button sits immediately left of **Clear measurements**, runs Bode → Noise → Saturation → Polarity → Impulse sequentially with automatic tab changes, returns to Bode, and shows a final completion toaster.
+22. Complete PNG includes four overview cards, all 42 measurements, project notes, and all eight graphs; complete CSV includes all displayed information and raw data for every graph.
+23. Large explanation tooltips use the same orange glass, blur, border, and glow language as toaster messages.
+24. Browser console has no startup errors.

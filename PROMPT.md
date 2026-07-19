@@ -13,7 +13,7 @@ The current app provides:
 - One manually toggled 440 Hz sine test tone
 - Manual-tap impulse response with selectable 3, 5, or 7 taps plus a separate automatic mode that emits exactly three sharp bipolar impulses, with adaptive noise rejection, stationary-hum cancellation, and robust aligned stacking
 - Captured impulse waveform, logarithmic decay envelope, and resonant-ring FFT
-- Ring frequency, T60 estimate, damping ratio ζ, Q, first-swing phase, and rise time
+- Ring frequency, T60 estimate, damping ratio ζ, Q, and rise time
 - Band-selectable white-noise response for 2.5, 5, or 10 seconds
 - 16 spectrum/time-domain metrics with detailed accessible tooltips
 - Stepped magnetic saturation, 500 Hz–8 kHz Bode magnitude, and five-pulse relative phase
@@ -209,7 +209,7 @@ The Settings tab contains labelled Tool name and Lab name fields, defaulting to 
 
 Place **Export PDF** in the Project action row immediately to the right of **Load project**. At the top of Summary, keep **Export PNG** and **Export CSV** on one non-wrapping horizontal line. Do not include the word “complete” in the labels. Give the Summary toolbar clear breathing room above and below, approximately 18–20 px of vertical padding.
 
-**Export PDF** builds a real multi-page A4 PDF locally without external libraries or uploads. Every page uses a clean light print palette, the configurable tool name (default `ИH Custom Winds`) at upper left, the logo at upper right, and a section title. The footer contains only the configurable lab name; it has no separator, timestamp, or page number. Embed a compact copy of the logo as a data URL specifically for PDF rendering; never draw the external `logo.png` element into the PDF canvas, because that can taint canvases and make `toBlob()` fail with an insecure-operation error under `file://`. Pages 1–2 contain Project Information: project metadata without Project ID, customer record, pickup properties, and measurement settings. Created and Updated use date-only Swiss formatting. Pickup ID is the first field in the PDF Pickup section. Render Guitar, Bass, Single Coil, Humbucker, Clockwise, and Counterclockwise as checked or empty boxes in three vertical pairs: Guitar above Bass, Single Coil above Humbucker, and Clockwise above Counterclockwise. Page 3 places Bode response above Relative phase, page 4 places Saturation above Noise spectrum, and page 5 contains Impulse / tap. Omit graphs from Noise spectrum and Relative phase; retain the Bode graph, both Saturation graphs, and all three Impulse graphs, with graphs before data fields and labelled x/y values. Mark the Bode peak-resonance point. Append an Annex titled `Measurement glossary`, spanning as many pages as needed, containing every displayed measurement term and the exact explanatory text from its tooltip. Include all 34 displayed measurement fields. Download as `<safe-name>-complete-record.pdf`.
+**Export PDF** builds a real multi-page A4 PDF locally without external libraries or uploads. Every page uses a clean light print palette, the configurable tool name (default `ИH Custom Winds`) at upper left, the logo at upper right, and a section title. The footer contains only the configurable lab name; it has no separator, timestamp, or page number. Embed a compact copy of the logo as a data URL specifically for PDF rendering; never draw the external `logo.png` element into the PDF canvas, because that can taint canvases and make `toBlob()` fail with an insecure-operation error under `file://`. Pages 1–2 contain Project Information: project metadata without Project ID, customer record, pickup properties, and measurement settings. Created and Updated use date-only Swiss formatting. Pickup ID is the first field in the PDF Pickup section. Render Guitar, Bass, Single Coil, Humbucker, Clockwise, and Counterclockwise as checked or empty boxes in three vertical pairs: Guitar above Bass, Single Coil above Humbucker, and Clockwise above Counterclockwise. Page 3 places Bode response above Relative phase, page 4 places Saturation above Noise spectrum, and page 5 contains Impulse / tap. Omit graphs from Noise spectrum and Relative phase; retain the Bode graph, both Saturation graphs, and all three Impulse graphs, with graphs before data fields and labelled x/y values. Mark the Bode peak-resonance point. Append an Annex titled `Measurement glossary`, spanning as many pages as needed, containing every displayed measurement term and the exact explanatory text from its tooltip. Include all 33 displayed measurement fields. Download as `<safe-name>-complete-record.pdf`.
 
 ## Canvas requirements
 
@@ -238,7 +238,7 @@ UI includes:
 - Captured waveform canvas limited to an aligned 20 ms onset view
 - Log decay-envelope canvas covering the captured decay, with fitted line
 - Resonant-ring FFT canvas
-- Result fields for ring frequency, T60, ζ, Q, first-swing phase, and rise time
+- Result fields for ring frequency, T60, ζ, Q, and rise time
 
 Manual Capture is input-only and uses the selected input. It never activates the output. The operator creates each physical or magnetic impulse after the detector displays **TAP NOW**.
 
@@ -409,7 +409,7 @@ Do not place Impulse ring or Noise spectrum overview cards at the top of Summary
 
 Below the cards, Summary contains five separated, labelled result sections in this order: Bode response, Noise spectrum, Saturation, Phase, and Impulse / tap. Together they contain synchronized copies of all eight graphs and every detailed measurement. The original graphs and measurements remain visible in their source tabs.
 
-PNG is a tall, complete report canvas at 2× backing scale using the current theme. It contains the four remaining overview cards and their notes, project notes, all 34 detailed measurement values, and all eight graphs in Summary order: Bode magnitude, noise spectrum, harmonics versus drive, transfer curve, five phase pulse responses, impulse waveform, decay envelope/fit, and impulse FFT.
+PNG is a tall, complete report canvas at 2× backing scale using the current theme. It contains the four remaining overview cards and their notes, project notes, all 33 detailed measurement values, and all eight graphs in Summary order: Bode magnitude, noise spectrum, harmonics versus drive, transfer curve, five phase pulse responses, impulse waveform, decay envelope/fit, and impulse FFT.
 
 CSV contains every item represented by Summary and the raw series needed to reconstruct every graph in Summary order: overview values and notes; Bode rows; raw white-noise metrics and spectrum; saturation harmonic/transfer rows; phase votes and pulse waveform samples; impulse waveform, envelope, decay fit, and FFT.
 
@@ -474,7 +474,7 @@ Document:
 20. At runtime the five source tabs retain eight original canvases and all result cards; Summary contains eight additional synchronized canvases and copied result cards grouped into five sections.
 21. No measurement tab contains an Open Summary copy box; **Export PDF** sits beside **Load project**, while Summary buttons read **Export PNG** and **Export CSV**, remain on one horizontal line, and have space above and below.
 22. A glowing, theme-accented **Measure All** button sits immediately left of **Clear measurements**, runs Bode → Noise → Saturation → Phase → automatic three-impulse capture sequentially with automatic tab changes, returns to Bode, and shows a final completion toaster.
-22. Complete PNG includes four overview cards, all 34 measurements, project notes, and all eight graphs; complete CSV includes all displayed information and raw data for every graph.
+22. Complete PNG includes four overview cards, all 33 measurements, project notes, and all eight graphs; complete CSV includes all displayed information and raw data for every graph.
 23. Large explanation tooltips use the same orange glass, blur, border, and glow language as toaster messages.
 24. Settings defaults to `ИH Custom Winds` and `Nicks Pickup Lab`; Apply updates the UI and all exports, and saved projects preserve both names.
 25. PDF places Bode above Relative phase on page 3 and Saturation above Noise spectrum on page 4, omits Noise and Phase graphs, arranges checkbox pickup selections in the requested vertical pairs, uses the lab name alone in the footer, contains no page numbers or footer timestamps, and appends a complete tooltip-derived measurement glossary annex.

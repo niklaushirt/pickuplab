@@ -4,7 +4,7 @@
 
 - Manual-tap and three-pulse automatic impulse response with adaptive noise rejection, hum cancellation, and robust aligned stacking
 - Captured impulse waveform, logarithmic decay envelope, and resonant-ring FFT
-- Ring frequency, estimated T60, damping ratio ζ, Q, first-swing phase, and rise time
+- Ring frequency, estimated T60, damping ratio ζ, Q, and rise time
 - Band-selectable white-noise response over 2.5, 5, or 10 seconds
 - 16 time- and frequency-domain noise-response indicators
 - Magnetic saturation, 500 Hz–8 kHz Bode magnitude, and five-pulse relative phase
@@ -163,7 +163,6 @@ These plots appear in the **Impulse / tap** tab and as synchronized copies in Su
 - **Decay time / T60 estimate** — time for the fitted amplitude envelope to fall 60 dB. It is extrapolated when the captured signal reaches the noise floor earlier.
 - **Damping ratio ζ** — estimated as `1 / (2Q)`. Smaller values mean a more lightly damped ring.
 - **Q from ring** — derived from frequency and decay: `Q = π × f × T60 / 6.9078`.
-- **First-swing phase** — sign of the strongest initial excursion after onset. It is relative to tap direction, fixture orientation, and unchanged input wiring.
 - **Rise time** — interval from 10% to 90% of the first peak.
 
 T60, Q, and ζ are model-based estimates. Multiple modes, noisy envelopes, driver motion, active electronics, mechanical vibration, and short capture windows can make the fit unresolved or misleading.
@@ -226,7 +225,7 @@ Five low-level shaped pulses vote on response sign. The result is positive, nega
 - **Load project** accepts version 2, migrates compatible version-1 files, and remains compatible with legacy `.pickup-health` files.
 - **Export CSV** contains the customer and pickup records, four Summary overview cards, every displayed measurement, raw impulse waveform/envelope/fit/FFT data, capture-mode and automatic-excitation metadata, impulse noise-cancellation metadata, all noise metrics and spectrum points, saturation harmonic/transfer data, Bode points, phase votes, and every phase waveform sample.
 - **Export PDF**, located immediately to the right of **Load project**, creates a polished multi-page A4 record locally: branded header and logo, project/customer information, pickup properties and test settings, three measurement pages, and a multi-page annex glossary copied directly from every measurement tooltip. The first measurement page places Bode response above Relative phase, the second places Saturation above Noise spectrum, and the third contains Impulse / tap. Noise spectrum and Relative phase remain data-only; the Bode, Saturation, and Impulse graphs appear before their data, and Bode peak resonance is marked. Pickup selections render as checked or empty boxes in three vertical pairs: Guitar above Bass, Single Coil above Humbucker, and Clockwise above Counterclockwise. Project ID is omitted; Created and Updated use date-only Swiss formatting. The footer contains only the configured lab name, with no separator, page number, or timestamp. Its PDF-only logo is embedded to keep canvas export secure when the app is opened directly from disk.
-- **Export PNG** uses the current theme and renders the customer and pickup records plus the complete Summary dashboard: all overview information, notes, 34 detailed measurements, and all eight graphs. The three export buttons stay together in a spaced toolbar at the top of Summary.
+- **Export PNG** uses the current theme and renders the customer and pickup records plus the complete Summary dashboard: all overview information, notes, 33 detailed measurements, and all eight graphs. The three export buttons stay together in a spaced toolbar at the top of Summary.
 
 The **Settings** analysis tab lets you change the tool name (default **ИH Custom Winds**) and lab name (default **Nicks Pickup Lab**). Press **Apply** to update the header, hero, browser title, and export branding. These names are stored with saved projects and restored when a project is loaded.
 

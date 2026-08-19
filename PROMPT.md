@@ -1,24 +1,21 @@
-# Reconstruction Prompt: ИH Custom Winds v1.1
+# Reconstruction Prompt: ИH Custom Winds v.2.1
 
 Rebuild the current application exactly from this specification. Do not depend on an existing implementation.
 
 ## Product objective
 
-Create **ИH Custom Winds**, a polished, responsive, single-file browser application for comparative passive or active guitar/bass pickup measurement through an audio interface and a repeatable magnetic driver or tap fixture.
+Create **ИH Custom Winds**, a polished, responsive, single-file browser application for comparative passive or active guitar/bass pickup measurement through an audio interface and a repeatable magnetic driver fixture.
 
 The current app provides:
 
 - Input-device and input-channel selection plus live input metering
 - Fixed operating-system-default output with no output selector
 - One manually toggled 440 Hz sine test tone
-- Manual-tap impulse response with selectable 3, 5, or 7 taps plus a separate automatic mode that emits exactly three sharp bipolar impulses, with adaptive noise rejection, stationary-hum cancellation, and robust aligned stacking
-- Captured impulse waveform, logarithmic decay envelope, and resonant-ring FFT
-- Ring frequency, T60 estimate, damping ratio ζ, Q, and rise time
 - Band-selectable white-noise response for 2.5, 5, or 10 seconds
 - 16 spectrum/time-domain metrics with detailed accessible tooltips
 - Stepped magnetic saturation, continuous-sweep 500 Hz–8 kHz Bode magnitude, and five-pulse relative phase
 - Version-2 JSON project save/load, CSV export, and current-theme PNG summary
-- Four session-only themes: Light, Dark orange, Dark green, and Dark blue; Dark green is the default
+- Four locally persisted themes: Light, Dark orange, Dark green, and Dark blue; Dark blue is the first-run default
 
 There is **no live oscilloscope/spectrum tab** and **no free-form excitation generator**. Do not reintroduce either.
 
@@ -33,7 +30,7 @@ README.md
 PROMPT.md
 ```
 
-All runtime HTML, CSS, and JavaScript must be in `index.html`. Local visual assets are `logo.png`, `favicon.svg`, `favicon-32x32.png`, `favicon.ico`, and `apple-touch-icon.png`; `scripts/generate-icons.py` reproducibly rebuilds the raster icons but is not required at runtime. Do not use a framework, runtime dependency, module, package manager, external script, stylesheet, font, remote image, network request, upload, server API, analytics service, telemetry, cookie, localStorage, sessionStorage, or IndexedDB.
+All runtime HTML, CSS, and JavaScript must be in `index.html`. Local visual assets are `logo.png`, `favicon.svg`, `favicon-32x32.png`, `favicon.ico`, and `apple-touch-icon.png`; `scripts/generate-icons.py` reproducibly rebuilds the raster icons but is not required at runtime. Do not use a framework, runtime dependency, module, package manager, external script, stylesheet, font, remote image, network request, upload, server API, analytics service, telemetry, cookie, sessionStorage, or IndexedDB. Use `localStorage` only for the automatic application-state persistence described below.
 
 ## Permission and privacy contract
 
@@ -124,7 +121,7 @@ The four theme labels are:
 - `Dark green`
 - `Dark blue`
 
-Use values `light`, `dark-orange`, `dark-green`, and `dark-blue`. The button displays the active label and advances through the circular order Light → Dark orange → Dark green → Dark blue → Light. Never persist selection, always start in Dark green, update the button's accessible label and browser `theme-color`, redraw every visible canvas on change, and use the current palette and theme name for PNG/CSV export.
+Use values `light`, `dark-orange`, `dark-green`, and `dark-blue`. The button displays the active label and advances through the circular order Light → Dark orange → Dark green → Dark blue → Light. Start in Dark blue only when no stored state exists; otherwise restore the saved theme. Update the button's accessible label and browser `theme-color`, redraw every visible canvas on change, persist the selection, and use the current palette and theme name for PNG/CSV export.
 
 Default hero copy:
 
@@ -137,7 +134,7 @@ The supporting sentence ends with: `with your interface and exciter coil.` Keep 
 Use a two-column upper workspace:
 
 - Narrow left panel: **01 Audio routing**
-- Wide right panel: **02 Analyze pickup health**, with a glowing theme-accented **Measure All** button immediately left of **Clear measurements**
+- Wide right panel: **02 Analyze pickup**, with a glowing theme-accented **Measure All** button immediately left of **Clear measurements**
 - Full-width lower panel: **03 Project**, spanning both upper columns. Place Customer on the left and Pickup on the right at desktop widths, then stack them on narrow screens.
 - Display `logo.png` at the far upper-right of the header, after the status and theme controls. Keep its aspect ratio and scale it down on mobile.
 
@@ -151,7 +148,7 @@ Provide:
 - Live input dBFS meter
 - Input-device select
 - Input-channel select derived from actual channel count
-- Digital input trim from −48 to +18 dB. Only after an input-device or input-channel change, reset Input trim to 0 dB and Output level to −30 dBFS, remove the previous route correction, and capture exactly one quiet analyser window lasting no more than three seconds from the same `AnalyserNode` used by the INPUT meter. Do not depend on `ScriptProcessorNode` callbacks for route calibration. Use the complete window's raw RMS, including visible DC, and apply at most one whole-dB Input-trim reduction when the baseline is louder than −70 dBFS. Raise Output level by the matching amount within its safe range and report any uncompensated amount. Do not perform verification passes. Lock measurement launch and route selectors during calibration, lock route selectors during measurements, and refuse measurement start while calibration is active. Measurements reuse the learned route profile and never recalibrate or change Input trim/Output automatically. Impulse/Tap may inspect immediate background only for trigger validation and denoising; label it as a background check, not calibration. Draw a small green reference line at −70 dBFS on the INPUT meter while retaining the red −12 dBFS line.
+- Digital input trim from −48 to +18 dB. Only after an input-device or input-channel change, reset Input trim to 0 dB and Output level to −30 dBFS, remove the previous route correction, and capture exactly one quiet analyser window lasting no more than three seconds from the same `AnalyserNode` used by the INPUT meter. During the entire calibration show a blocking overlay with the exact message **Calibrating, please wait.** plus a short instruction to keep the input quiet; remove it in the calibration `finally` path. Do not depend on `ScriptProcessorNode` callbacks for route calibration. Use the complete window's raw RMS, including visible DC, and apply at most one whole-dB Input-trim reduction when the baseline is louder than −70 dBFS. Raise Output level by the matching amount within its safe range and report any uncompensated amount. Do not perform verification passes. Lock measurement launch and route selectors during calibration, lock route selectors during measurements, and refuse measurement start while calibration is active. Measurements reuse the learned route profile and never recalibrate or change Input trim/Output automatically. Draw a small green reference line at −70 dBFS on the INPUT meter while retaining the red −12 dBFS line.
 - Output meter labelled `OUTPUT LEVEL / SYSTEM DEFAULT`
 - Output-level slider from −48 to −6 dBFS, default −30 dBFS
 - **Play 440 Hz test tone** and **Stop output**
@@ -196,26 +193,25 @@ The only manual output generator is a fixed 440 Hz sine. It requires an input co
 Use accessible `role="tab"` controls in this order:
 
 1. Bode response
-2. Noise spectrum
-3. Saturation
-4. Phase
-5. Impulse / tap
-6. Summary
-7. Settings
+2. Phase
+3. Spectrum
+4. Saturation
+5. Summary
+6. Settings
 
 The first tab is active. There is no Live scope tab.
 
-The first five tabs are complete measurement workspaces: each keeps its description, native setup controls, run button, progress indicator, and its own result graphs and measurement cards. Do not add an Open Summary shortcut box to these tabs. Give each top measurement-action row approximately 18 px of space above and 20 px below; apply this independently of the Summary export toolbar.
+The first four tabs are complete measurement workspaces: each keeps its description, native setup controls, run button, progress indicator, and its own result graphs and measurement cards. Do not add an Open Summary shortcut box to these tabs. Give each top measurement-action row approximately 18 px of space above and 20 px below; apply this independently of the Summary export toolbar.
 
-**Measure All** runs the five measurements sequentially in visible tab order: Bode response → Phase → Noise spectrum → Saturation → Impulse / tap. Activate each source tab when its test starts, await its real completion before continuing, keep Stop available, suppress per-test completion toasts during the batch, and show one centered `All five measurements complete.` toaster after full success. The final impulse stage uses Capture Auto and emits exactly three impulses, so the batch never pauses for manual taps. On completion, cancellation, or failure, return to the first Bode tab and restore every control. A failed stage stops the remaining sequence and identifies the error in a toaster.
+**Measure All** runs the four measurements sequentially in visible tab order: Bode response → Phase → Spectrum → Saturation. Activate each source tab when its test starts, await its real completion before continuing, keep Stop available, suppress per-test completion toasts during the batch, and show one centered `All four measurements complete.` toaster after full success. On completion, cancellation, or failure, return to the first Bode tab and restore every control. A failed stage stops the remaining sequence and identifies the error in a toaster.
 
-The Summary tab is a complete export dashboard. After the overview cards, create five semantic sections in the same order and with the same names as the source tabs. During startup, clone each source tab's graph and result DOM into its Summary section, rewrite cloned IDs with a `summary-` prefix, synchronize displayed values from the authoritative source elements, and render the cloned canvases from the same project data. The source results must remain in place. Project loading, clearing, theme redraws, and new measurements update both sets without recalculating measurements twice.
+The Summary tab is a complete export dashboard. After the overview cards, create four semantic sections in the same order and with the same names as the source tabs. During startup, clone each source tab's graph and result DOM into its Summary section, rewrite cloned IDs with a `summary-` prefix, synchronize displayed values from the authoritative source elements, and render the cloned canvases from the same project data. The source results must remain in place. Project loading, clearing, theme redraws, and new measurements update both sets without recalculating measurements twice.
 
 The Settings tab contains labelled Tool name and Lab name fields, defaulting to `ИH Custom Winds` and `Nicks Pickup Lab`, plus an **Apply** button. Apply trims blank values back to their defaults, updates the visible header, hero, browser title, splash product name, logo alternative text, CSV/PNG branding, and PDF header/footer. Accent the last two words of a customized lab name in the hero. Store both names in the current project and restore them on project load.
 
 Place **Export PDF** in the Project action row immediately to the right of **Load project**. At the top of Summary, keep **Export PNG** and **Export CSV** on one non-wrapping horizontal line. Do not include the word “complete” in the labels. Give the Summary toolbar clear breathing room above and below, approximately 18–20 px of vertical padding.
 
-**Export PDF** builds a real multi-page A4 PDF locally without external libraries or uploads. Every page uses a clean light print palette, the configurable tool name (default `ИH Custom Winds`) at upper left, the logo at upper right, and a section title. The footer contains only the configurable lab name; it has no separator, timestamp, or page number. Embed a compact copy of the logo as a data URL specifically for PDF rendering; never draw the external `logo.png` element into the PDF canvas, because that can taint canvases and make `toBlob()` fail with an insecure-operation error under `file://`. Pages 1–2 contain Project Information: project metadata without Project ID, customer record, pickup properties, Bode sweep-point selection, and measurement settings. Created and Updated use European `DD.MM.YYYY` formatting. Pickup ID is the first field in the PDF Pickup section. Render Guitar, Bass, Single Coil, Humbucker, Clockwise, and Counterclockwise as checked or empty boxes in three vertical pairs: Guitar above Bass, Single Coil above Humbucker, and Clockwise above Counterclockwise. Page 3 places Bode response above Relative phase, page 4 places Saturation above Noise spectrum, and page 5 contains Impulse / tap. Omit graphs from Noise spectrum and Relative phase; retain the Bode, Saturation, and Impulse graphs before their data fields. The Bode PDF graph uses the same minimum-at-0 positive scale and marked fitted resonance as the application, and lists fitted resonance, strongest measured bin, and fit uncertainty. All graphs have labelled x/y values. Append an Annex titled `Measurement glossary`, spanning as many pages as needed, containing every displayed measurement term and the exact explanatory text from its tooltip. Include all 33 displayed measurement fields. Download as `<safe-name>-complete-record.pdf`.
+**Export PDF** builds a real multi-page A4 PDF locally without external libraries or uploads. Every page uses a clean light print palette, the configurable tool name (default `ИH Custom Winds`) at upper left, the logo at upper right, and a section title. The footer contains only the configurable lab name; it has no separator, timestamp, or page number. Embed a compact copy of the logo as a data URL specifically for PDF rendering; never draw the external `logo.png` element into the PDF canvas, because that can taint canvases and make `toBlob()` fail with an insecure-operation error under `file://`. Pages 1–2 contain Project Information: project metadata without Project ID, customer record, pickup properties, Bode sweep-point selection, and measurement settings. Created and Updated use European `DD.MM.YYYY` formatting. Pickup ID is the first field in the PDF Pickup section. Render Guitar, Bass, Single Coil, Humbucker, Clockwise, and Counterclockwise as checked or empty boxes in three vertical pairs: Guitar above Bass, Single Coil above Humbucker, and Clockwise above Counterclockwise. Page 3 places Bode response above Relative phase, and page 4 places Saturation above Spectrum. The page-4 section is titled **Spectrum Data** and contains the measured spectral-waterfall graph plus the Spectrum metrics; Relative phase remains data-only. The Bode PDF graph uses the same minimum-at-0 positive scale and marked fitted resonance as the application, and lists fitted resonance, strongest measured bin, and fit uncertainty. In every Harmonics vs Drive rendering, Even is red and Odd is green. All graphs have labelled x/y values. Append an Annex titled `Measurement glossary`, spanning as many pages as needed, containing every displayed measurement term and the exact explanatory text from its tooltip. Include all 28 displayed measurement fields. Download as `<safe-name>-complete-record.pdf`.
 
 ## Canvas requirements
 
@@ -229,73 +225,9 @@ Every graph supports pointer hover/drag:
 - Render a theme-aware tooltip inside the canvas.
 - Clear it on pointer leave.
 
-Use logarithmic x mapping for FFT/spectrum plots and appropriate log-dB y scales.
+Use logarithmic x mapping for spectrum plots and appropriate log-dB y scales.
 
-## Impulse-response / tap test
-
-UI includes:
-
-- Description explaining both physical manual taps and the three-impulse automatic mode, adaptive noise rejection, and noise-reduced aligned stacking
-- Native tap-count selector with 3, 5, and 7 choices; default 3
-- Detector-state surface using live status text
-- Progress bar
-- **Manual Capture** for the selected 3, 5, or 7 physical taps
-- **Capture Auto** for exactly three output-generated impulses
-- Captured waveform canvas limited to an aligned 20 ms onset view
-- Log decay-envelope canvas covering the captured decay, with fitted line
-- Resonant-ring FFT canvas
-- Result fields for ring frequency, T60, ζ, Q, and rise time
-
-Manual Capture is input-only and uses the selected input. It never activates the output. The operator creates each physical or magnetic impulse after the detector displays **TAP NOW**.
-
-For each selected tap:
-
-1. Display **CHECKING BACKGROUND**, allow the input to settle, and collect about 700 ms of background audio for trigger validation only. Do not recalibrate or move either level control.
-2. High-pass condition the detector path around 70 Hz, split it into short blocks, and measure median RMS, median absolute deviation, 95th-percentile RMS, and 97th-percentile peak to derive adaptive thresholds. Keep the saved measurement path full-band.
-3. Require five stable frames before arming and displaying **TAP NOW · NOISE GATE ARMED**.
-4. Trigger only on a fresh, steep transient that clears RMS, peak, crest-factor, novelty, peak-rise, and sample-difference roughness thresholds. Evaluate the strongest short slice in the latest input window so a ScriptProcessor block boundary cannot hide the attack.
-5. Retain about 1.35 seconds aligned within a narrow trigger window for analysis, but store and display only the first 20 ms in the captured-waveform series.
-6. Measure attack SNR/gain over baseline, decay from attack to tail, and clipping.
-7. Reject weak, noise-like, non-decaying, or clipped captures and ask for another tap, with at most three rejected attempts per requested tap.
-8. Score accepted responses from raw SNR, conditioned transient SNR, and decay quality with clipping and retry penalties.
-
-For each accepted tap, use its pre-tap quiet reference to identify coherent 50 or 60 Hz mains hum and harmonics through 1.2 kHz. Fit candidate components to the final 480 ms of the capture and subtract only components whose amplitude remains consistent with the quiet reference. Do not use a hard amplitude gate or broadband smoothing that would shorten the measured decay.
-
-After all selected taps, rank them by score and use the highest-scoring tap as the alignment, amplitude, and phase anchor. Peak-align the cleaned captures, conservatively normalize their amplitudes, reject captures with early-ring correlation below about 0.38, and compute a sample-wise median of the remaining taps. Analyze this robust stack. Save compact per-tap metadata plus a `denoising` record containing the method, stacked-tap count, late-tail noise reduction in dB, and removed hum frequencies. If a clean tap cannot be obtained, report a clear capture error and never manufacture results.
-
-Capture Auto emits exactly three independent 4.5 ms, zero-DC bipolar impulses through the operating system's default output at the selected output level. Before each output event, inspect approximately 700 ms of quiet input only to validate the upcoming capture; do not recalibrate or change Input trim/Output. Schedule one short AudioBufferSource pulse, capture the return for long enough to retain approximately 1.35 seconds from its detected onset, and locate the response within a bounded post-output latency window using the high-pass-conditioned signal. Validate raw and transient SNR, attack gain, decay, and clipping. Do not retry a rejected automatic response with an extra pulse: each run must emit exactly three. Apply the same stationary-hum cancellation, alignment, correlation rejection, robust stacking, and impulse analysis to accepted responses. Save `captureMode: "auto"` plus excitation type, emitted/accepted counts, 4.5 ms duration, and output level. If all three are rejected, give concrete routing/gain guidance and do not manufacture a result.
-
-### Impulse derivation
-
-- Remove DC mean.
-- Locate absolute peak.
-- Find 10% and 90% threshold crossings before the first peak; rise time is their interval.
-- Find the strongest signed excursion in approximately the first 12 ms after onset; report POSITIVE or NEGATIVE.
-- Build 5 ms RMS envelope blocks across the aligned capture.
-- Normalize the envelope peak to 0 dB and clamp the plot floor near −100 dB.
-- Fit a line primarily to envelope points from −5 to −40 dB; fall back to approximately −3 to −25 dB.
-- If no meaningful negative slope exists, show T60/Q/ζ as unresolved.
-- Otherwise `T60 = −60 / slope`.
-- FFT the early ring with an 8192-point Hann window.
-- Search approximately 60 Hz–10 kHz for the strongest ring component.
-- `Q = π × ringFrequency × T60 / 6.907755`.
-- `ζ = 1 / (2Q)`.
-- Downsample only the aligned 20 ms onset waveform by keeping the maximum-magnitude sample per bucket so narrow transients survive.
-
-Save:
-
-```js
-{
-  sampleRate, captures, selectedIndex, score, peakDb,
-  ringFrequency, t60, q, damping, polarity, riseMs,
-  wave: [{x, y}],
-  envelope: [{x, y}],
-  decayFit: [{x, y}],
-  spectrum: [{x, y}]
-}
-```
-
-## White-noise spectrum
+## Spectrum
 
 UI includes:
 
@@ -304,12 +236,13 @@ UI includes:
 - Durations: 2.5, 5, or 10 seconds; default 5
 - **Measure spectrum**
 - Progress bar
-- One fixed-height logarithmic selected-spectrum canvas
+- One fixed-height logarithmic graph titled **Measured frequency spectrum**, plotting the averaged measured response across the selected frequencies
+- One fixed-height **Spectral waterfall** graph plotting the same measured frequencies over capture time, with frequency from left to right, time from top to bottom, and relative level encoded from −90 dB to 0 dB by color
 - 16 metric cards
 
 Changing numeric endpoints switches the preset to Custom. Clamp high frequency below Nyquist. Generate local white noise and pass it through high-pass and low-pass biquads with Q about 0.707, then through test-level gain to the system-default output. Capture selected-channel input during the run. Stop safely on cancellation.
 
-Average several 8192-point Hann FFT power frames (roughly 4–16 depending on duration). Store a plot downsampled to at most about 1200 points, normalized so the strongest selected-band point is 0 dB.
+Average several 8192-point Hann FFT power frames (roughly 4–16 depending on duration). Store a plot downsampled to at most about 1200 points, normalized so the strongest selected-band point is 0 dB. Also retain 12–28 evenly spaced 4096-point measured frames, each compacted to 96 logarithmically spaced frequency cells and normalized against the strongest waterfall cell, so the waterfall persists in localStorage and project files.
 
 ### Required metrics
 
@@ -336,7 +269,7 @@ The UI explains that broadband excitation makes fundamental, THD, and even/odd c
 
 ### Result and graph tooltips
 
-Every result value in Impulse, Noise spectrum, Saturation, Bode response, and Phase includes a keyboard-focusable `?` button with detailed explanation text. Every graph heading also includes a `?` button explaining the graph's role, how to read it, and its main confounder. The Summary copies retain these controls. Use one global, theme-aware, fixed-position `role="tooltip"` element. Show it on `mouseenter`, `focus`, and `click` so it works on touch screens; position it above or below without leaving the viewport. Hide it on `mouseleave`, `blur`, outside pointer press, or Escape. Style the tooltip as a large panel up to roughly 520 px wide with about 18 × 22 px padding, 14 px text, a 15 px radius, translucent blurred glass, and the same warm-orange border and glow treatment as the centered toaster message in all four themes.
+Every result value in Spectrum, Saturation, Bode response, and Phase includes a keyboard-focusable `?` button with detailed explanation text. Every graph heading also includes a `?` button explaining the graph's role, how to read it, and its main confounder. The Summary copies retain these controls. Use one global, theme-aware, fixed-position `role="tooltip"` element. Show it on `mouseenter`, `focus`, and `click` so it works on touch screens; position it above or below without leaving the viewport. Hide it on `mouseleave`, `blur`, outside pointer press, or Escape. Style the tooltip as a large panel up to roughly 520 px wide with about 18 × 22 px padding, 14 px text, a 15 px radius, translucent blurred glass, and the same warm-orange border and glow treatment as the centered toaster message in all four themes.
 
 Each tooltip explains:
 
@@ -396,9 +329,8 @@ Use version 2:
   },
   settings: {
     inputTrim, masterLevel, inputChannel,
-    noiseLow, noiseHigh, noiseDuration, tapCount, bodeSteps, bodeSmoothing
+    noiseLow, noiseHigh, noiseDuration, bodeSteps, bodeSmoothing
   },
-  impulse: null | { /* complete noise-reduced manual or automatic result, including captureMode, optional excitation metadata, and denoising metadata */ },
   noise: null | { low, high, duration, sampleRate, spectrum, metrics },
   saturation: [],
   bode: [],
@@ -407,9 +339,15 @@ Use version 2:
 }
 ```
 
-Save as pretty JSON data named `<safe-name>.custom-winds`, using no additional `.json` suffix. Load version 2 and migrate compatible version-1 projects by setting missing impulse/noise fields to null and missing customer/pickup records to the current form defaults. Continue accepting legacy `.pickup-health` files. Restore all relevant controls and redraw every result.
+Save as pretty JSON data named `<safe-name>.custom-winds`, using no additional `.json` suffix. Load version 2 and migrate compatible version-1 projects by setting missing Spectrum data to null and missing customer/pickup records to the current form defaults. Explicitly discard legacy impulse result and impulse-count fields during normalization so they do not persist into a new save. Continue accepting legacy `.pickup-health` files. Restore all relevant controls and redraw every result.
 
-CSV export includes customer and pickup records, project metadata and notes, the complete Summary overview, every displayed measurement, impulse capture-mode/automatic-excitation metadata, impulse noise-cancellation metadata, and raw data for all eight graphs: impulse waveform/envelope/fit/FFT, white-noise spectrum, saturation harmonic/transfer rows, Bode measured noise-subtracted dBFS, actual output dBFS, robust-filtered dBFS, positive raw relative dB, displayed relative value, SNR, learned-noise dBFS, interpolation/refinement flags, fitted-resonance metadata, and all phase pulse waveforms. PDF and PNG exports identify Manual versus Automatic capture, the aligned-response count, and achieved late-tail noise reduction; PDF also lists removed hum frequencies.
+## Local persistence
+
+Persist the complete serializable application state in `localStorage` under the versioned key `ih-custom-winds.local-state.v1`. The payload contains the entire version-2 project including all measurement arrays, plus UI state for theme, active tab, preferred input-device ID, and preferred input channel. Debounce form/control writes, save immediately before page exit and explicit JSON download, and update local state after project import, measurement completion, clearing, theme changes, and tab changes. On startup, validate and normalize the stored project, migrate legacy ISO dates, restore every compatible control and graph, and ignore/remove only this app's key if parsing or validation fails. Report storage quota/security failures once without preventing the app from running.
+
+Do not persist live `MediaStream`, Web Audio nodes, active generators/tests, sample ring buffers, or the learned input noise/calibration profile. Audio must reconnect through user permission and perform the required route-change calibration after reload. A missing stored device should fall back safely while keeping the app usable.
+
+CSV export includes customer and pickup records, project metadata and notes, the complete Summary overview, every displayed measurement, white-noise spectrum, saturation harmonic/transfer rows, Bode measured noise-subtracted dBFS, actual output dBFS, robust-filtered dBFS, positive raw relative dB, displayed relative value, SNR, learned-noise dBFS, interpolation/refinement flags, fitted-resonance metadata, and all phase pulse waveforms.
 
 ## Summary and PNG
 
@@ -420,23 +358,22 @@ Summary cards include:
 - Relative phase
 - Measurement record
 
-Do not place Impulse ring or Noise spectrum overview cards at the top of Summary; their detailed measurements remain available in their sections below.
+Do not place a Spectrum overview card at the top of Summary; its detailed measurements remain available in its section below.
 
-Below the cards, Summary contains five separated, labelled result sections in this order: Bode response, Phase, Noise spectrum, Saturation, and Impulse / tap. Together they contain synchronized copies of all eight graphs and every detailed measurement. The original graphs and measurements remain visible in their source tabs.
+Below the cards, Summary contains four separated, labelled result sections in this order: Bode response, Phase, Spectrum, and Saturation. Together they contain synchronized copies of all six graphs and every detailed measurement. The original graphs and measurements remain visible in their source tabs.
 
-PNG is a tall, complete report canvas at 2× backing scale using the current theme. It contains the four remaining overview cards and their notes, project notes, all 33 detailed measurement values, and all eight graphs in Summary order: Bode magnitude, five phase pulse responses, noise spectrum, harmonics versus drive, transfer curve, impulse waveform, decay envelope/fit, and impulse FFT.
+PNG is a tall, complete report canvas at 2× backing scale using the current theme. It contains the four overview cards and their notes, project notes, all 28 detailed measurement values, and all six graphs in Summary order: Bode magnitude, five phase pulse responses, averaged spectrum, spectral waterfall, harmonics versus drive, and transfer curve.
 
-CSV contains every item represented by Summary and the raw series needed to reconstruct every graph in Summary order: overview values and notes; complete Bode rows with noise/SNR/interpolation metadata; phase votes and pulse waveform samples; raw white-noise metrics and spectrum; saturation harmonic/transfer rows; impulse waveform, envelope, decay fit, and FFT.
+CSV contains every item represented by Summary and the raw series needed to reconstruct every graph in Summary order: overview values and notes; complete Bode rows with noise/SNR/interpolation metadata; phase votes and pulse waveform samples; raw white-noise metrics, spectrum, and waterfall cells; and saturation harmonic/transfer rows.
 
 ## Error handling and cancellation
 
 - Refuse output without an input connection.
-- Require an input connection before either impulse mode can run. Manual Capture is input-only; Capture Auto additionally uses the fixed system-default output.
 - Disable all run buttons, **Measure All**, **Clear measurements**, and the 440 Hz button during a test or Measure All sequence. Keep Stop available; stopping a batch cancels its remaining stages.
 - Keep Stop available.
 - Cancellation clears the active-test marker; loops check it after every short wait.
 - Always ramp output down in `finally` and on `beforeunload`.
-- Show concise toasts for permission denial, missing input, tap timeout, rejected tap series, invalid project, completion, and cancellation. Toasts are large and centered in the viewport, with a translucent blurred panel, theme-colored border/dot/glow accents, centered text, and a subtle scale/vertical entrance transition.
+- Show concise toasts for permission denial, missing input, invalid project, completion, and cancellation. Toasts are large and centered in the viewport, with a translucent blurred panel, theme-colored border/dot/glow accents, centered text, and a subtle scale/vertical entrance transition.
 - Never manufacture or simulate results when signal is absent.
 
 ## Accessibility and responsive behavior
@@ -447,7 +384,7 @@ CSV contains every item represented by Summary and the raw series needed to reco
 - Respect `prefers-reduced-motion`.
 - Avoid horizontal page overflow down to 300 px.
 - Metric grid is four columns on wide screens, three at medium width, two on tablets, and one on narrow phones.
-- Noise options and impulse-status controls stack responsively.
+- Spectrum options and measurement-status controls stack responsively.
 - Plot heights remain fixed on every breakpoint.
 
 ## README requirements
@@ -460,7 +397,6 @@ Document:
 - Electrical, thermal, feedback, hearing, and instrument-finish safety
 - Air-core driver construction using a nonmagnetic former, roughly 0.25–0.35 mm wire, 220–350 turns, commonly 6–12 Ω measured DCR, twisted strain-relieved leads, optional gapped shield, and strict amplifier-load caveats
 - Input preparation and repeatable geometry
-- Detailed manual-tap and three-pulse automatic workflows, adaptive detection, hum cancellation, robust stacking, scoring, plots, formulas, and limitations
 - Noise spans, durations, FFT averaging, all 16 metrics, and caveats
 - Retained saturation/Bode/phase tests
 - Projects, CSV, PNG, themes, accessibility, quality checklist, limitations, and troubleshooting
@@ -473,27 +409,27 @@ Document:
 4. There is no Live scope tab, free-form generator, waveform selector, frequency slider, output device selector, output channel selector, or `setSinkId()`.
 5. A fixed 440 Hz button is present.
 6. Output connects only to system-default `AudioContext.destination`.
-7. Splash is visible on Dark green reload and does not call `getUserMedia()` automatically.
-8. Impulse / tap offers Manual Capture with exactly 3, 5, and 7 taps (3 default) and Capture Auto with exactly three emitted impulses. Manual waits for a fresh transient after **TAP NOW** and never activates output; Auto uses only the fixed system-default output.
-9. Impulse result includes all three requested plots and five requested values.
-10. White-noise duration offers exactly 2.5, 5, and 10 seconds.
-11. Frequency span is selectable and custom endpoints are editable.
-12. All 16 noise metrics and all 15 scalar results from the other tests exist with nonempty detailed explanation text.
-13. Every graph heading has a detailed explanation button; the single global tooltip is accessible by focus, hover, and touch click and dismisses on outside press or Escape.
-14. Every plot has cursor inspection and fixed height.
-15. Canvas DPR is capped at 2.
-16. Project version 2 contains complete impulse/noise data and preserves the selected Bode sweep-point count and Bode display-smoothing level.
-17. CSV and PNG include the new measurements.
-18. One button cycles through Light, Dark orange, Dark green, and Dark blue; Dark green is the reload default, theme changes redraw every plot, and exports use the current theme.
-19. Desktop and mobile layouts have no horizontal overflow.
-20. At runtime the five source tabs retain eight original canvases and all result cards; Summary contains eight additional synchronized canvases and copied result cards grouped into five sections.
-21. No measurement tab contains an Open Summary copy box; **Export PDF** sits beside **Load project**, while Summary buttons read **Export PNG** and **Export CSV**, remain on one horizontal line, and have space above and below.
-22. A glowing, theme-accented **Measure All** button sits immediately left of **Clear measurements**, runs Bode → Phase → Noise → Saturation → automatic three-impulse capture sequentially with automatic tab changes, returns to Bode, and shows a final completion toaster.
-22. Complete PNG includes four overview cards, all 33 measurements, project notes, and all eight graphs; complete CSV includes all displayed information and raw data for every graph.
+7. Splash is visible on Dark blue reload and does not call `getUserMedia()` automatically.
+8. The visible tabs are Bode response, Phase, Spectrum, Saturation, Summary, and Settings; no Impulse / Tap UI or results section exists.
+9. White-noise duration offers exactly 2.5, 5, and 10 seconds.
+10. Frequency span is selectable and custom endpoints are editable.
+11. All 16 Spectrum metrics and all 12 scalar results from the other tests exist with nonempty detailed explanation text.
+12. Every graph heading has a detailed explanation button; the single global tooltip is accessible by focus, hover, and touch click and dismisses on outside press or Escape.
+13. Every plot has cursor inspection and fixed height.
+14. Canvas DPR is capped at 2.
+15. Project version 2 contains complete Spectrum data and preserves the selected Bode sweep-point count and Bode display-smoothing level. Legacy impulse results and settings are discarded on load.
+16. CSV, PNG, and PDF contain no impulse data, waveform, metric, or section.
+17. One button cycles through Light, Dark orange, Dark green, and Dark blue; Dark blue is the first-run default, the restored theme redraws every plot, and exports use the current theme.
+18. Desktop and mobile layouts have no horizontal overflow.
+19. At runtime the four source tabs retain six original canvases and all result cards; Summary contains six additional synchronized canvases and copied result cards grouped into four sections.
+20. No measurement tab contains an Open Summary copy box; **Export PDF** sits beside **Load project**, while Summary buttons read **Export PNG** and **Export CSV**, remain on one horizontal line, and have space above and below.
+21. A glowing, theme-accented **Measure All** button sits immediately left of **Clear measurements**, runs Bode → Phase → Spectrum → Saturation sequentially with automatic tab changes, returns to Bode, and shows a final completion toaster.
+22. Complete PNG includes four overview cards, all 28 measurements, project notes, and all six graphs; complete CSV includes all displayed information and raw data for every graph, including time/frequency/level waterfall cells.
 23. Large explanation tooltips use the same orange glass, blur, border, and glow language as toaster messages.
 24. Settings defaults to `ИH Custom Winds` and `Nicks Pickup Lab`; Apply updates the UI and all exports, and saved projects preserve both names.
-25. PDF places Bode above Relative phase on page 3 and Saturation above Noise spectrum on page 4, omits Noise and Phase graphs, arranges checkbox pickup selections in the requested vertical pairs, uses the lab name alone in the footer, contains no page numbers or footer timestamps, and appends a complete tooltip-derived measurement glossary annex.
-26. Every input-device or input-channel change first resets Input trim to 0 dB and Output level to −30 dBFS, removes the previous route correction, and captures exactly one quiet profile lasting no more than three seconds; a baseline louder than −70 dBFS causes one whole-dB Input-trim reduction and matching Output increase within safe limits, with no verification passes; measurement launch and route changes are locked during calibration, route changes are locked during measurements, and no measurement recalibrates or automatically moves either level control; Impulse/Tap background checks are validation/denoising only; the INPUT meter marks −70 dBFS in green and −12 dBFS in red.
+25. PDF places Bode above Relative phase on page 3 and Saturation above Spectrum on page 4, names the section **Spectrum Data**, includes the measured spectral waterfall there, keeps Relative phase data-only, colors Even red and Odd green in Harmonics vs Drive, arranges checkbox pickup selections in the requested vertical pairs, uses the lab name alone in the footer, contains no page numbers or footer timestamps, contains no Impulse / Tap page, and appends a complete tooltip-derived measurement glossary annex.
+26. Every input-device or input-channel change first resets Input trim to 0 dB and Output level to −30 dBFS, removes the previous route correction, shows the blocking **Calibrating, please wait.** overlay, and captures exactly one quiet profile lasting no more than three seconds; a baseline louder than −70 dBFS causes one whole-dB Input-trim reduction and matching Output increase within safe limits, with no verification passes; measurement launch and route changes are locked during calibration, route changes are locked during measurements, and no measurement recalibrates or automatically moves either level control; the INPUT meter marks −70 dBFS in green and −12 dBFS in red.
 27. Bode emits one phase-continuous logarithmic 500 Hz–8 kHz chirp with smooth endpoint fades; offers 20/30/40/50/60 normal analysis points with 60 default and high-frequency-dense exponential spacing; uses learned-noise power subtraction; keeps the selected output level constant; adds nine adaptive analysis points around the candidate peak from the same capture; hides partial curves; shows frequency plus measured dBFS in the top status; publishes a robust minimum-at-0 positive curve only after completion; dims that raw curve beneath a brighter 0–100% adjustable logarithmic-frequency smoothing overlay (45% default) in UI, Summary, PNG, and PDF without changing fitted results; fits the strongest local 5–7 points in log-frequency; and reports/exports fitted resonance, strongest measured bin, and uncertainty.
 28. Browser console has no startup errors.
 29. Every date uses exactly `DD.MM.YYYY`, including saved-project Created/Updated fields, Wind Date, Summary measurement dates, CSV Created/Updated fields, and PDF Created/Updated fields. Loading migrates legacy ISO timestamps to this format.
+30. Versioned `localStorage` persistence restores the full project, every measurement array, settings, branding, theme, active tab, and preferred input route after reload; malformed/quota-blocked storage fails safely, while live audio and route calibration remain session-only and are relearned after reconnection.

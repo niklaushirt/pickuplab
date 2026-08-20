@@ -9,7 +9,7 @@ Create **ИH Custom Winds**, a polished, responsive, single-file browser applica
 The current app provides:
 
 - Input-device and input-channel selection plus live input metering
-- Fixed operating-system-default output with no output selector
+- Output-device and hardware-channel selection, with every browser-exposed output offered and the system default as fallback
 - One manually toggled 440 Hz sine test tone
 - Band-selectable white-noise response for 2.5, 5, or 10 seconds
 - 16 spectrum/time-domain metrics with detailed accessible tooltips
@@ -144,17 +144,20 @@ Stack below roughly 1100 px and use single-column mobile layout below roughly 76
 
 Provide:
 
-- Two clearly separated bordered groups inside Audio routing: a green-accented **Input** group for captured-interface controls and a blue-accented **Output** group for system-output controls. Keep the groups vertically stacked and preserve semantic `fieldset`/`legend` labelling.
+- Two clearly separated bordered groups inside Audio routing: a green-accented **Input** group for captured-interface controls and a blue-accented **Output** group for generated-signal routing. Keep the groups vertically stacked and preserve semantic `fieldset`/`legend` labelling.
 - Live input dBFS meter
 - Input-device select
 - Input-channel select derived from actual channel count
 - Digital input trim from −48 to +18 dB. Only after an input-device or input-channel change, reset Input trim to 0 dB and Output level to −30 dBFS, remove the previous route correction, and capture exactly one quiet analyser window lasting no more than three seconds from the same `AnalyserNode` used by the INPUT meter. During the entire calibration show a blocking overlay with the exact message **Calibrating, please wait.** plus a short instruction to keep the input quiet; remove it in the calibration `finally` path. Do not depend on `ScriptProcessorNode` callbacks for route calibration. Use the complete window's raw RMS, including visible DC, and apply at most one whole-dB Input-trim reduction when the baseline is louder than −70 dBFS. Raise Output level by the matching amount within its safe range and report any uncompensated amount. Do not perform verification passes. Lock measurement launch and route selectors during calibration, lock route selectors during measurements, and refuse measurement start while calibration is active. Measurements reuse the learned route profile and never recalibrate or change Input trim/Output automatically. Draw a small green reference line at −70 dBFS on the INPUT meter while retaining the red −12 dBFS line.
-- Output meter labelled `OUTPUT LEVEL / SYSTEM DEFAULT`
+- Output meter labelled `OUTPUT LEVEL`
+- Output-device select containing **System default output** plus every distinct `audiooutput` returned by `enumerateDevices()`
+- Output-channel select derived from the selected `AudioContext.destination.maxChannelCount`, labelled **Channel 1 / Left**, **Channel 2 / Right**, then **Channel N**
 - Output-level slider from −48 to −6 dBFS, default −30 dBFS
 - **Play 440 Hz test tone** and **Stop output**
-- Note explaining fixed system-default output, no input monitoring, and automatic route-specific noise-floor learning
 
-Do not render output-device or output-channel controls. Connect the output gain directly to `AudioContext.destination`; do not call `setSinkId()`.
+Prefer `AudioContext.setSinkId()` to activate a selected non-default output. When that method is unavailable but `HTMLMediaElement.setSinkId()` exists, create a hidden autoplaying audio element fed by a `MediaStreamAudioDestinationNode` and use it as the selectable-device bridge. If permission is required and `MediaDevices.selectAudioOutput()` is available, request authorization from the user-initiated device change and accept a returned replacement device ID. Keep the system default selectable with an empty sink ID. If neither selectable-sink route is supported, retain the system default and explain that another device requires localhost or HTTPS in a current Chrome or Edge browser. Route the mono output gain through a discrete `ChannelMergerNode`, connecting it only to the selected merger input before the active destination. Stop active output before any output-route change. Lock both input and output selectors during calibration and measurements.
+
+Do not render a routing explanation box below the Input and Output groups. Never connect input audibly to output.
 
 Use `getUserMedia()` with audio only and request two channels where possible. Disable echo cancellation, noise suppression, and automatic gain control.
 
@@ -211,7 +214,7 @@ The Settings tab contains labelled Tool name and Lab name fields, defaulting to 
 
 Place **Export PDF** in the Project action row immediately to the right of **Load project**. At the top of Summary, keep **Export PNG** and **Export CSV** on one non-wrapping horizontal line. Do not include the word “complete” in the labels. Give the Summary toolbar clear breathing room above and below, approximately 18–20 px of vertical padding.
 
-**Export PDF** builds a real multi-page A4 PDF locally without external libraries or uploads. Every page uses a clean light print palette, the configurable tool name (default `ИH Custom Winds`) at upper left, the logo at upper right, and a section title. The footer contains only the configurable lab name; it has no separator, timestamp, or page number. Embed a compact copy of the logo as a data URL specifically for PDF rendering; never draw the external `logo.png` element into the PDF canvas, because that can taint canvases and make `toBlob()` fail with an insecure-operation error under `file://`. Pages 1–2 contain Project Information: project metadata without Project ID, customer record, pickup properties, Bode sweep-point selection, and measurement settings. Created and Updated use European `DD.MM.YYYY` formatting. Pickup ID is the first field in the PDF Pickup section. Render Guitar, Bass, Single Coil, Humbucker, Clockwise, and Counterclockwise as checked or empty boxes in three vertical pairs: Guitar above Bass, Single Coil above Humbucker, and Clockwise above Counterclockwise. Page 3 places Bode response above Relative phase, and page 4 places Saturation above Spectrum. The page-4 section is titled **Spectrum Data** and contains the measured spectral-waterfall graph plus the Spectrum metrics; Relative phase remains data-only. The Bode PDF graph uses the same minimum-at-0 positive scale and marked fitted resonance as the application, and lists fitted resonance, strongest measured bin, and fit uncertainty. In every Harmonics vs Drive rendering, Even is red and Odd is green. All graphs have labelled x/y values. Append an Annex titled `Measurement glossary`, spanning as many pages as needed, containing every displayed measurement term and the exact explanatory text from its tooltip. Include all 28 displayed measurement fields. Download as `<safe-name>-complete-record.pdf`.
+**Export PDF** builds a real multi-page A4 PDF locally without external libraries or uploads. Every page uses a clean light print palette, the configurable tool name (default `ИH Custom Winds`) at upper left, the logo at upper right, and a section title. The footer contains only the configurable lab name; it has no separator, timestamp, or page number. Embed a compact copy of the logo as a data URL specifically for PDF rendering; never draw the external `logo.png` element into the PDF canvas, because that can taint canvases and make `toBlob()` fail with an insecure-operation error under `file://`. Pages 1–2 contain Project Information: project metadata without Project ID, customer record, pickup properties, measurement settings, and an Audio Routing section. The PDF Measurement Settings section contains only Input Trim and Output Level; omit Bode Sweep Points, Bode Smoothing, Noise Duration, Noise Low, and Noise High. In Audio Routing, place Input Device and Input Channel beside each other on one row, then Output Device and Output Channel beside each other on the next. Created and Updated use European `DD.MM.YYYY` formatting. Pickup ID is the first field in the PDF Pickup section. Render Guitar, Bass, Single Coil, Humbucker, Clockwise, and Counterclockwise as checked or empty boxes in three vertical pairs: Guitar above Bass, Single Coil above Humbucker, and Clockwise above Counterclockwise. Page 3 places Bode response above Relative phase, and page 4 places Saturation above Spectrum. The page-4 section is titled **Spectrum Data** and contains the measured spectral-waterfall graph plus the Spectrum metrics; Relative phase remains data-only. The Bode PDF graph uses the same minimum-at-0 positive scale and marked fitted resonance as the application, and lists fitted resonance, strongest measured bin, and fit uncertainty. In every Harmonics vs Drive rendering, Even is red and Odd is green. All graphs have labelled x/y values. Append an Annex titled `Measurement glossary`, spanning as many pages as needed, containing every displayed measurement term and the exact explanatory text from its tooltip. Include all 28 displayed measurement fields. Download as `<safe-name>-complete-record.pdf`.
 
 ## Canvas requirements
 
@@ -240,7 +243,7 @@ UI includes:
 - One fixed-height **Spectral waterfall** graph plotting the same measured frequencies over capture time, with frequency from left to right, time from top to bottom, and relative level encoded from −90 dB to 0 dB by color
 - 16 metric cards
 
-Changing numeric endpoints switches the preset to Custom. Clamp high frequency below Nyquist. Generate local white noise and pass it through high-pass and low-pass biquads with Q about 0.707, then through test-level gain to the system-default output. Capture selected-channel input during the run. Stop safely on cancellation.
+Changing numeric endpoints switches the preset to Custom. Clamp high frequency below Nyquist. Generate local white noise and pass it through high-pass and low-pass biquads with Q about 0.707, then through test-level gain to the selected output device and hardware channel. Capture selected-channel input during the run. Stop safely on cancellation.
 
 Average several 8192-point Hann FFT power frames (roughly 4–16 depending on duration). Store a plot downsampled to at most about 1200 points, normalized so the strongest selected-band point is 0 dB. Also retain 12–28 evenly spaced 4096-point measured frames, each compacted to 96 logarithmically spaced frequency cells and normalized against the strongest waterfall cell, so the waterfall persists in localStorage and project files.
 
@@ -328,7 +331,9 @@ Use version 2:
     poleInsulator, protection, leads, startWire, endWire
   },
   settings: {
-    inputTrim, masterLevel, inputChannel,
+    inputTrim, masterLevel,
+    inputDeviceId, inputDeviceLabel, inputChannel,
+    outputDeviceId, outputDeviceLabel, outputChannel,
     noiseLow, noiseHigh, noiseDuration, bodeSteps, bodeSmoothing
   },
   noise: null | { low, high, duration, sampleRate, spectrum, metrics },
@@ -392,7 +397,7 @@ CSV contains every item represented by Summary and the raw series needed to reco
 Document:
 
 - Local-server startup and privacy
-- Fixed system-output behavior
+- Selectable output-device/channel behavior and system-default fallback
 - 440 Hz workflow
 - Electrical, thermal, feedback, hearing, and instrument-finish safety
 - Air-core driver construction using a nonmagnetic former, roughly 0.25–0.35 mm wire, 220–350 turns, commonly 6–12 Ω measured DCR, twisted strain-relieved leads, optional gapped shield, and strict amplifier-load caveats
@@ -406,9 +411,9 @@ Document:
 1. Only `index.html`, `README.md`, and `PROMPT.md` are primary deliverables.
 2. Inline script passes `node --check` after extraction.
 3. No external runtime or network/storage APIs exist.
-4. There is no Live scope tab, free-form generator, waveform selector, frequency slider, output device selector, output channel selector, or `setSinkId()`.
+4. There is no Live scope tab, free-form generator, waveform selector, or frequency slider. Input and output device/channel selectors are present.
 5. A fixed 440 Hz button is present.
-6. Output connects only to system-default `AudioContext.destination`.
+6. Every browser-exposed audio output is proposed in the Output device selector; non-default routing uses `AudioContext.setSinkId()`, and the mono generator reaches only the selected discrete output channel through a `ChannelMergerNode`.
 7. Splash is visible on Dark blue reload and does not call `getUserMedia()` automatically.
 8. The visible tabs are Bode response, Phase, Spectrum, Saturation, Summary, and Settings; no Impulse / Tap UI or results section exists.
 9. White-noise duration offers exactly 2.5, 5, and 10 seconds.
@@ -417,7 +422,7 @@ Document:
 12. Every graph heading has a detailed explanation button; the single global tooltip is accessible by focus, hover, and touch click and dismisses on outside press or Escape.
 13. Every plot has cursor inspection and fixed height.
 14. Canvas DPR is capped at 2.
-15. Project version 2 contains complete Spectrum data and preserves the selected Bode sweep-point count and Bode display-smoothing level. Legacy impulse results and settings are discarded on load.
+15. Project version 2 contains complete Spectrum data, the selected input/output device IDs, labels and channels, and the selected Bode sweep-point count and display-smoothing level. Legacy impulse results and settings are discarded on load.
 16. CSV, PNG, and PDF contain no impulse data, waveform, metric, or section.
 17. One button cycles through Light, Dark orange, Dark green, and Dark blue; Dark blue is the first-run default, the restored theme redraws every plot, and exports use the current theme.
 18. Desktop and mobile layouts have no horizontal overflow.
@@ -427,9 +432,9 @@ Document:
 22. Complete PNG includes four overview cards, all 28 measurements, project notes, and all six graphs; complete CSV includes all displayed information and raw data for every graph, including time/frequency/level waterfall cells.
 23. Large explanation tooltips use the same orange glass, blur, border, and glow language as toaster messages.
 24. Settings defaults to `ИH Custom Winds` and `Nicks Pickup Lab`; Apply updates the UI and all exports, and saved projects preserve both names.
-25. PDF places Bode above Relative phase on page 3 and Saturation above Spectrum on page 4, names the section **Spectrum Data**, includes the measured spectral waterfall there, keeps Relative phase data-only, colors Even red and Odd green in Harmonics vs Drive, arranges checkbox pickup selections in the requested vertical pairs, uses the lab name alone in the footer, contains no page numbers or footer timestamps, contains no Impulse / Tap page, and appends a complete tooltip-derived measurement glossary annex.
+25. PDF places Input Device beside Input Channel and Output Device beside Output Channel in its Audio Routing section; places Bode above Relative phase on page 3 and Saturation above Spectrum on page 4; names the section **Spectrum Data**; includes the measured spectral waterfall there; keeps Relative phase data-only; colors Even red and Odd green in Harmonics vs Drive; arranges checkbox pickup selections in the requested vertical pairs; uses the lab name alone in the footer; contains no page numbers or footer timestamps or Impulse / Tap page; and appends a complete tooltip-derived measurement glossary annex.
 26. Every input-device or input-channel change first resets Input trim to 0 dB and Output level to −30 dBFS, removes the previous route correction, shows the blocking **Calibrating, please wait.** overlay, and captures exactly one quiet profile lasting no more than three seconds; a baseline louder than −70 dBFS causes one whole-dB Input-trim reduction and matching Output increase within safe limits, with no verification passes; measurement launch and route changes are locked during calibration, route changes are locked during measurements, and no measurement recalibrates or automatically moves either level control; the INPUT meter marks −70 dBFS in green and −12 dBFS in red.
 27. Bode emits one phase-continuous logarithmic 500 Hz–8 kHz chirp with smooth endpoint fades; offers 20/30/40/50/60 normal analysis points with 60 default and high-frequency-dense exponential spacing; uses learned-noise power subtraction; keeps the selected output level constant; adds nine adaptive analysis points around the candidate peak from the same capture; hides partial curves; shows frequency plus measured dBFS in the top status; publishes a robust minimum-at-0 positive curve only after completion; dims that raw curve beneath a brighter 0–100% adjustable logarithmic-frequency smoothing overlay (45% default) in UI, Summary, PNG, and PDF without changing fitted results; fits the strongest local 5–7 points in log-frequency; and reports/exports fitted resonance, strongest measured bin, and uncertainty.
 28. Browser console has no startup errors.
 29. Every date uses exactly `DD.MM.YYYY`, including saved-project Created/Updated fields, Wind Date, Summary measurement dates, CSV Created/Updated fields, and PDF Created/Updated fields. Loading migrates legacy ISO timestamps to this format.
-30. Versioned `localStorage` persistence restores the full project, every measurement array, settings, branding, theme, active tab, and preferred input route after reload; malformed/quota-blocked storage fails safely, while live audio and route calibration remain session-only and are relearned after reconnection.
+30. Versioned `localStorage` persistence restores the full project, every measurement array, settings, branding, theme, active tab, and preferred input/output routes after reload; malformed/quota-blocked storage fails safely, while live audio and route calibration remain session-only and are relearned after reconnection.

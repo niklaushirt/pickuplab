@@ -39,7 +39,7 @@ Open `http://127.0.0.1:4173` in a current browser. The opening splash follows th
 
 ```text
 440 Hz / automated output (Bode, spectrum, saturation, phase)
-  → operating-system default audio output
+  → selected audio output device and hardware channel
   → suitable headphone or power amplifier
   → repeatable magnetic driver coil
   → magnetic coupling across a fixed gap
@@ -48,7 +48,7 @@ Open `http://127.0.0.1:4173` in a current browser. The opening splash follows th
   → browser analysis
 ```
 
-Spectrum, saturation, Bode, phase, and the 440 Hz tone use the fixed operating-system output. There is intentionally no output-device or output-channel selector.
+Spectrum, saturation, Bode, phase, and the 440 Hz tone use the selected output device and channel. The Output device dropdown lists every `audiooutput` exposed by the browser, with **System default output** as the fallback. Selecting a hardware device prefers Web Audio output-sink routing and falls back to a hidden HTML audio sink fed by the Web Audio graph; the browser may request permission before exposing or activating a non-default device. If neither standards-based sink API is available, non-default selection requires opening the app from localhost or HTTPS in a current Chrome or Edge browser. The Output channel selector routes the mono test signal discretely to the chosen destination channel.
 
 Whenever the input device or input channel changes, the app keeps the output silent, resets **Input trim** to 0 dB and **Output level** to −30 dBFS, discards the previous route correction, and records exactly one quiet window lasting no more than three seconds from the same `AnalyserNode` that drives the visible INPUT meter. A blocking overlay says **Calibrating, please wait.** and asks the operator to keep the input quiet for the complete capture. The automatic decision uses that window's raw meter RMS, including any visible DC component. If it is louder than −70 dBFS, the app lowers **Input trim** once in whole-dB steps and raises **Output level** by the same amount within its safe range. There are no verification passes or further calibration captures. Route selection and measurement buttons are locked during those three seconds, and device/channel selection is locked during every measurement, so calibration cannot run while a measurement is active. Measurements reuse the learned route profile without moving either level control. A green marker on the INPUT meter identifies the −70 dBFS target; the red marker remains at −12 dBFS.
 
@@ -105,14 +105,14 @@ Record the driver-to-pickup gap, pickup position, instrument-control positions, 
 5. Connect to a high-impedance interface input and disable input effects, auto gain, echo cancellation, noise suppression, and monitoring.
 6. Grant input permission and select the device and channel.
 7. Adjust analog input gain so the strongest event stays below clipping.
-8. Set **Output level** low and verify the default operating-system output.
+8. Select the required output device and hardware channel, then set **Output level** low.
 9. Use the 440 Hz button briefly to confirm routing. Stop it before changing cables or fixtures.
 
 Digital input trim changes analysis level but cannot repair analog clipping.
 
 ## Analysis workflow and results dashboard
 
-The desktop workspace places **01 Audio routing** beside the wider **02 Analyze pickup** panel. Inside Audio routing, the interface input controls and meter sit in a dedicated green-accented **Input** group, while the generator level, meter, and buttons sit in a separate blue-accented **Output** group. The full-width **03 Project** panel sits below both, with Customer on the left and Pickup on the right. These panels and project subsections stack vertically on narrow screens.
+The desktop workspace places **01 Audio routing** beside the wider **02 Analyze pickup** panel. Inside Audio routing, the interface input controls and meter sit in a dedicated green-accented **Input** group. The blue-accented **Output** group contains the output-device and hardware-channel selectors, generator level, meter, and buttons. The full-width **03 Project** panel sits below both, with Customer on the left and Pickup on the right. These panels and project subsections stack vertically on narrow screens.
 
 The four measurement tabs—**Bode response**, **Phase**, **Spectrum**, and **Saturation**—contain their setup, start button, progress, graphs, and measurements. Bode response is the initial tab. Each primary measurement-action row has clear vertical breathing room above and below. The **Summary** tab contains a synchronized second copy of every graph and measurement in the same order.
 
@@ -122,13 +122,13 @@ Every result value has a `?` explanation button describing its role, interpretat
 
 ## 440 Hz test tone
 
-**Play 440 Hz test tone** produces a continuous sine wave through the operating system's default output at the selected test-output level. It requires an input connection. Press the same button or **Stop output** to ramp it down.
+**Play 440 Hz test tone** produces a continuous sine wave through the selected output device and channel at the selected output level. It requires an input connection. Press the same button or **Stop output** to ramp it down.
 
 The button is intended only for routing, gain, and phase-chain checks. It replaces the former free-form excitation generator.
 
 ## Spectrum
 
-The noise test plays locally generated white noise through the system-default output. Two second-order Butterworth-style biquad filters limit the excitation to the selected span:
+The noise test plays locally generated white noise through the selected output device and channel. Two second-order Butterworth-style biquad filters limit the excitation to the selected span:
 
 - Pickup focus: 500–8,000 Hz
 - Guitar / bass: 40–8,000 Hz
@@ -186,15 +186,15 @@ Five low-level shaped pulses vote on response sign. The result is positive, nega
 
 - The **Customer** record stores name, address, phone, eMail, notes, and wind date in European `DD.MM.YYYY` format.
 - The **Pickup** record starts with Pickup ID, which defaults to `NH 7k42 #1`, followed by guitar/bass, single-coil/humbucker, clockwise/counterclockwise selections plus wire type, gauge, wind count, polarity, phase, pole insulator, protection, leads, start wire (hot), and end wire (ground). Wire Type offers Plain Enamel, Heavy Formvar, and Poly; Gauge offers AWG41 through AWG44; Polarity offers North or South; and Phase offers Negative or Positive. Their defaults are Plain Enamel, AWG42, South, and Negative. New projects also default to 7000 winds, Kapton Tape, Tissue, Waxed Pushback, Yellow hot/start, and Black ground/end.
-- **Save project** downloads version-2 JSON data using the single `.custom-winds` filename extension. It contains customer and pickup records, settings including Bode sweep density and display smoothing, all Spectrum metrics, averaged spectrum points, spectral-waterfall cells, saturation, noise-suppressed Bode points and resonance-fit metadata, phase, notes, and Created/Updated dates in European `DD.MM.YYYY` format. Legacy impulse fields are discarded when older projects are loaded.
+- **Save project** downloads version-2 JSON data using the single `.custom-winds` filename extension. It contains customer and pickup records, the selected input/output device labels, IDs and channels, settings including Bode sweep density and display smoothing, all Spectrum metrics, averaged spectrum points, spectral-waterfall cells, saturation, noise-suppressed Bode points and resonance-fit metadata, phase, notes, and Created/Updated dates in European `DD.MM.YYYY` format. Legacy impulse fields are discarded when older projects are loaded.
 - **Load project** accepts version 2, migrates compatible version-1 files, and remains compatible with legacy `.pickup-health` files.
 - **Export CSV** contains Created and Updated in European `DD.MM.YYYY` format, the customer and pickup records, four Summary overview cards, every displayed measurement, all Spectrum metrics, averaged spectrum points, time/frequency/level waterfall cells, saturation harmonic/transfer data, and Bode measured level, generated output level, robust level, raw relative dB, displayed relative value, SNR, learned floor, interpolation/refinement flags, and fitted-resonance metadata, plus phase votes and every phase waveform sample.
-- **Export PDF**, located immediately to the right of **Load project**, creates a polished multi-page A4 record locally: branded header and logo, project/customer information, pickup properties and test settings, two measurement pages, and a multi-page annex glossary copied directly from every measurement tooltip. The first measurement page places Bode response above Relative phase, and the second places Saturation above Spectrum. The **Spectrum Data** section includes the measured spectral waterfall; Relative phase remains data-only. The Bode, Saturation, and spectral-waterfall graphs appear with their data, and the fitted Bode resonance is marked while the fitted frequency, strongest measured bin, and uncertainty are listed. Pickup selections render as checked or empty boxes in three vertical pairs: Guitar above Bass, Single Coil above Humbucker, and Clockwise above Counterclockwise. Project ID is omitted; Created and Updated use European `DD.MM.YYYY` formatting. The footer contains only the configured lab name, with no separator, page number, or timestamp. Its PDF-only logo is embedded to keep canvas export secure when the app is opened directly from disk.
+- **Export PDF**, located immediately to the right of **Load project**, creates a polished multi-page A4 record locally: branded header and logo, project/customer information, pickup properties and test settings, two measurement pages, and a multi-page annex glossary copied directly from every measurement tooltip. Its Audio Routing section places **Input Device** beside **Input Channel** on one row and **Output Device** beside **Output Channel** on the next. PDF Measurement Settings contains only **Input Trim** and **Output Level**. The first measurement page places Bode response above Relative phase, and the second places Saturation above Spectrum. The **Spectrum Data** section includes the measured spectral waterfall; Relative phase remains data-only. The Bode, Saturation, and spectral-waterfall graphs appear with their data, and the fitted Bode resonance is marked while the fitted frequency, strongest measured bin, and uncertainty are listed. Pickup selections render as checked or empty boxes in three vertical pairs: Guitar above Bass, Single Coil above Humbucker, and Clockwise above Counterclockwise. Project ID is omitted; Created and Updated use European `DD.MM.YYYY` formatting. The footer contains only the configured lab name, with no separator, page number, or timestamp. Its PDF-only logo is embedded to keep canvas export secure when the app is opened directly from disk.
 - **Export PNG** uses the current theme and renders the customer and pickup records plus the complete Summary dashboard: all overview information, notes, 28 detailed measurements, and all six graphs, including the spectral waterfall. The three export buttons stay together in a spaced toolbar at the top of Summary.
 
 The **Settings** analysis tab lets you change the tool name (default **ИH Custom Winds**) and lab name (default **Nicks Pickup Lab**). Press **Apply** to update the header, hero, browser title, and export branding. These names are stored with saved projects and restored when a project is loaded.
 
-The complete serializable application state is saved automatically under the browser-local key `ih-custom-winds.local-state.v1`. Reloading restores project/customer/pickup fields, all measurement data and graphs, settings, branding, theme, active tab, and preferred input device/channel. Imported project files immediately replace and update the local state. Corrupt or incompatible stored data is discarded safely without blocking startup, and a one-time warning appears if browser storage is unavailable or full.
+The complete serializable application state is saved automatically under the browser-local key `ih-custom-winds.local-state.v1`. Reloading restores project/customer/pickup fields, all measurement data and graphs, settings, branding, theme, active tab, and preferred input/output devices and channels. Imported project files immediately replace and update the local state. Corrupt or incompatible stored data is discarded safely without blocking startup, and a one-time warning appears if browser storage is unavailable or full.
 
 Live microphone streams, Web Audio nodes, active measurements, and learned route-noise/calibration buffers are intentionally session-only. After reload, audio remains disconnected until permission is granted; reconnecting relearns the route noise floor according to the normal three-second calibration rule.
 
@@ -229,8 +229,8 @@ Controls are native, labelled, and keyboard accessible. Every single-line text/n
 
 **No input prompt** — Reload the page, press **Allow audio access** on the splash, use localhost/HTTPS, and check site permissions.
 
-**White-noise response is missing** — Confirm the operating-system default output, driver amplifier, coil continuity, and selected input. Use the 440 Hz tone at low level first.
+**White-noise response is missing** — Confirm the selected output device/channel, driver amplifier, coil continuity, and selected input. Use the 440 Hz tone at low level first.
 
 **Fundamental seems wrong** — Broadband excitation can make the harmonic-score estimate ambiguous. Treat it as a comparative hint and use the dedicated saturation test for more defensible harmonic measurements.
 
-**Output comes from the wrong interface** — Change the operating system's default output. The app intentionally has no output selector.
+**Output comes from the wrong interface or channel** — Select the required device and hardware channel in the Output group. If the browser refuses a non-default device, grant the output-selection prompt or use a browser that supports Web Audio output-sink selection.

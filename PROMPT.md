@@ -1,4 +1,4 @@
-# Reconstruction Prompt: ИH Custom Winds v.2.1
+# Reconstruction Prompt: ИH Custom Winds V2.3
 
 Rebuild the current application exactly from this specification. Do not depend on an existing implementation.
 
@@ -15,7 +15,7 @@ The current app provides:
 - 16 spectrum/time-domain metrics with detailed accessible tooltips
 - Stepped magnetic saturation, continuous-sweep 500 Hz–8 kHz Bode magnitude, and five-pulse relative phase
 - Version-2 JSON project save/load, CSV export, and current-theme PNG summary
-- Four locally persisted themes: Light, Dark orange, Dark green, and Dark blue; Dark blue is the first-run default
+- Four locally persisted themes: Light, Dark orange, Dark green, and Dark blue; Dark green is the first-run default
 
 There is **no live oscilloscope/spectrum tab** and **no free-form excitation generator**. Do not reintroduce either.
 
@@ -121,7 +121,7 @@ The four theme labels are:
 - `Dark green`
 - `Dark blue`
 
-Use values `light`, `dark-orange`, `dark-green`, and `dark-blue`. The button displays the active label and advances through the circular order Light → Dark orange → Dark green → Dark blue → Light. Start in Dark blue only when no stored state exists; otherwise restore the saved theme. Update the button's accessible label and browser `theme-color`, redraw every visible canvas on change, persist the selection, and use the current palette and theme name for PNG/CSV export.
+Use values `light`, `dark-orange`, `dark-green`, and `dark-blue`. The button displays the active label and advances through the circular order Light → Dark orange → Dark green → Dark blue → Light. Start in Dark green only when no stored state exists; otherwise restore the saved theme. Update the button's accessible label and browser `theme-color`, redraw every visible canvas on change, persist the selection, and use the current palette and theme name for PNG/CSV export.
 
 Default hero copy:
 
@@ -135,7 +135,8 @@ Use a two-column upper workspace:
 
 - Narrow left panel: **01 Audio routing**
 - Wide right panel: **02 Analyze pickup**, with a glowing theme-accented **Measure All** button immediately left of **Clear measurements**
-- Full-width lower panel: **03 Project**, spanning both upper columns. Place Customer on the left and Pickup on the right at desktop widths, then stack them on narrow screens.
+- Full-width **03 Project comparison** panel, spanning both upper columns. At desktop widths place the six large slot cards and actions on the left, and six adjacent **Fitted Resonance** readouts plus the shared Bode graph on the right; stack these areas on narrow screens.
+- Full-width **04 Project** panel. Place Customer on the left and Pickup on the right at desktop widths. When `?footprint=true` is active, add a separate full-width Tonewinder subsection below them; hide it by default.
 - Display `logo.png` at the far upper-right of the header, after the status and theme controls. Keep its aspect ratio and scale it down on mobile.
 
 Stack below roughly 1100 px and use single-column mobile layout below roughly 760 px.
@@ -146,14 +147,16 @@ Provide:
 
 - Two clearly separated bordered groups inside Audio routing: a green-accented **Input** group for captured-interface controls and a blue-accented **Output** group for generated-signal routing. Keep the groups vertically stacked and preserve semantic `fieldset`/`legend` labelling.
 - Live input dBFS meter
-- Input-device select
-- Input-channel select derived from actual channel count
+- Input-device select and input-channel select derived from actual channel count, placed together on one row
+- Place digital Input trim and a primary accent-colored **Recalibrate** button together on the following row. Recalibrate manually repeats the quiet-input calibration for the current route, and is unavailable while calibration or a measurement is active.
 - Digital input trim from −48 to +18 dB. Only after an input-device or input-channel change, reset Input trim to 0 dB and Output level to −30 dBFS, remove the previous route correction, and capture exactly one quiet analyser window lasting no more than three seconds from the same `AnalyserNode` used by the INPUT meter. During the entire calibration show a blocking overlay with the exact message **Calibrating, please wait.** plus a short instruction to keep the input quiet; remove it in the calibration `finally` path. Do not depend on `ScriptProcessorNode` callbacks for route calibration. Use the complete window's raw RMS, including visible DC, and apply at most one whole-dB Input-trim reduction when the baseline is louder than −70 dBFS. Raise Output level by the matching amount within its safe range and report any uncompensated amount. Do not perform verification passes. Lock measurement launch and route selectors during calibration, lock route selectors during measurements, and refuse measurement start while calibration is active. Measurements reuse the learned route profile and never recalibrate or change Input trim/Output automatically. Draw a small green reference line at −70 dBFS on the INPUT meter while retaining the red −12 dBFS line.
 - Output meter labelled `OUTPUT LEVEL`
-- Output-device select containing **System default output** plus every distinct `audiooutput` returned by `enumerateDevices()`
-- Output-channel select derived from the selected `AudioContext.destination.maxChannelCount`, labelled **Channel 1 / Left**, **Channel 2 / Right**, then **Channel N**
+- Output-device select containing **System default output** plus every distinct `audiooutput` returned by `enumerateDevices()`, placed on the same row as Output channel
+- Output-channel select derived from the selected `AudioContext.destination.maxChannelCount`, labelled **Channel 1 / Left**, **Channel 2 / Right**, then **Channel N**, placed on the same row as Output device
 - Output-level slider from −48 to −6 dBFS, default −30 dBFS
 - **Play 440 Hz test tone** and **Stop output**
+
+In the full-width Project comparison panel, provide six large comparison slot cards. Make the entire card an obvious mouse and keyboard selection target while preserving its radio control and independent **Show** checkbox. Clearly highlight the active card. **Store** copies the complete current project and measurements into the active slot. Selecting a populated slot loads that snapshot into the main workspace. **Save to file**, **Load from file**, and **Create PDF** operate on the active slot; loading places the imported project into that slot, makes it visible, and loads it into the workspace. Add a **Clear slot** button that removes only the selected stored snapshot after a confirmation prompt and disables itself when the selected slot is empty. Add a separate **Clear All** button that confirms before removing every stored slot and disables itself when all slots are empty. Show each populated slot's labelled **Fitted Resonance** in its details and show all six slots' fitted-resonance values next to one another above the graph, with an em dash for an empty or unmeasured slot. Make every resonance readout a mouse- and keyboard-accessible selector for its corresponding slot. Use blue, lime, orange, white, purple, and teal as the six stable slot colors; reserve red for the currently selected project's graph, which is drawn slightly thicker than the other enabled responses. Draw all enabled stored Bode responses together on one labelled 500 Hz–8 kHz canvas. Persist the six snapshots, the active slot, and the six visibility flags in local storage. When **Create PDF** is clicked, freeze the selected slot into an immutable export snapshot and use that same snapshot for all PDF text, tone calculations, graphs, filename, and confirmation; block slot changes and project edits until generation finishes.
 
 Prefer `AudioContext.setSinkId()` to activate a selected non-default output. When that method is unavailable but `HTMLMediaElement.setSinkId()` exists, create a hidden autoplaying audio element fed by a `MediaStreamAudioDestinationNode` and use it as the selectable-device bridge. If permission is required and `MediaDevices.selectAudioOutput()` is available, request authorization from the user-initiated device change and accept a returned replacement device ID. Keep the system default selectable with an empty sink ID. If neither selectable-sink route is supported, retain the system default and explain that another device requires localhost or HTTPS in a current Chrome or Edge browser. Route the mono output gain through a discrete `ChannelMergerNode`, connecting it only to the selected merger input before the active destination. Stop active output before any output-route change. Lock both input and output selectors during calibration and measurements.
 
@@ -179,11 +182,13 @@ Retain approximately 15 seconds of selected-channel PCM. Rebuild the graph after
 
 ## Project records
 
-Begin with fields labelled **Project Name** and **Project Notes**, then add two bordered subsections.
+Begin with fields labelled **Project Name** and **Project Notes**, then add three bordered main subsections.
 
 The **Customer** subsection contains labelled fields for Name, Address, Phone, eMail, Notes, and Wind Date. Use suitable text, telephone, email, numeric-text, and multiline controls. Wind Date uses European `DD.MM.YYYY` formatting and formats digits as the user types; use `DD.MM.YYYY` as the placeholder without a separate format-hint string.
 
-The **Pickup** subsection starts with Pickup ID, defaulting to `NH 7k42 #1`, then contains independent checkboxes for Guitar, Bass, Single Coil, Humbucker, Clockwise, and Counterclockwise. Wire Type is a dropdown containing Plain Enamel, Heavy Formvar, and Poly, with Plain Enamel selected by default. Gauge is a dropdown containing AWG41, AWG42, AWG43, and AWG44, with AWG42 selected by default. Polarity is a dropdown containing North and South, with South selected by default. Phase is a dropdown containing Negative and Positive, with Negative selected by default. It also contains fields for # Winds, Pole Insulator, Protection, Leads, Start Wire (Hot), End Wire (Ground), Inductance, and DCR. Place Inductance and DCR last in the subsection and leave them blank by default so values can include their units. Wind count is a non-negative whole number. Remaining defaults are 7000 winds, Kapton Tape, Tissue, Waxed Pushback, Yellow, and Black respectively. Persist and restore Inductance and DCR with the pickup record and include them in PDF, PNG, and CSV exports.
+Group the **Pickup** subsection into **Info**, **Wire**, **Hardware**, **Wires**, and **Properties**. Info contains Pickup ID (default `NH 7k42 #1`), Guitar Type, and independent checkboxes for Guitar, Bass, Single Coil, Humbucker, Clockwise, and Counterclockwise. Wire contains Wire Type, Gauge, and # Winds. Hardware contains Pole Insulator, Protection, and Magnet Type. Wires contains Leads, Start Wire (Ground), and End Wire (Hot). Properties contains Polarity, Phase, DCR, Inductance, and Capacitance. Wire Type offers Plain Enamel, Heavy Formvar, and Poly, with Plain Enamel selected by default. Gauge offers AWG41 through AWG44, with AWG42 selected by default. Polarity offers North and South, with South selected by default; Phase offers Negative and Positive, with Negative selected by default. Wind counts are non-negative whole numbers. New projects default to 7000 winds, Kapton Tape, Tissue, Waxed Pushback, Black ground/start, and Yellow hot/end. Guitar Type, Magnet Type, DCR, Inductance, and Capacitance start blank. Tonal Characteristics is calculated internally when the electrical values, pickup type, or fitted resonance changes and is displayed in Summary, PNG, and PDF only when `?footprint=true` is active.
+
+When the page URL contains `footprint=true`, show **Tonewinder** as a separate full-width main subsection at the same hierarchy as Customer and Pickup; hide it by default and for every other parameter value. It contains Tonewinder Profile; a **Global** group with Turns, Start, Direction, Wire Gauge, ATC Wire tension initial → final, and Winding Speed; and a **Scatter Parameters** group with Turns Pre-Scatter, Turns Post-Scatter, Filling factor Pre/Post, Min Filling factor, Max Filling factor, and Turns Scatter Change. Start is a Left/Right select and Direction is a CW/CCW select, defaulting to Left and CW. The remaining Tonewinder values start blank. Keep Tonewinder values in persistence and CSV exports even while the UI section is hidden.
 
 Every customer and pickup value participates in dirty-state tracking, project save/load, legacy-project migration, CSV export, and PNG summary export.
 
@@ -195,26 +200,26 @@ The only manual output generator is a fixed 440 Hz sine. It requires an input co
 
 Use accessible `role="tab"` controls in this order:
 
-1. Bode response
-2. Phase
-3. Spectrum
-4. Saturation
-5. Summary
+1. Summary
+2. Bode response
+3. Phase
+4. Spectrum
+5. Saturation
 6. Settings
 
-The first tab is active. There is no Live scope tab.
+Summary is the first and initially active tab. There is no Live scope tab.
 
 The first four tabs are complete measurement workspaces: each keeps its description, native setup controls, run button, progress indicator, and its own result graphs and measurement cards. Do not add an Open Summary shortcut box to these tabs. Give each top measurement-action row approximately 18 px of space above and 20 px below; apply this independently of the Summary export toolbar.
 
-**Measure All** runs the four measurements sequentially in visible tab order: Bode response → Phase → Spectrum → Saturation. Activate each source tab when its test starts, await its real completion before continuing, keep Stop available, suppress per-test completion toasts during the batch, and show one centered `All four measurements complete.` toaster after full success. On completion, cancellation, or failure, return to the first Bode tab and restore every control. A failed stage stops the remaining sequence and identifies the error in a toaster.
+**Measure All** runs the four measurements sequentially in visible tab order: Bode response → Phase → Spectrum → Saturation. Activate each source tab when its test starts, await its real completion before continuing, keep Stop available, suppress per-test completion toasts during the batch, and show one centered `All four measurements complete.` toaster after full success. On completion, cancellation, or failure, return to the Summary tab and restore every control. A failed stage stops the remaining sequence and identifies the error in a toaster.
 
-The Summary tab is a complete export dashboard. After the overview cards, create four semantic sections in the same order and with the same names as the source tabs. During startup, clone each source tab's graph and result DOM into its Summary section, rewrite cloned IDs with a `summary-` prefix, synchronize displayed values from the authoritative source elements, and render the cloned canvases from the same project data. The source results must remain in place. Project loading, clearing, theme redraws, and new measurements update both sets without recalculating measurements twice.
+The Summary tab is a compact overview dashboard. Tone Footprint information is opt-in: show it only when the page URL contains the GET parameter `footprint=true`; hide both the Tone Footprint and Tonal Characteristics by default and for every other parameter value. When enabled, place a horizontal Tone Footprint bar chart at the top for Brightness, Clarity, Compression, Attack, and Body on a 0–100 scale. Add an accessible factor-specific tooltip to each of those five labels explaining what raises or lowers that score and, for Compression, that it comes only from the stepped-drive saturation test. Color every filled bar with a left-to-right gradient from the current theme accent to reddish orange, and use the same treatment in PNG and PDF exports. Compute Brightness, Clarity, Attack, and Body with a pickup-specific model grounded in the supplied resonance/inductance/DCR/wind-count tables: fitted resonance has the highest weight when available, followed by inductance, DCR, and winding count, with a small guitar/bass and pickup-construction adjustment. More windings and higher inductance move the result toward darker, thicker body; lower inductance and a higher resonance move it toward brightness, clarity, and faster attack. Peaks above 6 kHz retain clarity but may be characterized as thin or harsh. Compression continues to come only from the stepped-drive result. Identify every 0–100 score as a comparative normalized descriptor rather than a calibrated physical unit. Summary always shows Resonance, Relative phase, DCR, Inductance, Compression, and Measurement record. Do not clone detailed measurement graphs or metric grids into Summary. Generated Tonal Characteristics wording must be pickup-type neutral, omit any pickup-type prefix, and must not identify the pickup as a Single Coil.
 
 The Settings tab contains labelled Tool name and Lab name fields, defaulting to `ИH Custom Winds` and `Nicks Pickup Lab`, plus an **Apply** button. Apply trims blank values back to their defaults, updates the visible header, hero, browser title, splash product name, logo alternative text, CSV/PNG branding, and PDF header/footer. Accent the last two words of a customized lab name in the hero. Store both names in the current project and restore them on project load.
 
-Place **Export PDF** in the Project action row immediately to the right of **Load project**. At the top of Summary, keep **Export PNG** and **Export CSV** on one non-wrapping horizontal line. Do not include the word “complete” in the labels. Give the Summary toolbar clear breathing room above and below, approximately 18–20 px of vertical padding.
+Do not show Save project, Load project, or Export PDF buttons at the bottom of Project; Project comparison's **Save to file**, **Load from file**, and **Create PDF** controls replace them and operate on the selected slot. At the top of Summary, keep **Export PNG** and **Export CSV** on one non-wrapping horizontal line. Do not include the word “complete” in the labels. Give the Summary toolbar clear breathing room above and below, approximately 18–20 px of vertical padding.
 
-**Export PDF** builds a real multi-page A4 PDF locally without external libraries or uploads. Every page uses a clean light print palette, the configurable tool name (default `ИH Custom Winds`) at upper left, the logo at upper right, and a section title. The footer contains only the configurable lab name; it has no separator, timestamp, or page number. Embed a compact copy of the logo as a data URL specifically for PDF rendering; never draw the external `logo.png` element into the PDF canvas, because that can taint canvases and make `toBlob()` fail with an insecure-operation error under `file://`. Pages 1–2 contain Project Information: project metadata without Project ID, customer record, pickup properties, measurement settings, and an Audio Routing section. The PDF Measurement Settings section contains only Input Trim and Output Level; omit Bode Sweep Points, Bode Smoothing, Noise Duration, Noise Low, and Noise High. In Audio Routing, place Input Device and Input Channel beside each other on one row, then Output Device and Output Channel beside each other on the next. Created and Updated use European `DD.MM.YYYY` formatting. Pickup ID is the first field in the PDF Pickup section. Render Guitar, Bass, Single Coil, Humbucker, Clockwise, and Counterclockwise as checked or empty boxes in three vertical pairs: Guitar above Bass, Single Coil above Humbucker, and Clockwise above Counterclockwise. Page 3 places Bode response above Relative phase, and page 4 places Saturation above Spectrum. The page-4 section is titled **Spectrum Data** and contains the measured spectral-waterfall graph plus the Spectrum metrics; Relative phase remains data-only. The Bode PDF graph uses the same minimum-at-0 positive scale and marked fitted resonance as the application, and lists fitted resonance, strongest measured bin, and fit uncertainty. In every Harmonics vs Drive rendering, Even is red and Odd is green. All graphs have labelled x/y values. Append an Annex titled `Measurement glossary`, spanning as many pages as needed, containing every displayed measurement term and the exact explanatory text from its tooltip. Include all 28 displayed measurement fields. Download as `<safe-name>-complete-record.pdf`.
+**Export PDF** builds a real multi-page A4 PDF locally without external libraries or uploads. Every page uses a clean light print palette, the configurable tool name (default `ИH Custom Winds`) at upper left, the logo at upper right, and a section title. The footer contains only the configurable lab name; it has no separator, timestamp, or page number. Embed a compact copy of the logo as a data URL specifically for PDF rendering; never draw the external `logo.png` element into the PDF canvas, because that can taint canvases and make `toBlob()` fail with an insecure-operation error under `file://`. Pages 1–2 contain Project Information: project metadata without Project ID, customer record, pickup properties grouped under Info, Wire, Hardware, Wires, and Properties, measurement settings, and an Audio Routing section. Properties contains Polarity, Phase, DCR, Inductance, and Capacitance. Tonal Characteristics does not appear in the Pickup section. The PDF Measurement Settings section contains only Input Trim and Output Level; omit Bode Sweep Points, Bode Smoothing, Noise Duration, Noise Low, and Noise High. In Audio Routing, place Input Device and Input Channel beside each other on one row, then Output Device and Output Channel beside each other on the next. Created and Updated use European `DD.MM.YYYY` formatting. Pickup ID is the first field in the PDF Info section. Render Guitar, Bass, Single Coil, Humbucker, Clockwise, and Counterclockwise as checked or empty boxes in three vertical pairs: Guitar above Bass, Single Coil above Humbucker, and Clockwise above Counterclockwise. Add a dedicated **Overview** page after Project Information and before the Bode response page. It always contains fitted resonance, Relative Phase, DCR, Inductance, Capacitance, and Compression. Include the horizontal-bar Tone Footprint and Tonal Characteristics on that page only when the app URL contains `footprint=true`. The following measurement page places Bode response above Relative phase, and the next places Saturation above Spectrum. The latter section is titled **Spectrum Data** and contains the measured spectral-waterfall graph plus the Spectrum metrics; Relative phase remains data-only. The Bode PDF graph uses the same minimum-at-0 positive scale and marked fitted resonance as the application, and lists fitted resonance, strongest measured bin, and fit uncertainty. In every Harmonics vs Drive rendering, Even is red and Odd is green. All graphs have labelled x/y values. Append an Annex titled `Measurement glossary`, spanning as many pages as needed, containing every displayed measurement term and the exact explanatory text from its tooltip. Include all 28 displayed measurement fields. When `footprint=true` is active, append a separate final **Tonewinder** page containing Tonewinder Profile, the six Global values, and the six Scatter Parameters; omit that page by default. Download as `<safe-name>-complete-record.pdf`.
 
 ## Canvas requirements
 
@@ -325,10 +330,12 @@ Use version 2:
     name, address, phone, email, notes, windDate, pickupId
   },
   pickup: {
+    guitarType,
     guitar, bass, singleCoil, humbucker,
     clockwise, counterclockwise,
     wireType, gauge, winds, polarity, phase,
-    poleInsulator, protection, leads, startWire, endWire
+    poleInsulator, protection, magnetType,
+    leads, startWire, endWire, inductance, dcr
   },
   settings: {
     inputTrim, masterLevel,
@@ -365,9 +372,9 @@ Summary cards include:
 
 Do not place a Spectrum overview card at the top of Summary; its detailed measurements remain available in its section below.
 
-Below the cards, Summary contains four separated, labelled result sections in this order: Bode response, Phase, Spectrum, and Saturation. Together they contain synchronized copies of all six graphs and every detailed measurement. The original graphs and measurements remain visible in their source tabs.
+Summary remains a compact overview containing Resonance, Relative phase, DCR, Inductance, Compression, and Measurement record. Tone Footprint and Tonal Characteristics are added only when `?footprint=true` is active. Detailed graphs and metrics remain in their source measurement tabs.
 
-PNG is a tall, complete report canvas at 2× backing scale using the current theme. It contains the four overview cards and their notes, project notes, all 28 detailed measurement values, and all six graphs in Summary order: Bode magnitude, five phase pulse responses, averaged spectrum, spectral waterfall, harmonics versus drive, and transfer curve.
+PNG is a 2× backing-scale canvas using the current theme and mirrors the visible Summary tab. It always contains Resonance, Relative phase, DCR, Inductance, Compression, and Measurement record; it contains Tone Footprint, its note, and Tonal Characteristics only when `?footprint=true` is active. It does not add customer, pickup, or detailed measurement-tab content.
 
 CSV contains every item represented by Summary and the raw series needed to reconstruct every graph in Summary order: overview values and notes; complete Bode rows with noise/SNR/interpolation metadata; phase votes and pulse waveform samples; raw white-noise metrics, spectrum, and waterfall cells; and saturation harmonic/transfer rows.
 
@@ -424,12 +431,12 @@ Document:
 14. Canvas DPR is capped at 2.
 15. Project version 2 contains complete Spectrum data, the selected input/output device IDs, labels and channels, and the selected Bode sweep-point count and display-smoothing level. Legacy impulse results and settings are discarded on load.
 16. CSV, PNG, and PDF contain no impulse data, waveform, metric, or section.
-17. One button cycles through Light, Dark orange, Dark green, and Dark blue; Dark blue is the first-run default, the restored theme redraws every plot, and exports use the current theme.
+17. One button cycles through Light, Dark orange, Dark green, and Dark blue; Dark green is the first-run default, the restored theme redraws every plot, and exports use the current theme.
 18. Desktop and mobile layouts have no horizontal overflow.
 19. At runtime the four source tabs retain six original canvases and all result cards; Summary contains six additional synchronized canvases and copied result cards grouped into four sections.
-20. No measurement tab contains an Open Summary copy box; **Export PDF** sits beside **Load project**, while Summary buttons read **Export PNG** and **Export CSV**, remain on one horizontal line, and have space above and below.
-21. A glowing, theme-accented **Measure All** button sits immediately left of **Clear measurements**, runs Bode → Phase → Spectrum → Saturation sequentially with automatic tab changes, returns to Bode, and shows a final completion toaster.
-22. Complete PNG includes four overview cards, all 28 measurements, project notes, and all six graphs; complete CSV includes all displayed information and raw data for every graph, including time/frequency/level waterfall cells.
+20. No measurement tab contains an Open Summary copy box; the Project panel has no Save, Load, or PDF action row, while Summary buttons read **Export PNG** and **Export CSV**, remain on one horizontal line, and have space above and below.
+21. A glowing, theme-accented **Measure All** button sits immediately left of **Clear measurements**, runs Bode → Phase → Spectrum → Saturation sequentially with automatic tab changes, returns to Summary, and shows a final completion toaster.
+22. PNG mirrors the compact Summary tab only; complete CSV includes all displayed information and raw data for every graph, including time/frequency/level waterfall cells.
 23. Large explanation tooltips use the same orange glass, blur, border, and glow language as toaster messages.
 24. Settings defaults to `ИH Custom Winds` and `Nicks Pickup Lab`; Apply updates the UI and all exports, and saved projects preserve both names.
 25. PDF places Input Device beside Input Channel and Output Device beside Output Channel in its Audio Routing section; places Bode above Relative phase on page 3 and Saturation above Spectrum on page 4; names the section **Spectrum Data**; includes the measured spectral waterfall there; keeps Relative phase data-only; colors Even red and Odd green in Harmonics vs Drive; arranges checkbox pickup selections in the requested vertical pairs; uses the lab name alone in the footer; contains no page numbers or footer timestamps or Impulse / Tap page; and appends a complete tooltip-derived measurement glossary annex.
@@ -438,3 +445,8 @@ Document:
 28. Browser console has no startup errors.
 29. Every date uses exactly `DD.MM.YYYY`, including saved-project Created/Updated fields, Wind Date, Summary measurement dates, CSV Created/Updated fields, and PDF Created/Updated fields. Loading migrates legacy ISO timestamps to this format.
 30. Versioned `localStorage` persistence restores the full project, every measurement array, settings, branding, theme, active tab, and preferred input/output routes after reload; malformed/quota-blocked storage fails safely, while live audio and route calibration remain session-only and are relearned after reconnection.
+31. Input device and Input channel remain on one row, Input trim and Recalibrate remain on the next, and Output device and Output channel share one row; Recalibrate reruns the current route's quiet-input calibration and handles a disconnected input without a startup error.
+32. Full-width Project comparison has six persistent large-card slots on the left and six adjacent fitted-resonance values plus the graph on the right at desktop widths; both whole-card selection and each matching fitted-resonance readout load populated projects, Show independently controls colored Bode traces, Clear slot removes the selected snapshot only after confirmation, Clear All confirms before emptying every slot, and Store, Save to file, Load from file, and Create PDF operate on the selected project. Slot 4 uses white instead of red, while the selected project's shown graph is red and emphasized. PDF creation freezes that selected slot and cannot mix data from another slot if controls are used while it is being built.
+33. Tonewinder Start accepts only Left or Right, and Tonewinder Direction accepts only CW or CCW, in the UI, saved project data, and the final PDF page.
+34. Tonewinder is a separate full-width Project subsection at the same hierarchy as Customer and Pickup when `?footprint=true` is active; Tone Footprint bars use an accent-to-reddish-orange gradient in the app, PNG, and PDF; the visible product version is V2.3.
+35. Tone Footprint, Tonal Characteristics, and Tonewinder are hidden by default. For `?footprint=true`, the Summary and PNG include Tone Footprint and Tonal Characteristics, the PDF Overview includes them, the Tonewinder UI subsection appears, and the PDF includes its final Tonewinder page; all five Tone Footprint factors have distinct accessible tooltips.

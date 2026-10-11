@@ -196,7 +196,7 @@ Live microphone streams, Web Audio nodes, active measurements, and learned route
 
 ## Themes, responsive behavior, and accessibility
 
-The header theme button cycles through **Light**, **Dark orange**, **Dark green**, and **Dark blue**, displaying the active theme name. Dark green is the first-run default and uses acid-green `#d5fe42` accents; Dark blue remains available with vibrant blue accents, and Light uses neutral surfaces with dark blue. Theme selection is restored from local storage and redraws every source and Summary canvas; PNG and CSV exports identify and use the selected palette.
+The header theme button cycles through **Light**, **Dark orange**, **Dark green**, **Dark blue**, and **Dark purple**, displaying the active theme name. Dark purple is the first-run default and uses violet `#c4b5fd` accents with magenta highlights; Dark green and Dark blue remain available, and Light uses neutral surfaces with dark blue. Theme selection is restored from local storage and redraws every source and Summary canvas; PNG and CSV exports identify and use the selected palette.
 
 Controls are native, labelled, and keyboard accessible. Every single-line text/number field and dropdown uses the same 40 px height; multiline notes remain resizable. Measurement and graph tooltips work with pointer hover, keyboard focus, and touch. Plots remain fixed in height while data accumulates, resize horizontally, cap backing-store scale at `2×` device pixel ratio, and stack on mobile. Summary sections and their metric grids collapse cleanly to one column on narrow phones.
 

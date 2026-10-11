@@ -15,7 +15,7 @@ The current app provides:
 - 16 spectrum/time-domain metrics with detailed accessible tooltips
 - Continuous-sweep 500 Hz–8 kHz Bode magnitude and five-pulse relative phase
 - Version-2 JSON project save/load, CSV export, and current-theme PNG summary
-- Four locally persisted themes: Light, Dark orange, Dark green, and Dark blue; Dark green is the first-run default
+- Five locally persisted themes: Light, Dark orange, Dark green, Dark blue, and Dark purple; Dark purple is the first-run default
 
 There is **no live oscilloscope/spectrum tab** and **no free-form excitation generator**. Do not reintroduce either.
 
@@ -104,9 +104,22 @@ Required variables:
 --cyan: #00b8ff;
 --canvas-bg: #060a10;
 --canvas-grid: #1d2b40;
+
+/* Dark purple — default */
+--bg: #0b0712;
+--panel: #151021;
+--panel-2: #1d1530;
+--line: #3a2b55;
+--ink: #f3edff;
+--muted: #aa9abd;
+--lime: #c4b5fd;
+--primary-fill: #7c3aed;
+--cyan: #d946ef;
+--canvas-bg: #08050e;
+--canvas-grid: #2a1f3e;
 ```
 
-Use variables for every surface, canvas, grid, trace, point, export, label, page glow, permission splash, toaster, and large explanation tooltip. Dark orange glows and accents are orange, Dark green uses acid green, and Dark blue and Light use blue. Theme changes must recolor the visible permission splash immediately.
+Use variables for every surface, canvas, grid, trace, point, export, label, page glow, permission splash, toaster, and large explanation tooltip. Dark orange glows and accents are orange, Dark green uses acid green, Dark blue and Light use blue, and Dark purple uses violet with magenta highlights. Theme changes must recolor the visible permission splash immediately.
 
 Create two translucent, blurred, inline-SVG single-coil pickup tiles—one in the header and one in the splash. Use matching graphical, no-text pickup artwork for the local favicon assets and the opaque 180×180 iPhone home-screen PNG. Include Apple web-app title, capability, status-bar, and touch-icon metadata; update the Apple title when configurable branding changes.
 
@@ -114,14 +127,15 @@ Create two translucent, blurred, inline-SVG single-coil pickup tiles—one in th
 
 Header contains product identity, live status pill, and an accessible theme cycle button.
 
-The four theme labels are:
+The five theme labels are:
 
 - `Light`
 - `Dark orange`
 - `Dark green`
 - `Dark blue`
+- `Dark purple`
 
-Use values `light`, `dark-orange`, `dark-green`, and `dark-blue`. The button displays the active label and advances through the circular order Light → Dark orange → Dark green → Dark blue → Light. Start in Dark green only when no stored state exists; otherwise restore the saved theme. Update the button's accessible label and browser `theme-color`, redraw every visible canvas on change, persist the selection, and use the current palette and theme name for PNG/CSV export.
+Use values `light`, `dark-orange`, `dark-green`, `dark-blue`, and `dark-purple`. The button displays the active label and advances through the circular order Light → Dark orange → Dark green → Dark blue → Dark purple → Light. Start in Dark purple only when no stored state exists; otherwise restore the saved theme. Update the button's accessible label and browser `theme-color`, redraw every visible canvas on change, persist the selection, and use the current palette and theme name for PNG/CSV export.
 
 Default hero copy:
 
@@ -186,7 +200,7 @@ Begin with fields labelled **Project Name** and **Project Notes**, defaulting Pr
 
 The **Customer** subsection contains labelled fields for Name, Address, Phone, eMail, Notes, and Wind Date. Use suitable text, telephone, email, numeric-text, and multiline controls. Wind Date uses European `DD.MM.YYYY` formatting and formats digits as the user types; use `DD.MM.YYYY` as the placeholder without a separate format-hint string. Set Wind Date to today's date when Measure All is selected and after either confirmed comparison-slot clear action, but never when an individual measurement is launched.
 
-Group the **Pickup** subsection into **Info**, **Wire**, **Hardware**, **Wires**, and **Properties**. Make Properties span the full Pickup width. Info contains Pickup ID, Guitar Type, and independent checkboxes for Guitar, Bass, Single Coil, Humbucker, Clockwise, and Counterclockwise. Wire contains Wire Type, Gauge, and # Winds. Hardware contains Pole Insulator, Protection, and Magnet Type. Wires contains Leads, Start Wire (Ground), and End Wire (Hot). Properties contains Polarity, Phase, DCR, Inductance, and Capacitance. Use black backgrounds for text, numeric, date, email, telephone, select, and multiline fields in both dark themes, and white backgrounds in the light theme. Defaults are blank Pickup ID, Telecaster Guitar Type, every checkbox clear, Plain Enamel, AWG42, `0` winds, Kapton Tape, Tissue, Alnico 5, Waxed Pushback, Black ground/start, Orange hot/end, South polarity, and Negative phase. DCR, Inductance, and Capacitance start blank. Tonal Characteristics is calculated internally when the electrical values, pickup type, or fitted resonance changes and is displayed in Summary, PNG, and PDF only when `?footprint=true` is active.
+Group the **Pickup** subsection into **Info**, **Wire**, **Hardware**, **Wires**, and **Properties**. Make Properties span the full Pickup width. Info contains Pickup ID, Guitar Type, and independent checkboxes for Guitar, Bass, Single Coil, Humbucker, Clockwise, and Counterclockwise. Wire contains Wire Type, Gauge, and # Winds. Hardware contains Pole Insulator, Protection, and Magnet Type. Wires contains Leads, Start Wire (Ground), and End Wire (Hot). Properties contains Polarity, Phase, DCR, Inductance, and Capacitance. Use black backgrounds for text, numeric, date, email, telephone, select, and multiline fields in every dark theme, and white backgrounds in the light theme. Defaults are blank Pickup ID, Telecaster Guitar Type, every checkbox clear, Plain Enamel, AWG42, `0` winds, Kapton Tape, Tissue, Alnico 5, Waxed Pushback, Black ground/start, Orange hot/end, South polarity, and Negative phase. DCR, Inductance, and Capacitance start blank. Tonal Characteristics is calculated internally when the electrical values, pickup type, or fitted resonance changes and is displayed in Summary, PNG, and PDF only when `?footprint=true` is active.
 
 When the page URL contains `footprint=true`, show **Tonewinder** as a separate full-width main subsection at the same hierarchy as Customer and Pickup; hide it by default and for every other parameter value. Tonewinder Profile occupies the left 50% of the subsection on desktop and returns to full width on mobile. It also contains a **Global** group with Turns, Start, Direction, Wire Gauge, ATC Wire tension initial → final, and Winding Speed; and a **Scatter Parameters** group with Turns Pre-Scatter, Turns Post-Scatter, Filling factor Pre/Post, Min Filling factor, Max Filling factor, and Turns Scatter Change. Defaults are Profile `None`; Turns `0`; Start `Left`; Direction `CCW`; Wire Gauge `71`; ATC Wire tension `18-20`; Winding Speed `650`; Turns Pre-Scatter `200`; Turns Post-Scatter `150`; Filling factor Pre/Post `90`; Min Filling factor `45`; Max Filling factor `80`; and Turns Scatter Change `60`. Keep Tonewinder values in persistence and CSV exports even while the UI section is hidden.
 
@@ -276,7 +290,7 @@ The UI explains that broadband excitation makes fundamental, THD, and even/odd c
 
 ### Result and graph tooltips
 
-Every result value in Spectrum, Bode response, and Phase includes a keyboard-focusable `?` button with detailed explanation text. Every graph heading also includes a `?` button explaining the graph's role, how to read it, and its main confounder. The Summary copies retain these controls. Use one global, theme-aware, fixed-position `role="tooltip"` element. Show it on `mouseenter`, `focus`, and `click` so it works on touch screens; position it above or below without leaving the viewport. Hide it on `mouseleave`, `blur`, outside pointer press, or Escape. Style the tooltip as a large panel up to roughly 520 px wide with about 18 × 22 px padding, 14 px text, a 15 px radius, translucent blurred glass, and the same warm-orange border and glow treatment as the centered toaster message in all four themes.
+Every result value in Spectrum, Bode response, and Phase includes a keyboard-focusable `?` button with detailed explanation text. Every graph heading also includes a `?` button explaining the graph's role, how to read it, and its main confounder. The Summary copies retain these controls. Use one global, theme-aware, fixed-position `role="tooltip"` element. Show it on `mouseenter`, `focus`, and `click` so it works on touch screens; position it above or below without leaving the viewport. Hide it on `mouseleave`, `blur`, outside pointer press, or Escape. Style the tooltip as a large panel up to roughly 520 px wide with about 18 × 22 px padding, 14 px text, a 15 px radius, translucent blurred glass, and the same theme-colored border and glow treatment as the centered toaster message in all five themes.
 
 Each tooltip explains:
 
@@ -418,7 +432,7 @@ Document:
 14. Canvas DPR is capped at 2.
 15. Project version 2 contains complete Spectrum data, the selected input/output device IDs, labels and channels, and the selected Bode sweep-point count and display-smoothing level. Legacy impulse results and settings are discarded on load.
 16. CSV, PNG, and PDF contain no impulse data, waveform, metric, or section.
-17. One button cycles through Light, Dark orange, Dark green, and Dark blue; Dark green is the first-run default, the restored theme redraws every plot, and exports use the current theme.
+17. One button cycles through Light, Dark orange, Dark green, Dark blue, and Dark purple; Dark purple is the first-run default, the restored theme redraws every plot, and exports use the current theme.
 18. Desktop and mobile layouts have no horizontal overflow.
 19. At runtime the three source tabs retain four original canvases and all result cards.
 20. No measurement tab contains an Open Summary copy box; the Project panel has no Save, Load, or PDF action row, while Summary buttons read **Export PNG** and **Export CSV**, remain on one horizontal line, and have space above and below.

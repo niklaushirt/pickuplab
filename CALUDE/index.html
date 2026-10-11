@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="en" data-theme="dark-green">
+<html lang="en" data-theme="dark-purple">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ИH Custom Winds V3.0</title>
 <meta name="description" content="Local comparative pickup measurement lab: Bode magnitude, relative phase and white-noise spectrum through your audio interface.">
-<meta name="theme-color" content="#080c09">
+<meta name="theme-color" content="#0b0812">
 <meta name="color-scheme" content="dark light">
 <meta name="application-name" content="ИH Custom Winds">
 <meta name="apple-mobile-web-app-title" content="ИH Custom Winds">
@@ -27,7 +27,14 @@
   --pole-red: #7a1f2b;
   --pole-red-hi: #a32b3c;
 }
-:root,[data-theme="dark-green"]{
+:root,[data-theme="dark-purple"]{
+  --bg:#0b0812; --panel:#130f1d; --panel-2:#191426; --line:#30274a; --ink:#f0ebff; --muted:#a59cbc;
+  --lime:#c09bff; --primary-fill:#8b5cf6; --cyan:#d77bff; --amber:#ffd166; --red:#ff6470;
+  --canvas-bg:#090611; --canvas-grid:#261e3a; --on-primary:#ffffff;
+  --glow: rgba(192,155,255,.32); --glow-2: rgba(139,92,246,.20); --glass: rgba(19,15,29,.74);
+  --shadow: 0 18px 50px rgba(0,0,0,.5);
+}
+[data-theme="dark-green"]{
   --bg:#080c09; --panel:#101712; --panel-2:#151e17; --line:#2b3a2f; --ink:#edf4ee; --muted:#93a497;
   --lime:#d5fe42; --primary-fill:#9ecb2e; --cyan:#b7ef38; --amber:#ffd166; --red:#ff6470;
   --canvas-bg:#070b08; --canvas-grid:#202e24; --on-primary:#0b1206;
@@ -361,7 +368,7 @@ footer{color:var(--muted);font-size:13px;text-align:center;padding:26px 0 8px}
       <button class="btn glow" id="btnAllowAudio" type="button">Allow audio access</button>
       <button class="btn" id="btnExplore" type="button">Explore first</button>
     </div>
-    <div class="splash-foot">Theme: <button class="btn small ghost" type="button" data-theme-cycle aria-label="Theme: Dark green. Switch to next theme">Dark green</button></div>
+    <div class="splash-foot">Theme: <button class="btn small ghost" type="button" data-theme-cycle aria-label="Theme: Dark purple. Switch to next theme">Dark purple</button></div>
   </div>
 </div>
 
@@ -517,7 +524,7 @@ footer{color:var(--muted);font-size:13px;text-align:center;padding:26px 0 8px}
     <div class="action-row"><button class="btn primary" type="button" id="btnApplyBrand">Apply</button></div>
     <p class="tab-desc">Colour theme of the whole app. Stored in this browser.</p>
     <div class="setup set-grid">
-      <div class="field"><label for="themeBtn">Theme</label><button class="btn" type="button" id="themeBtn" data-theme-cycle aria-label="Theme: Dark green. Switch to next theme">Dark green</button></div>
+      <div class="field"><label for="themeBtn">Theme</label><button class="btn" type="button" id="themeBtn" data-theme-cycle aria-label="Theme: Dark purple. Switch to next theme">Dark purple</button></div>
     </div>
   </div>
 </section>
@@ -657,7 +664,8 @@ const THEMES = [
   { value: 'light', label: 'Light' },
   { value: 'dark-orange', label: 'Dark orange' },
   { value: 'dark-green', label: 'Dark green' },
-  { value: 'dark-blue', label: 'Dark blue' }
+  { value: 'dark-blue', label: 'Dark blue' },
+  { value: 'dark-purple', label: 'Dark purple' }
 ];
 const SLOT_COLORS = ['#3d8bff', '#b6f03c', '#ff9b2f', '#ffffff', '#a970ff', '#22c7b8'];
 const SLOT_COLOR_NAMES = ['Blue', 'Lime', 'Orange', 'White', 'Purple', 'Teal'];
@@ -884,7 +892,7 @@ const MEASUREMENT_KEYS = [...METRIC_KEYS, 'bode_fit', 'bode_unc', 'bode_peak', '
 /* ---------- Application state ---------- */
 const state = {
   project: newProject(),
-  theme: 'dark-green',
+  theme: 'dark-purple',
   activeTab: 'summary',
   dirty: false,
   test: null,           // {kind, cancelled}
@@ -2545,7 +2553,7 @@ function setTab(name, focus) {
   saveLocalSoon();
 }
 function applyTheme(v, persist = true) {
-  if (!THEMES.some(t => t.value === v)) v = 'dark-green';
+  if (!THEMES.some(t => t.value === v)) v = 'dark-purple';
   state.theme = v; document.documentElement.dataset.theme = v; palCache = null;
   const label = THEMES.find(t => t.value === v).label, next = THEMES[(THEMES.findIndex(t => t.value === v) + 1) % THEMES.length].label;
   for (const b of $$('[data-theme-cycle]')) { b.textContent = label; b.setAttribute('aria-label', `Theme: ${label}. Switch to ${next}`); }
@@ -3089,7 +3097,7 @@ function init() {
     state.project = stored.project;
     state.dirty = stored.dirty;
     const ui = stored.ui || {};
-    state.theme = THEMES.some(t => t.value === ui.theme) ? ui.theme : 'dark-green';
+    state.theme = THEMES.some(t => t.value === ui.theme) ? ui.theme : 'dark-purple';
     state.activeTab = TAB_ORDER.includes(ui.activeTab) ? ui.activeTab : 'summary';
     state.prefs.inputDeviceId = typeof ui.inputDeviceId === 'string' ? ui.inputDeviceId : '';
     state.prefs.inputChannel = Math.max(0, +ui.inputChannel || 0);

@@ -1,232 +1,234 @@
-# ИH Custom Winds
+# ИH Custom Winds V3.0
 
-ИH Custom Winds is a self-contained browser instrument for comparative guitar and bass pickup testing. It uses a real audio-interface input and a repeatable magnetic driver fixture to measure:
+A single-file browser lab for **comparative** guitar and bass pickup measurement through an audio interface and a repeatable magnetic driver (exciter) fixture. It measures a Bode magnitude response, relative phase, and a white-noise spectrum with 16 metrics. It also keeps a full winding record and compares up to six stored pickups side by side.
 
-- Band-selectable white-noise response over 2.5, 5, or 10 seconds
-- 16 time- and frequency-domain noise-response indicators
-- 500 Hz–8 kHz Bode magnitude and five-pulse relative phase
-- A fixed 440 Hz routing/reference tone
-- Automatic local-state persistence, JSON project save/load, CSV data export, and theme-aware PNG summary export
+Everything runs locally in `index.html`: no framework, no network requests, no uploads, no analytics.
 
-The application logic is entirely contained in [index.html](./index.html), with the local [logo.png](./logo.png) displayed in the upper-right header and local favicon/iPhone artwork used for browser tabs and Add to Home Screen. Audio stays in the browser tab. There are no runtime dependencies, remote assets, uploads, network requests, telemetry services, or automatic recordings.
-
-## Files
-
-```text
-index.html             Complete application, styling, audio engine, and plots
-logo.png               Header logo
-favicon.svg            Scalable browser-tab icon
-favicon-32x32.png       Raster browser-tab icon
-favicon.ico             Multi-size legacy browser favicon
-apple-touch-icon.png    180×180 iPhone Add to Home Screen icon
-scripts/generate-icons.py  Reproducible raster-icon generator
-README.md              User guide, safety guidance, and driver construction
-PROMPT.md              Full reconstruction specification
+```
+index.html               the complete application (HTML, CSS, JavaScript)
+logo.png                 header logo
+favicon.svg, favicon-32x32.png, favicon.ico, apple-touch-icon.png
+scripts/generate-icons.py   rebuilds the raster icons (Pillow); not needed at runtime
+README.md, PROMPT.md
 ```
 
-## Start locally
+---
 
-Audio permission requires a secure browser context. `localhost` qualifies:
+## 1. Starting the app and privacy
+
+Browsers only expose microphone input and output-device selection in a secure context. Serve the folder from **localhost** (or HTTPS):
 
 ```bash
-cd /path/to/MY_CUSTOM_WINDS
-python3 -m http.server 4173
+python3 -m http.server 8765 --bind 127.0.0.1
 ```
 
-Open `http://127.0.0.1:4173` in a current browser. The opening splash follows the active theme and describes audio access but does not request permission automatically. Press **Allow audio access** to connect. **Explore first** closes the splash without requesting access; reload the page when you are ready to connect an input.
+Then open <http://localhost:8765/> in a current Chrome or Edge. Add `?footprint=true` to the URL to turn on the Tone Footprint features (see §9).
 
-## Signal path
+- A splash screen appears on every load. **Nothing is requested automatically.** Microphone permission is requested only when you press **Allow audio access**. **Explore first** lets you browse, load projects and export without audio. Click the status pill at the top right later to bring the splash back.
+- **AUDIO STAYS ON YOUR PC.** All capture, FFTs and fitting happen inside the page. Captured input is never routed to an audible output. The only path from input to the speakers is a zero-gain node that keeps the capture callback running.
+- Your system output stays silent until you explicitly start the 440 Hz tone or a measurement.
+- Storage: one `localStorage` key, `ih-custom-winds.local-state.v1`, holds the current project, the six comparison slots and UI preferences. No cookies, `sessionStorage` or IndexedDB are used. Live audio, sample buffers and the learned noise/calibration profile are never stored, so after a reload you allow audio again and the route is recalibrated.
 
-```text
-440 Hz / automated output (Bode, spectrum, phase)
-  → selected audio output device and hardware channel
-  → suitable headphone or power amplifier
-  → repeatable magnetic driver coil
-  → magnetic coupling across a fixed gap
-  → pickup under test
-  → interface Hi-Z input and selected channel
-  → browser analysis
-```
+## 2. Audio routing
 
-Spectrum, Bode, phase, and the 440 Hz tone use the selected output device and channel. The Output device dropdown lists every `audiooutput` exposed by the browser, with **System default output** as the fallback. Selecting a hardware device prefers Web Audio output-sink routing and falls back to a hidden HTML audio sink fed by the Web Audio graph; the browser may request permission before exposing or activating a non-default device. If neither standards-based sink API is available, non-default selection requires opening the app from localhost or HTTPS in a current Chrome or Edge browser. The Output channel selector routes the mono test signal discretely to the chosen destination channel. After a measurement completes, fails, or is stopped, the app immediately mutes and disconnects the active source and rebuilds the selected output route to prevent a finished source from leaving a repeating high-frequency artifact behind.
+**Input** group (green):
 
-Whenever the input device or input channel changes, the app keeps the output silent, resets **Input trim** to 0 dB and **Output level** to −30 dBFS, discards the previous route correction, and records exactly one quiet window lasting no more than three seconds from the same `AnalyserNode` that drives the visible INPUT meter. A blocking overlay says **Calibrating, please wait.** and asks the operator to keep the input quiet for the complete capture. The automatic decision uses that window's raw meter RMS, including any visible DC component. If it is louder than −70 dBFS, the app lowers **Input trim** once in whole-dB steps and raises **Output level** by the same amount within its safe range. There are no verification passes or further calibration captures. Route selection and measurement buttons are locked during those three seconds, and device/channel selection is locked during every measurement, so calibration cannot run while a measurement is active. Measurements reuse the learned route profile without moving either level control. A green marker on the INPUT meter identifies the −70 dBFS target; the red marker remains at −12 dBFS.
+- **Input device** and **Input channel**. The channel list comes from the real channel count of the captured stream. Two channels are requested where possible, with echo cancellation, noise suppression and AGC disabled.
+- **Input trim** (−48 to +18 dB), a digital gain before the meter and the capture buffer.
+- **Recalibrate** (dark pole-red) repeats the quiet-input calibration for the current route.
+- **INPUT meter** in dBFS. After calibration its left edge sits just above the learned quiet-input floor, so background noise leaves the bar empty and the readout shows *quiet*. Only a real signal moves it. A green line marks −70 dBFS (the calibration target) when it is inside the range, and a red line marks −12 dBFS (headroom warning).
 
-The final session-only profile also detects persistent 50/60 Hz harmonics. It is used for conservative stationary-hum removal throughout the measurements and for local-window noise-power subtraction in the continuous Bode sweep. The active sweep frequency is protected from hum removal. Relearning avoids reusing a noise profile or calibration from a different interface route.
+**Output** group (blue):
 
-## Safety
+- **Output device** lists *System default output* plus every distinct `audiooutput` the browser exposes.
+  - A non-default device is activated with `AudioContext.setSinkId()`.
+  - If only `HTMLMediaElement.setSinkId()` exists, a hidden audio element fed by a `MediaStreamAudioDestinationNode` acts as a bridge.
+  - If the browser requires permission and supports `selectAudioOutput()`, the device change asks for it.
+  - If no selectable-sink route exists, the app keeps the system default and says that another device needs localhost/HTTPS in a current Chrome or Edge.
+- **Output channel** (Channel 1 / Left, Channel 2 / Right, Channel N…). The channel count comes from the active destination. The mono test signal passes through a discrete `ChannelMergerNode` and reaches **only** the selected hardware channel.
+- **Output level** (−48 to −6 dBFS, default −30 dBFS) sets the test level used by every measurement.
+- Active output is always stopped before a route change. Route selectors are locked during calibration and measurements.
 
-Incorrect loading or excessive output can damage an interface, amplifier, driver coil, active pickup, speakers, or hearing.
+### Route calibration
 
-1. Mute monitors, headphones, instrument amplifiers, and DAW monitoring before enabling an output signal.
-2. Never assume an interface line output can drive a low-resistance coil. Use an appropriate enclosed, current-limited headphone or power amplifier.
-3. Measure the finished coil's DC resistance. Follow the amplifier manufacturer's minimum-load requirement; DC resistance is not the same as AC impedance.
-4. Begin at `−48 dBFS` and with the external amplifier low. Increase cautiously.
-5. Stop if the coil or amplifier warms, clips, smells unusual, or behaves erratically.
-6. Input is never routed to output by this application, but an interface mixer, operating-system mixer, or DAW can still create a feedback path.
-7. Do not work on exposed mains wiring.
-8. Use clean nonmagnetic spacers so the fixture cannot scratch the instrument or strike the pickup.
-9. For active pickups, use a healthy battery and keep onboard control positions fixed.
+This runs after connecting, after every input-device or input-channel change, and when you press Recalibrate. A blocking overlay shows **Calibrating, please wait.**
 
-## Repeatable magnetic driver
+1. Input trim is reset to 0 dB, Output level to −30 dBFS, and the previous profile is removed. The output stays silent.
+2. After a short settle, exactly one quiet window (32768 samples, about 0.7 s at 48 kHz, never more than 3 s) is read from the same `AnalyserNode` that drives the INPUT meter.
+3. The window's raw RMS (including DC), peak, band-limited noise power and persistent 50/60 Hz harmonics are learned.
+4. If the baseline is louder than −70 dBFS, Input trim is reduced once by whole dB. Output level is raised by the same amount within its safe range, and any amount it could not compensate is reported. There are no verification passes.
+5. The status pill shows the resulting input-noise level.
 
-Repeatability matters more than field strength. A useful starting design is:
+Measurements reuse this profile. They never recalibrate or move the level controls.
 
-- Nonmagnetic plastic, fibreboard, acrylic, or 3D-printed former
-- Winding window roughly 35–50 mm long and 8–15 mm wide
-- Enamelled copper wire around 0.25–0.35 mm diameter (AWG 30–27)
-- Approximately 220–350 turns
-- Common finished DC resistance around 6–12 Ω, verified with a meter
-- Twisted, strain-relieved flexible leads
-- Optional electrostatic foil shield with a full-width gap so it cannot form a shorted turn
+## 3. 440 Hz test tone
 
-These are starting values, not a guaranteed load. Wire diameter, winding length, inductance, frequency, and amplifier design all affect the real load.
+**Play 440 Hz test tone** is the only manual generator: a fixed sine with short ramps at the selected output level. Use it to confirm the exciter is wired, the right channel is selected and the input meter responds. The button toggles to **Stop 440 Hz test tone**. **Stop output** works at any time. The tone needs a connected input and is disabled while measurements run.
 
-### Construction
+## 4. Safety
 
-1. Build a rigid former with two flanges and no steel, magnets, or ferrite.
-2. Smooth sharp edges and provide holes or clamps for strain relief.
-3. Wind 220–350 turns in a consistent direction and count them.
-4. Secure layers with thin insulating tape or winding varnish.
-5. Strip enamel only at the two joints, solder flexible leads, and insulate them.
-6. Measure DC resistance and check that neither lead connects to the former or shield.
-7. If shielding, leave a deliberate full-width gap in the foil.
-8. Permanently mark the driver face, winding direction, and lead phase.
-9. Mount it in a nonmagnetic fixture with hard stops for height, lateral position, and angle.
+- **Electrical:** never connect an exciter coil directly across a line output that is not designed to drive low impedance. Drive it from a small power amplifier or a headphone amplifier rated for the coil's impedance, and keep levels low. Disconnect the coil before switching amplifiers on or off.
+- **Thermal:** a small coil driven continuously can get hot. Check its temperature by touch after long sessions, and never leave it driven unattended.
+- **Feedback:** keep the measured pickup's output away from the amplifier that drives the exciter. Never monitor the pickup through speakers while it is on the fixture. The app never routes input to output.
+- **Hearing:** test signals can be loud on headphones or monitors. Start at −30 dBFS or lower, with the playback system turned down.
+- **Instrument finish:** the fixture, magnets and tape can mark lacquer and nitro finishes. Protect the finish with a soft, non-reactive layer, and do not leave heated parts in contact with an instrument.
 
-Record the driver-to-pickup gap, pickup position, instrument-control positions, input gain, output-amplifier setting, sample rate, and fixture orientation in project notes.
+## 5. Building an air-core driver (exciter)
 
-## Preparing a measurement
+- Wind on a **nonmagnetic former** (3D-printed PLA/PETG, acrylic or phenolic), roughly the footprint of the pickup's pole-piece row.
+- Use roughly **0.25–0.35 mm** enamelled copper wire and **220–350 turns**. Aim for a measured DCR of commonly **6–12 Ω**.
+- Use **twisted, strain-relieved leads**, with the twist running right up to the coil and a clamp at the former.
+- An optional **gapped shield** (a copper foil wrap that does not close into a shorted turn) reduces capacitive coupling. Ground it at one point only.
+- **Amplifier load caveats:** many amplifiers are not stable into an almost purely resistive 6–12 Ω load with long leads, and some headphone outputs current-limit. Use a series resistor (for example 10 Ω, ≥2 W) if needed, check the datasheet's minimum load, and never short the output. A coil with too little DCR may make an amplifier oscillate or trip its protection.
 
-1. Fix the instrument and driver so neither can move.
-2. Mechanically mute the strings for magnetic-driver measurements.
-3. Select only the pickup under test.
-4. Put passive volume/tone or active EQ controls at documented positions.
-5. Connect to a high-impedance interface input and disable input effects, auto gain, echo cancellation, noise suppression, and monitoring.
-6. Grant input permission and select the device and channel.
-7. Adjust analog input gain so the strongest event stays below clipping.
-8. Select the required output device and hardware channel, then set **Output level** low.
-9. Use the 440 Hz button briefly to confirm routing. Stop it before changing cables or fixtures.
+## 6. Input preparation and repeatable geometry
 
-Digital input trim changes analysis level but cannot repair analog clipping.
+- Connect the pickup to a **high-impedance** instrument input (Hi-Z, ≥ 1 MΩ). Use the same short cable for every pickup: input and cable capacitance shift the measured resonance.
+- Keep the fixture geometry identical: the same distance and position between exciter and pole pieces (a spacer or jig helps), the same orientation and the same output level. Every result is comparative to that setup.
+- Keep the room quiet electrically: dim fluorescent lights, keep phones and switch-mode supplies away, and calibrate with the pickup in place.
 
-## Analysis workflow and results dashboard
+## 7. Measurements
 
-The desktop workspace places **01 Audio routing** beside the wider **02 Analyze pickup** panel. Inside Audio routing, the interface input controls and meter sit in a dedicated green-accented **Input** group. **Input device** and **Input channel** share one row; **Input trim** and the dark pole-red manual **Recalibrate** button share the next. Recalibrate repeats the same quiet-input route calibration used after an input-device or input-channel change. In the blue-accented **Output** group, **Output device** and **Output channel** share one row above the generator level, meter, and buttons. The full-width **03 Project comparison** panel places six compact project selectors across the top, each showing its Tonewinder Profile, DCR, and **Show** control. A narrow vertical action rail sits to the left of the wider, taller shared Bode graph. The full-width **04 Project** panel follows it. Project Name and Project Notes share its first desktop row at 35% and 65%, matching Customer on the left and Pickup on the right below. When `?footprint=true` is active, a separate full-width Tonewinder subsection appears below them. These panels stack vertically on narrow screens.
+Tabs: **Summary · Bode response · Phase · Spectrum · Settings**. Each measurement tab has its own description, setup, run button, Stop, progress bar, graphs and result cards. Every result and every graph heading has a `?` button. It opens a large explanation tooltip on hover, keyboard focus or tap, covering what is calculated, what it indicates and the main caveat. An outside press or Escape closes it.
 
-The **Summary** tab is first and initially active. By default it contains Resonance, Relative phase, DCR, Inductance, and Measurement record. Add `?footprint=true` to the page URL—for example, `http://127.0.0.1:8766/?footprint=true`—to also show the **Character** gauge, spider-diagram **Tone Footprint**, **Tonal Characteristics**, and the Project panel's **Tonewinder** subsection. Character ranges from **Velvet** through **Warm**, **Balanced**, and **Vivid** to **Bright**, on a continuous red-to-blue gradient. Its calibrated transfer maps the supplied 48/54/57/64 reference profile to about 10 and the 82/85/84/33 profile to about 85. Tonal Characteristics sits below the spider diagram inside the same footprint box. Each Tone Footprint factor has its own accessible explanation tooltip. Brightness, Clarity, and Attack use value-dependent blue hues, while Body uses orange hues in the UI, PNG, and PDF. The detailed graphs and metrics remain in the three measurement tabs—**Bode response**, **Phase**, and **Spectrum**. Brightness, Clarity, Attack, and Body use a pickup-specific electrical model: fitted resonance receives the strongest weight when available, while inductance, DCR, wind count, and pickup construction supplement it or provide an estimate before measurement. Brightness, Clarity, and Attack receive a slight 0.94 output scaling, while Body receives a slight 1.05 scaling. These normalized scores are comparative descriptors rather than calibrated physical units. The feature stays off when the parameter is absent or has any value other than `true`.
+**Measure All** runs Bode → Phase → Spectrum in sequence, opens each tab as its test starts, and stamps today's Wind Date. It shows one *All three measurements complete.* message at the end and then returns to Summary. Stop cancels the remaining stages. A failure stops the sequence and names the stage. Individual run buttons never change Wind Date.
 
-The glowing **Measure All** button beside **Clear measurements** runs the three tests sequentially in tab order: Bode, Phase, then Spectrum. The app opens each tab as its measurement starts, waits for every test to finish, and returns to Summary when the sequence completes, fails, or is stopped. One centered toaster confirms when all three measurements finish successfully; **Stop output** cancels the active test and the remaining sequence.
+All output-producing tests need a connected, calibrated input. The output bus is muted whenever no tone or measurement is running. After every measurement, whether it completes, fails or is cancelled, the app also shuts the output down hard. It cancels all gain automation, mutes the bus, stops and disconnects every generator, and rebuilds the output route, including re-applying the output device the way a manual device change does. A capture that stops receiving audio fails with an error instead of hanging. If the browser pauses audio, the status pill asks for one click to resume it. No result is ever invented when the signal is missing. A measurement that fails or is cancelled leaves the previous results untouched.
 
-Every result value has a `?` explanation button describing its role, interpretation, and main caveat. Every graph heading has the same explanation control. The buttons work by hover, keyboard focus, and touch; tap elsewhere or press Escape to dismiss. Explanation boxes use the same large, orange-accented blurred-glass treatment as centered notification messages. Every graph keeps labelled x/y tick values visible, and measured graphs also show exact cursor-position values on hover or touch-drag.
+### Bode response (magnitude only)
 
-## 440 Hz test tone
+- One phase-continuous logarithmic chirp from 500 Hz to 8 kHz (7 s plus brief endpoint holds, with 55 ms fades) is played at the unchanged Output level. The full return is captured once.
+- The return is located from the audio API latency estimate plus a bounded cross-correlation onset search. Learned hum is removed conservatively, without touching the frequencies the chirp is passing through at that moment. The signal is band-limited.
+- **Sweep points** (20/30/40/50/60, default 60) sets analysis density, not separate tones. Points follow an exponential schedule that is denser at high frequencies. Each point is analysed from an overlapping local window of about ±1/20 octave, using the median RMS of five sub-blocks. The learned noise power is subtracted in the power domain. At least 60% of the points must clear the noise floor; otherwise the run fails with routing/gain guidance.
+- Rejected gaps are interpolated only to keep the curve continuous. They are excluded from the direct-point count and from peak selection. A local median outlier guard and light 3-point smoothing stop single spikes from being taken as the resonance.
+- Nine extra log-spaced **refinement** points around the strongest candidate are analysed from the same capture. The curve is published only after the whole run succeeds.
+- The **fit** is a quadratic in log-frequency through the strongest local 7 (or 5) direct points. It reports the fitted resonance and a ± uncertainty that combines half the closest bin spacing with leave-one-out variation. When no concave in-range fit exists, the strongest-bin fallback is stored explicitly.
+- **Display:** the curve is normalised so its lowest robust value is exactly 0 dB, with ticks every 6 dB. **Curve smoothing** (0–100%, default 45%) is a display-only Gaussian in log-frequency with a strongly progressive mapping. It never changes the fit, the cards or the raw CSV values.
+- Cards: Fitted resonance, Fit uncertainty, Peak above minimum, Direct / total points.
 
-**Play 440 Hz test tone** produces a continuous sine wave through the selected output device and channel at the selected output level. It requires an input connection. Press the same button or **Stop output** to ramp it down.
+### Phase
 
-The button is intended only for routing, gain, and phase-chain checks. It replaces the former free-form excitation generator.
+Five shaped low-level pulses are played. Each return is searched in a window wide enough for common interface latency. The strongest excursion is located and normalised into a 30 ms view, and its sign is voted. The result is **POSITIVE**, **NEGATIVE**, or **INDETERMINATE** when the response is below about −80 dBFS or fewer than four votes agree. Cards: Relative phase, Vote agreement, Pulse response level.
 
-## Spectrum
+### Spectrum (white noise)
 
-The noise test plays locally generated white noise through the selected output device and channel. Two second-order Butterworth-style biquad filters limit the excitation to the selected span:
+- Presets are Pickup focus 500–8,000 Hz, Guitar/bass 40–8,000 Hz, Full audio 20–20,000 Hz, and Custom. Editing Low/High switches to Custom, and High is clamped below Nyquist.
+- **Duration** is 2.5, 5 or 10 s. Local white noise passes through a high-pass and a low-pass biquad (Q ≈ 0.707) and is played at the test level on the selected output channel.
+- Between 4 and 16 Hann-windowed 8192-point FFT power frames are averaged, depending on duration. The plot is downsampled on a log grid to at most 1200 points and normalised to the strongest point (0 dB).
+- **Spectral waterfall**: 12–28 evenly spaced 4096-point frames, each compacted to 96 log cells and normalised to the strongest cell. For contrast, a high-contrast colour scale runs from the quietest 5% of cells (never below −90 dB) to 0 dB, and its lower limit is printed on the colour bar. The measured spectrum and the waterfall sit side by side on wide screens. Frequency runs left to right and time top to bottom. The waterfall is saved with the project.
 
-- Pickup focus: 500–8,000 Hz
-- Guitar / bass: 40–8,000 Hz
-- Full audio: 20–20,000 Hz, limited by sample rate
-- Custom low and high frequencies
+The 16 metrics:
 
-Choose 2.5, 5, or 10 seconds. Longer runs support more stable averaging but heat the driver more and require a quiet, fixed setup. The analyzer averages multiple 8192-point Hann-window FFT frames and plots the response relative to its strongest selected-band bin.
+1. Peak frequency
+2. Fundamental (harmonic-sum estimate)
+3. RMS level (DC removed, dBFS)
+4. Sample peak
+5. Spectral centroid
+6. 85% roll-off
+7. Spectral bandwidth
+8. Spectral flatness
+9. Spectral slope (dB/octave)
+10. THD estimate (harmonics 2–8)
+11. Even / odd
+12. Peak asymmetry
+13. Transient index (max/median 20 ms RMS)
+14. Low band (< 250 Hz)
+15. Mid band (250 Hz–2 kHz)
+16. High band (> 2 kHz)
 
-### Spectrum metrics and tooltips
+**Caveat:** with broadband excitation, *Fundamental*, *THD* and *Even / odd* are **comparative screening indicators**, not calibrated distortion measurements. The exciter, its amplifier and the input loading shape every spectrum.
 
-The **Spectrum** tab contains two measured-frequency graphs: an averaged logarithmic spectrum and a time-resolved spectral waterfall. In the waterfall, frequency runs left to right, capture time runs top to bottom, and color represents relative level from −90 dB to 0 dB. Both graphs and the metric cards have synchronized copies in Summary. Every metric card and graph has a `?` button; hover, focus, or tap it to see an explanation.
+## 8. Projects, comparison and exports
 
-| Measurement | Meaning |
-| --- | --- |
-| Peak frequency | Strongest averaged spectral component in the selected span. |
-| Fundamental | Harmonic-score estimate of the lowest periodic component; may be uncertain for broadband noise. |
-| RMS level | Average captured signal energy in dBFS. |
-| Sample peak | Largest absolute digital sample; values near 0 dBFS indicate clipping risk. |
-| Spectral centroid | Power-weighted spectral center, often perceived as brightness. |
-| 85% roll-off | Frequency below which 85% of selected-band power lies. |
-| Spectral bandwidth | Power-weighted spread around the centroid. |
-| Spectral flatness | Geometric/arithmetic mean power ratio; high is flat/noise-like. |
-| Spectral slope | Fitted level trend in dB per octave. |
-| THD estimate | Harmonics 2–8 relative to estimated fundamental; screening-only under noise excitation. |
-| Even / odd | Even-harmonic to odd-harmonic energy ratio in dB. |
-| Peak asymmetry | Positive/negative waveform peak ratio in dB. |
-| Transient index | Strongest 20 ms RMS block divided by median block RMS. |
-| Low band | Integrated selected-span spectral energy below 250 Hz. |
-| Mid band | Integrated selected-span spectral energy from 250 Hz to 2 kHz. |
-| High band | Integrated selected-span spectral energy above 2 kHz. |
+**Project panel:** Project Name (default `Demo`) and Project Notes, then three subsections:
 
-Fundamental, THD, and even/odd remain comparative screening indicators under broadband excitation rather than calibrated distortion measurements.
+- **Customer**: Name, Address, Phone, eMail, Notes, and a Wind Date in `DD.MM.YYYY` that formats itself as you type.
+- **Pickup**, in five groups:
+  - Info: Pickup ID, Guitar Type, and the Guitar/Bass, Single Coil/Humbucker and Clockwise/Counterclockwise checkboxes
+  - Wire: Wire Type, Gauge, # Winds
+  - Hardware: Pole Insulator, Protection, Magnet Type
+  - Wires: Leads, Start Wire (Ground), End Wire (Hot)
+  - Properties: Polarity, Phase, DCR, Inductance, Capacitance
+- **Tonewinder** (only with `?footprint=true`).
 
-## Existing guided measurements
+Every value is tracked for unsaved changes and saved automatically.
 
-### Bode magnitude
+**Project comparison** has six persistent slots with stable colours: blue, lime, orange, white, purple and teal. Red is reserved for the selected project's trace, which is drawn thicker.
 
-The **Sweep points** dropdown offers 20, 30, 40, 50, or 60 analysis points, with 60 as the default. The app emits one phase-continuous logarithmic chirp from 500 Hz to 8 kHz at the selected test-output level. Short endpoint holds and 55 ms fade-in/fade-out ramps avoid the abrupt transitions and output peaks produced by separate stepped tones.
+- Click a card (or use its radio button with the keyboard) to select it. Selecting a stored slot loads it into the workspace.
+- **Show** toggles that slot's trace on the shared 500 Hz–8 kHz Bode comparison graph. Each slot's fitted resonance appears next to the graph, and each readout also selects its slot.
+- **Store** copies the complete current project into the active slot.
+- **Create PDF** freezes the active slot as an immutable snapshot and blocks edits until the file is ready.
+- **Load from file** imports a project into the active slot and loads it.
+- **Save to file** downloads the active slot.
+- **Clear slot** and **Clear All** both ask for confirmation, then start a clean `Demo` project with today's Wind Date and default Pickup and Tonewinder values.
 
-The selected points are sampled from overlapping local windows of the same captured chirp, using windowed RMS estimates and learned-noise power subtraction. Noise-limited points are excluded from the direct-point count and interpolated only for graph continuity. A local outlier filter and light smoothing prevent isolated noisy bins from becoming the resonance candidate. After the normal sweep analysis, the app adds nine closely spaced analysis frequencies between the candidate's neighboring bins, using the same continuous capture.
+**Project file:** pretty-printed version-2 JSON named `<safe-name>.pickup-lab`. Version-1 projects and legacy `.custom-winds` and `.pickup-health` files load as well. Missing Spectrum data becomes empty, missing customer and pickup records get defaults, legacy impulse results and settings are dropped, and ISO dates are converted to `DD.MM.YYYY`.
 
-The graph remains hidden while the continuous sweep runs, while its normal points are calculated, and during peak refinement. During excitation, the top-right status displays the instantaneous sweep frequency and live input value; during analysis and refinement, it displays the point frequency and measured value. Once complete, the robust response is normalized to a minimum of 0 and presented on the established 1:6 display scale. Its measured robust trace is only slightly dimmed and is drawn above the brighter Gaussian-smoothed curve so the original points remain visible. The **Curve smoothing** slider adjusts the overlay from 0% to 100% in logarithmic-frequency space and defaults to 45%. Its progressive response preserves considerably more local variation through the lower and middle range, reserving strong smoothing for the upper end. It is a display control only and never changes the resonance fit, uncertainty, saved measurements, or CSV raw values. The selected smoothing level is saved with the project and used by the on-screen, Summary, PNG, and PDF Bode graphs.
+**Export CSV** (Summary) contains:
 
-A quadratic curve in log-frequency is fitted through the strongest local seven direct points (five when only five are available). The app reports and exports the fitted resonance, strongest measured bin, and a conservative uncertainty based on local bin spacing and leave-one-out fit variation. The fitted resonance is marked directly on the graph. Peak magnitude and endpoint tilt use the same display scale, while CSV retains raw relative dB, the displayed value, refinement flags, and fit metadata. The result remains magnitude-only and includes the entire driver/interface chain.
+- project, customer, pickup, tonewinder and routing/settings records
+- the Summary overview and every displayed measurement
+- full Bode rows: noise-subtracted, raw, output, robust-filtered, raw relative, displayed and smoothed values, plus SNR, learned noise, stability and the direct/interpolated/refinement flags
+- the fit metadata
+- phase votes and all five pulse waveforms
+- raw spectrum metrics, spectrum points and every waterfall cell
 
-### Relative phase
+**Export PNG** is a 2× image in the current theme that mirrors the compact Summary only.
 
-Five shaped pulses vote on response sign. For improved signal-to-noise and phase precision, the pulse test runs 6 dB above the selected output level while remaining capped at −6 dBFS. Each captured pulse uses a distinct curve hue so the five votes remain visually separable. The result is positive, negative, or indeterminate. It is relative to driver face, winding, leads, input wiring, and interface phase—not absolute magnetic north/south.
+**Create PDF** is a real multi-page A4 document built locally from canvas-rendered pages. It uses a clean print palette, with the tool name at upper left, the logo at upper right and the lab name alone in the footer. Pages:
 
-## Projects and exports
+1. Project Information (two pages)
+2. Overview
+3. Bode response with Relative phase (data only)
+4. Spectrum Data (measured spectrum, waterfall and the 16 metrics)
+5. With `?footprint=true`, a final Tonewinder page
 
-- The **Customer** record stores name, address, phone, eMail, notes, and wind date in European `DD.MM.YYYY` format.
-- The **Pickup** record is grouped into **Info** (Pickup ID, Guitar Type, and the six classification/direction checkboxes), **Wire** (Wire Type, Gauge, and wind count), **Hardware** (Pole Insulator, Protection, and Magnet Type), **Wires** (Leads, Start Wire/Ground, and End Wire/Hot), and a full-width **Properties** group (Polarity, Phase, DCR, Inductance, and Capacitance). Pickup ID starts blank. Defaults are Telecaster, Plain Enamel, AWG42, `0` winds, Kapton Tape, Tissue, Alnico 5, Waxed Pushback, Black ground/start, Orange hot/end, South polarity, and Negative phase. All text, numeric, select, and multiline fields use black backgrounds in dark themes and white backgrounds in the light theme. All six classification/direction checkboxes start clear; DCR, Inductance, and Capacitance start blank. Calculated **Tonal Characteristics** uses type-neutral wording without a pickup-type prefix and is exposed in Summary, PNG, and PDF only when `?footprint=true` is active.
-- With `?footprint=true`, the separate full-width **Tonewinder** subsection stores a named profile plus **Global** values and **Scatter Parameters**. Tonewinder Profile occupies the left 50% on desktop and returns to full width on mobile. The subsection is hidden by default. Its defaults are Profile `None`; Turns `0`; Start `Left`; Direction `CCW`; Wire Gauge `71`; ATC Wire tension `18-20`; Winding Speed `650`; Turns Pre-Scatter `200`; Turns Post-Scatter `150`; Filling factor Pre/Post `90`; Min Filling factor `45`; Max Filling factor `80`; and Turns Scatter Change `60`. Hidden Tonewinder data remains part of project persistence and CSV exports.
-- **Project comparison** keeps six independent project snapshots. Each compact top selector is mouse- and keyboard-selectable and shows the project name, Tonewinder Profile, DCR, and an independent **Show** checkbox for its colored Bode trace. The active selector is strongly highlighted. A vertically stacked legend overlays the graph's upper-left corner and lists every shown project with its current trace color. Slot colors are blue, lime, orange, white, purple, and teal; the selected project's graph and legend swatch change to an emphasized red line. The vertically arranged action rail places **Store** and **Create PDF** first, followed by file and clear actions. **Store** copies the current project and measurements into the active slot. **Clear project** removes the selected snapshot after confirmation; **Clear All** confirms before removing every stored slot. Both clear actions create a clean active record named `Demo`, clear Project Notes and every Customer field, stamp today's Wind Date, erase all measurements, and restore every Pickup and Tonewinder value to the documented defaults. **Create PDF**, **Load from file**, and **Save to file** operate on the active slot; loading accepts version 2, migrates compatible version-1 data, and remains compatible with legacy `.pickup-health` files. The former Project-panel Save, Load, and PDF buttons are intentionally omitted. The six slots and visibility choices persist locally.
-- **Export CSV** contains Created and Updated in European `DD.MM.YYYY` format, the customer, pickup, and Tonewinder records, the Summary overview, every displayed measurement, all Spectrum metrics, averaged spectrum points, time/frequency/level waterfall cells, and Bode measured level, generated output level, robust level, raw relative dB, displayed relative value, SNR, learned floor, interpolation/refinement flags, and fitted-resonance metadata, plus phase votes and every phase waveform sample.
-- **Create PDF** in Project comparison freezes the currently selected slot into a snapshot and creates that project's polished multi-page A4 record locally, so switching or editing controls cannot mix another project's data into the export. The record includes a branded header and logo, project/customer information, pickup properties grouped as **Info**, **Wire**, **Hardware**, **Wires**, and **Properties**, test settings, a dedicated **Overview** page, and two measurement pages. All cards and graph cases use white backgrounds for clean laser-printer output; value-box outlines are only slightly darker than the remaining structural lines, and no glossary annex is generated. By default the Overview contains fitted resonance, Relative Phase, DCR, Inductance, and Capacitance. When the app URL contains `?footprint=true`, it additionally contains the Character gauge, color-coded Tone Footprint spider diagram, and Tonal Characteristics in one box, and the PDF gains a separate final **Tonewinder** page. Tonal Characteristics remains omitted from the Project Information pickup section. Its Audio Routing section places **Input Device** beside **Input Channel** on one row and **Output Device** beside **Output Channel** on the next. PDF Measurement Settings contains only **Input Trim** and **Output Level**. The first measurement page places Bode response above Relative phase, and the second is dedicated to Spectrum data and the measured spectral waterfall; Relative phase remains data-only. The fitted Bode resonance is marked while the fitted frequency, strongest measured bin, and uncertainty are listed. Pickup selections render as checked or empty boxes in three vertical pairs: Guitar above Bass, Single Coil above Humbucker, and Clockwise above Counterclockwise. Project ID is omitted; Created and Updated use European `DD.MM.YYYY` formatting. The footer contains only the configured lab name, with no separator, page number, or timestamp. Its PDF-only logo is embedded to keep canvas export secure when the app is opened directly from disk.
-- **Export PNG** uses the current theme and mirrors the visible Summary tab. Tone Footprint and Tonal Characteristics are included only when `?footprint=true` is active. The **Export PNG** and **Export CSV** buttons stay together in a spaced toolbar at the top of Summary.
+The file is named `<safe-name>-complete-record.pdf`.
 
-The **Settings** analysis tab lets you change the tool name (default **ИH Custom Winds**) and lab name (default **Nicks Pickup Lab**). Press **Apply** to update the header, hero, browser title, and export branding. These names are stored with saved projects and restored when a project is loaded.
+## 9. Tone Footprint (`?footprint=true`)
 
-The complete serializable application state is saved automatically under the browser-local key `ih-custom-winds.local-state.v1`. Reloading restores project/customer/pickup fields, all measurement data and graphs, settings, branding, theme, active tab, preferred input/output devices and channels, and the six comparison slots with their active/visible states. Imported project files immediately replace and update the local state. Corrupt or incompatible stored data is discarded safely without blocking startup, and a one-time warning appears if browser storage is unavailable or full.
+This mode is hidden by default. When enabled, Summary, PNG and the PDF Overview add three things:
 
-Live microphone streams, Web Audio nodes, active measurements, and learned route-noise/calibration buffers are intentionally session-only. After reload, audio remains disconnected until permission is granted; reconnecting relearns the route noise floor according to the normal three-second calibration rule.
+- A **Character** gauge with five bands — Velvet, Warm, Balanced, Vivid and Bright — on a red-to-blue gradient.
+- A four-axis **Tone Footprint** spider diagram:
+  - Brightness, Clarity and Attack in blue hues
+  - Body in orange
+- **Tonal Characteristics** text.
 
-## Themes, responsive behavior, and accessibility
+Brightness, Clarity, Attack and Body come from a pickup model. Fitted resonance has the highest weight, then inductance, DCR and winding count, with a small instrument and construction adjustment. Every score is a **comparative normalized descriptor, not a calibrated physical unit**. The Tonewinder subsection and its PDF page also appear only in this mode, but Tonewinder values are always saved and exported to CSV.
 
-The header theme button cycles through **Light**, **Dark orange**, **Dark green**, and **Dark blue**, displaying the active theme name. Dark green is the first-run default and uses acid-green `#d5fe42` accents; Dark blue remains available with vibrant blue accents, and Light uses neutral surfaces with dark blue. Theme selection is restored from local storage and redraws every source and Summary canvas; PNG and CSV exports identify and use the selected palette.
+## 10. Themes and accessibility
 
-Controls are native, labelled, and keyboard accessible. Every single-line text/number field and dropdown uses the same 40 px height; multiline notes remain resizable. Measurement and graph tooltips work with pointer hover, keyboard focus, and touch. Plots remain fixed in height while data accumulates, resize horizontally, cap backing-store scale at `2×` device pixel ratio, and stack on mobile. Summary sections and their metric grids collapse cleanly to one column on narrow phones.
+- Themes: **Light**, **Dark orange**, **Dark green**, **Dark blue** and **Dark purple** (first-run default). The theme button cycles through them in that order. The choice is remembered and redraws every graph.
+- Semantic headings, labels and fieldsets; native controls; `role="tab"` tabs with arrow-key navigation; live status regions; visible focus rings; and a single global `role="tooltip"`.
+- Buttons are at least 38 px tall and single-line inputs and selects 40 px. Graphs keep a fixed height at every width, and the canvas resolution is capped at a device pixel ratio of 2. Hover or drag on any graph to inspect values.
+- `prefers-reduced-motion` is respected. The layout stacks below about 1100 px, becomes a single column below about 760 px, and has no horizontal scrolling down to 300 px.
 
-## Quality checklist
+## 11. Quality checklist
 
-- Keep driver geometry and all analog gains fixed.
-- Warm up active electronics and the driver amplifier.
-- Use the same sample rate for a comparison series.
-- Record battery condition and instrument-control positions.
-- Repeat a reference pickup periodically to quantify fixture drift.
-- Reject clipped captures and investigate high transient index during noise tests.
-- Allow the driver to cool between long or high-level noise runs.
-- Compare complete curves and confidence indicators, not one headline value.
-- Save the project immediately after a clean series.
+1. Serve from localhost and allow audio. Check that the status pill shows the learned input noise.
+2. Play the 440 Hz tone and confirm the exciter and the INPUT meter respond on the chosen channel.
+3. Set the Output level so the Bode return peaks well below −12 dBFS while staying clearly above the input floor.
+4. Run Measure All. Check *Direct / total points* (close to the total), and the phase vote (5/5).
+5. Store the project in a slot, then measure the next pickup with an identical geometry.
 
-## Limitations
+## 12. Limitations
 
-- Browser and interface timing are not laboratory-instrument synchronized.
-- The response is not de-embedded from DAC, amplifier, driver coil, fixture, pickup loading, cable, or ADC.
-- Bode and noise results are magnitude-only.
-- White-noise harmonic metrics cannot separate excitation energy from distortion as cleanly as a single-tone analyzer.
-- The app cannot sense driver-coil temperature or external amplifier clipping.
-- Comparative results can be excellent; certification-grade absolute results require calibrated hardware and a controlled fixture.
+- Results are **comparative**. Input impedance, cable capacitance, exciter construction, amplifier response and geometry all shape them.
+- Bode is magnitude only. Phase is a relative sign, not a phase response.
+- Hum removal is conservative and only covers stationary 50/60 Hz harmonics learned during calibration.
+- Browser latency estimates vary. The bounded onset search compensates within about ±0.3 s.
+- Output-device selection depends on browser support (current Chrome or Edge).
 
-## Troubleshooting
+## 13. Troubleshooting
 
-**No input prompt** — Reload the page, press **Allow audio access** on the splash, use localhost/HTTPS, and check site permissions. The app automatically retries with simpler, browser-compatible constraints when Chrome or Safari rejects an advanced audio request.
-
-**White-noise response is missing** — Confirm the selected output device/channel, driver amplifier, coil continuity, and selected input. Use the 440 Hz tone at low level first.
-
-**Fundamental seems wrong** — Broadband excitation can make the harmonic-score estimate ambiguous. Treat it as a comparative screening hint rather than a calibrated harmonic measurement.
-
-**Output comes from the wrong interface or channel** — Select the required device and hardware channel in the Output group. If the browser refuses a non-default device, grant the output-selection prompt or use a browser that supports Web Audio output-sink selection.
+| Symptom | Fix |
+|---|---|
+| "Only N of M points cleared the input noise floor" | Check the output device and channel (is the exciter actually driven?), raise the Output level, move the exciter closer, or check the input channel. |
+| Permission denied | Allow microphone access for the page in the browser's site settings, then press the status pill and **Allow audio access**. |
+| Output device change reverts to the system default | Use localhost/HTTPS in a current Chrome or Edge. Some browsers need the device-selection prompt to be accepted. |
+| Calibration reports a loud baseline | Silence the room, check grounding and keep the exciter disconnected from noisy sources. Trim is reduced automatically. |
+| Phase INDETERMINATE | Raise the Output level, improve coupling, reduce hum. |
+| Local state lost | Private windows and cleared site data reset `localStorage`. Save projects to file. |
+| Rebuild icons | `python3 scripts/generate-icons.py` (requires Pillow). |

@@ -200,7 +200,7 @@ Brightness, Clarity, Attack and Body come from a pickup model. Fitted resonance 
 
 ## 10. Themes and accessibility
 
-- Themes: **Light**, **Dark orange**, **Dark green** (first-run default) and **Dark blue**. The theme button cycles through them in that order. The choice is remembered and redraws every graph.
+- Themes: **Light**, **Dark orange**, **Dark green**, **Dark blue** and **Dark purple** (first-run default). The theme button cycles through them in that order. The choice is remembered and redraws every graph.
 - Semantic headings, labels and fieldsets; native controls; `role="tab"` tabs with arrow-key navigation; live status regions; visible focus rings; and a single global `role="tooltip"`.
 - Buttons are at least 38 px tall and single-line inputs and selects 40 px. Graphs keep a fixed height at every width, and the canvas resolution is capped at a device pixel ratio of 2. Hover or drag on any graph to inspect values.
 - `prefers-reduced-motion` is respected. The layout stacks below about 1100 px, becomes a single column below about 760 px, and has no horizontal scrolling down to 300 px.

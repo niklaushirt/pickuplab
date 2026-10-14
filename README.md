@@ -97,14 +97,26 @@ All output-producing tests need a connected, calibrated input. The output bus is
 
 ### Bode response (magnitude only)
 
-- One phase-continuous logarithmic chirp from 500 Hz to 8 kHz (7 s plus brief endpoint holds, with 55 ms fades) is played at the unchanged Output level. The full return is captured once.
-- The return is located from the audio API latency estimate plus a bounded cross-correlation onset search. Learned hum is removed conservatively, without touching the frequencies the chirp is passing through at that moment. The signal is band-limited.
-- **Sweep points** (20/30/40/50/60, default 60) sets analysis density, not separate tones. Points follow an exponential schedule that is denser at high frequencies. Each point is analysed from an overlapping local window of about ±1/20 octave, using the median RMS of five sub-blocks. The learned noise power is subtracted in the power domain. At least 60% of the points must clear the noise floor; otherwise the run fails with routing/gain guidance.
-- Rejected gaps are interpolated only to keep the curve continuous. They are excluded from the direct-point count and from peak selection. A local median outlier guard and light 3-point smoothing stop single spikes from being taken as the resonance.
-- Nine extra log-spaced **refinement** points around the strongest candidate are analysed from the same capture. The curve is published only after the whole run succeeds.
-- The **fit** is a quadratic in log-frequency through the strongest local 7 (or 5) direct points. It reports the fitted resonance and a ± uncertainty that combines half the closest bin spacing with leave-one-out variation. When no concave in-range fit exists, the strongest-bin fallback is stored explicitly.
-- **Display:** the curve is normalised so its lowest robust value is exactly 0 dB, with ticks every 6 dB. **Curve smoothing** (0–100%, default 45%) is a display-only Gaussian in log-frequency with a strongly progressive mapping. It never changes the fit, the cards or the raw CSV values.
-- Cards: Fitted resonance, Fit uncertainty, Peak above minimum, Direct / total points.
+The Bode engine is a phase-continuous stepped sine between the **Start frequency** and **End frequency** (default 500 Hz and 7 kHz), set on the same line as Points per decade and Curve smoothing.
+
+- **Grid:** whole-hertz frequencies `round(40 · 10^(k/N))`, keeping those from the start to the end frequency. **Points per decade** N is 25, 50 or 100 (default 100). With the default range that gives 115 steps at 100 (504 Hz … 6,951 Hz). Start can be 40 Hz–20 kHz; end must be at least 1.25 × start and at most 24 kHz.
+- **Generator:** one continuous-phase sine at the Output level. It fades in over 0.2 s, jumps to each grid frequency in turn, and fades out over 0.2 s at the end.
+- **Drive compensation** (both on by default; set in the Settings tab, which shows these controls only with `?footprint=true`):
+  - **6 dB/oct reduction** scales the drive by `f_first / f`, cancelling the coil driver's rising induced voltage for magnetic pickups.
+  - **Coil driver load** scales the drive by `|Z(f)| / |Z(f_first)|`, with `|Z| = √(R² + (2πfL)²)`, to keep the driver current constant. **Coil driver DCR** defaults to 126 Ω and **Coil driver inductance** to 1.1 mH.
+  - The total drive is clamped at full scale.
+  - The settings are stored with the project and apply whether or not the controls are visible.
+- **Latency:** at the start of every run, the steady first tone sets a threshold. The tone is then switched off and on in 0.4 s bursts (7 toggles), and each switch-on is timed to the first 256-sample block whose peak exceeds the threshold. The average becomes the settle time; if no onset is found, 0.25 s is used.
+- **Reading:** after each step, and before every repeated reading, the app discards the settle time plus two blocks. It then integrates the **broadband RMS** of the raw input (no filtering, no hum or noise subtraction) over 60 signal periods up to 800 Hz, 120 up to 2 kHz and 240 above.
+- **Level check:** the first point must be at least 20 dB above the learned input noise floor, and never needs more than 0.01 RMS (−40 dBFS). Otherwise the run stops with *Signal level is too low*, naming the required level and the noise floor.
+- **Validation:** each reading is converted to dB relative to the first point and compared with the local trend. For the second point that is the level step; after that it is the change in slope (second difference).
+  - A deviation of 0.4 dB or more is discarded and measured again, up to 3 times before it is accepted anyway.
+  - Accepted readings are averaged (up to 3). Averaging stops early once the averaged value lies within 0.015 dB of the trend below 300 Hz, or within 0.033 dB above.
+- **Spike filter:** two steps behind the newest point, a point whose curvature is at least 0.8 of its local span is replaced by the mean of its neighbours. Beyond the first two points this also needs a matching wider (±2-point) curvature test, and the check then repeats on the previous point. Despiked points show amber in the graph.
+- **Run time:** at 100 points per decade a run typically takes about 40–60 s. Steep parts of the curve, such as around a sharp resonance or at coarse grid spacing, trigger more repeated readings. The curve is published only after the whole run succeeds.
+- The **fit** is a quadratic in log-frequency through the strongest local 7 (or 5) points. It reports the fitted resonance and a ± uncertainty that combines half the closest bin spacing with leave-one-out variation. When no concave in-range fit exists, the strongest-bin fallback is stored explicitly.
+- **Display:** the curve is referenced to its level at the start frequency (the lowest grid point), so the y axis reads 0 dB there and lower levels are negative. The plot is maximised: the lowest value sits on the bottom edge and only a small headroom is left above the peak. The x axis spans the measured range, rounded to e.g. 500–7000 Hz. The smoothed curve is a thick accent-colour line drawn over small, muted measured points; the fitted resonance is a dashed accent-colour line. **Curve smoothing** (0–100%, default 45%) is a display-only Gaussian in log-frequency with a strongly progressive mapping. It never changes the fit, the cards or the raw CSV values.
+- Cards: Fitted resonance, Fit uncertainty, Peak above <start> (fitted peak minus the level at the first grid frequency, e.g. *Peak above 504 Hz*), Measured points (with rejected readings and despiked points).
 
 ### Phase
 
@@ -156,7 +168,7 @@ Every value is tracked for unsaved changes and saved automatically.
 **Project comparison** has six persistent slots with stable colours: blue, lime, orange, white, purple and teal. Red is reserved for the selected project's trace, which is drawn thicker.
 
 - Click a card (or use its radio button with the keyboard) to select it. Selecting a stored slot loads it into the workspace.
-- **Show** toggles that slot's trace on the shared 500 Hz–8 kHz Bode comparison graph. Each slot's fitted resonance appears next to the graph, and each readout also selects its slot.
+- **Show** toggles that slot's trace on the shared Bode comparison graph, which spans the visible projects' measured ranges. Each slot's fitted resonance appears next to the graph, and each readout also selects its slot.
 - **Store** copies the complete current project into the active slot.
 - **Create PDF** freezes the active slot as an immutable snapshot and blocks edits until the file is ready.
 - **Load from file** imports a project into the active slot and loads it.
@@ -169,7 +181,7 @@ Every value is tracked for unsaved changes and saved automatically.
 
 - project, customer, pickup, tonewinder and routing/settings records
 - the Summary overview and every displayed measurement
-- full Bode rows: noise-subtracted, raw, output, robust-filtered, raw relative, displayed and smoothed values, plus SNR, learned noise, stability and the direct/interpolated/refinement flags
+- full Bode rows: measured relative dB, raw magnitude (dBFS), output level, filtered (despiked) relative dB, raw relative, displayed and smoothed values, SNR against the learned broadband noise, stability (spread of averaged readings), readings averaged, readings rejected, trend deviation, drive gain and the direct/interpolated/refinement/despiked flags
 - the fit metadata
 - phase votes and all five pulse waveforms
 - raw spectrum metrics, spectrum points and every waterfall cell
@@ -195,6 +207,8 @@ This mode is hidden by default. When enabled, Summary, PNG and the PDF Overview 
   - Brightness, Clarity and Attack in blue hues
   - Body in orange
 - **Tonal Characteristics** text.
+
+It also shows the Bode **Drive compensation** controls in the Settings tab: 6 dB/oct reduction, Coil driver load, Coil driver DCR (Ω) and Coil driver inductance (mH). See §Bode response for what they do and their defaults.
 
 Brightness, Clarity, Attack and Body come from a pickup model. Fitted resonance has the highest weight, then inductance, DCR and winding count, with a small instrument and construction adjustment. Every score is a **comparative normalized descriptor, not a calibrated physical unit**. The Tonewinder subsection and its PDF page also appear only in this mode, but Tonewinder values are always saved and exported to CSV.
 

@@ -104,6 +104,12 @@ button,input,select,textarea{font:inherit;color:inherit}
 .btn.small{min-height:32px;padding:5px 10px;font-size:13px}
 label{display:block}
 .field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field-stack{display:flex;flex-direction:column;gap:10px;min-width:0}
+.setup.bode-setup{grid-template-columns:120px 150px 150px minmax(160px,1fr);align-items:end}
+.set-groups{display:grid;gap:12px;max-width:760px;margin-top:4px}
+.set-groups .group .tab-desc{margin:0 0 4px}
+.set-groups .group .setup{margin-top:10px}
+@media (max-width:760px){.setup.bode-setup{grid-template-columns:repeat(3,minmax(0,1fr))}.setup.bode-setup .slider-field{grid-column:1/-1}}
 .field>span,.field>label,.lbl{font-size:12.5px;letter-spacing:.01em;color:var(--muted);font-weight:600}
 input[type=text],input[type=number],input[type=email],input[type=tel],input:not([type]),select{
   height:40px; min-height:40px; max-height:40px; width:100%; padding:0 11px; border-radius:10px;
@@ -281,7 +287,7 @@ fieldset.io-out legend{color:var(--output-blue)}
 .blocker .box p{margin:8px 0 0;color:var(--muted)}
 .spinner{width:34px;height:34px;margin:0 auto 14px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--lime);animation:spin .9s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.toasts{position:fixed;inset:0;pointer-events:none;z-index:90;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:18px}
+.toasts{position:fixed;inset:0;pointer-events:none;z-index:90;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:calc(18px + 30vh) 18px 18px}
 .toast,.tipbox{
   --tb: var(--toast-accent,#ff9d3d);
   background:var(--glass);backdrop-filter:blur(18px) saturate(1.3);-webkit-backdrop-filter:blur(18px) saturate(1.3);
@@ -467,10 +473,12 @@ footer{color:var(--muted);font-size:13px;text-align:center;padding:26px 0 8px}
 
   <!-- Bode -->
   <div class="tabpanel" role="tabpanel" id="panel-bode" aria-labelledby="tab-bode" tabindex="0" hidden>
-    <p class="tab-desc">One phase-continuous logarithmic chirp from 500 Hz to 8 kHz drives the exciter at the selected output level. The complete return is captured once, analysed from overlapping local windows with the learned input noise subtracted, refined around the strongest candidate and fitted in log-frequency to locate the resonance. Magnitude only.</p>
-    <div class="setup">
-      <div class="field"><label for="bodeSteps">Sweep points</label><select id="bodeSteps"><option>20</option><option>30</option><option>40</option><option>50</option><option selected>60</option></select></div>
-      <div class="slider-field" style="grid-column:span 2;min-width:0"><div class="top"><label for="bodeSmooth">Curve smoothing</label><output id="bodeSmoothVal" for="bodeSmooth">45%</output></div><input type="range" id="bodeSmooth" min="0" max="100" step="1" value="45"></div>
+    <p class="tab-desc">A phase-continuous stepped sine walks a logarithmic grid of whole-hertz frequencies.</p>
+    <div class="setup bode-setup">
+      <div class="field"><label for="bodePpd">Points per decade</label><select id="bodePpd"><option value="25">25</option><option value="50">50</option><option value="100" selected>100</option></select></div>
+      <div class="field"><label for="bodeStart">Start frequency (Hz)</label><input type="number" id="bodeStart" min="40" max="20000" step="1" value="500" inputmode="numeric"></div>
+      <div class="field"><label for="bodeEnd">End frequency (Hz)</label><input type="number" id="bodeEnd" min="50" max="24000" step="1" value="7000" inputmode="numeric"></div>
+      <div class="slider-field" style="min-width:0"><div class="top"><label for="bodeSmooth">Curve smoothing</label><output id="bodeSmoothVal" for="bodeSmooth">45%</output></div><input type="range" id="bodeSmooth" min="0" max="100" step="1" value="45"></div>
     </div>
     <div class="action-row">
       <button class="btn primary" type="button" id="runBode" data-run="bode">Run Bode sweep</button>
@@ -516,15 +524,30 @@ footer{color:var(--muted);font-size:13px;text-align:center;padding:26px 0 8px}
 
   <!-- Settings -->
   <div class="tabpanel" role="tabpanel" id="panel-settings" aria-labelledby="tab-settings" tabindex="0" hidden>
-    <p class="tab-desc">Branding used in the header, browser title, splash, CSV, PNG and PDF exports. Stored with the project.</p>
-    <div class="setup set-grid">
-      <div class="field"><label for="setTool">Tool name</label><input type="text" id="setTool" value="ИH Custom Winds" autocomplete="off"></div>
-      <div class="field"><label for="setLab">Lab name</label><input type="text" id="setLab" value="Nicks Pickup Lab" autocomplete="off"></div>
-    </div>
-    <div class="action-row"><button class="btn primary" type="button" id="btnApplyBrand">Apply</button></div>
-    <p class="tab-desc">Colour theme of the whole app. Stored in this browser.</p>
-    <div class="setup set-grid">
-      <div class="field"><label for="themeBtn">Theme</label><button class="btn" type="button" id="themeBtn" data-theme-cycle aria-label="Theme: Dark purple. Switch to next theme">Dark purple</button></div>
+    <div class="set-groups">
+      <div class="group"><h4>Branding</h4>
+        <p class="tab-desc">Used in the header, browser title, splash, CSV, PNG and PDF exports. Stored with the project.</p>
+        <div class="setup set-grid">
+          <div class="field"><label for="setTool">Tool name</label><input type="text" id="setTool" value="ИH Custom Winds" autocomplete="off"></div>
+          <div class="field"><label for="setLab">Lab name</label><input type="text" id="setLab" value="Nicks Pickup Lab" autocomplete="off"></div>
+        </div>
+        <div class="action-row"><button class="btn primary" type="button" id="btnApplyBrand">Apply</button></div>
+      </div>
+      <div class="group"><h4>Colour scheme</h4>
+        <p class="tab-desc">Colour theme of the whole app. Stored in this browser.</p>
+        <div class="setup set-grid">
+          <div class="field"><label for="themeBtn">Theme</label><button class="btn" type="button" id="themeBtn" data-theme-cycle aria-label="Theme: Dark purple. Switch to next theme">Dark purple</button></div>
+        </div>
+      </div>
+      <div class="group fp-only" id="driveSection" hidden><h4>Drive compensation</h4>
+        <div class="setup set-grid">
+          <div class="field"><span>Compensation</span><label class="check"><input type="checkbox" id="bodeSixDb" checked>6 dB/oct reduction</label><label class="check"><input type="checkbox" id="bodeCoil" checked>Coil driver load</label></div>
+          <div class="field-stack">
+            <div class="field"><label for="coilR">Coil driver DCR (Ω)</label><input type="number" id="coilR" min="0" max="10000" step="0.1" value="126" inputmode="decimal"></div>
+            <div class="field"><label for="coilL">Coil driver inductance (mH)</label><input type="number" id="coilL" min="0" max="10000" step="0.01" value="1.1" inputmode="decimal"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -670,7 +693,13 @@ const THEMES = [
 const SLOT_COLORS = ['#3d8bff', '#b6f03c', '#ff9b2f', '#ffffff', '#a970ff', '#22c7b8'];
 const SLOT_COLOR_NAMES = ['Blue', 'Lime', 'Orange', 'White', 'Purple', 'Teal'];
 const SELECTED_TRACE = '#ff3b4a';
-const BODE_F1 = 500, BODE_F2 = 8000;
+const BODE_START = 500, BODE_END = 7000; // default sweep range (Hz)
+const BODE_PPD_OPTIONS = [25, 50, 100];
+/** Valid sweep range: start 40 Hz – 20 kHz, end at least 1.25 × start and at most 24 kHz. */
+function bodeRange(start, end) {
+  const a = clamp(Math.round(+start || BODE_START), 40, 20000), b = clamp(Math.round(+end || BODE_END), Math.ceil(a * 1.25), 24000);
+  return { bodeStart: a, bodeEnd: b };
+}
 const NOISE_PRESETS = { pickup: [500, 8000], gb: [40, 8000], full: [20, 20000] };
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -747,7 +776,8 @@ const DEFAULT_TONEWINDER = () => ({
 const DEFAULT_SETTINGS = () => ({
   inputTrim: 0, masterLevel: -30, inputDeviceId: '', inputDeviceLabel: '', inputChannel: 0,
   outputDeviceId: '', outputDeviceLabel: 'System default output', outputChannel: 0,
-  noiseLow: 500, noiseHigh: 8000, noiseDuration: 5, bodeSteps: 60, bodeSmoothing: 45
+  noiseLow: 500, noiseHigh: 8000, noiseDuration: 5, bodePpd: 100, bodeStart: BODE_START, bodeEnd: BODE_END, bodeSmoothing: 45,
+  bodeSixDb: true, bodeCoil: true, coilR: 126, coilL: 1.1
 });
 function newProject(name = 'Demo') {
   const t = todayEU();
@@ -756,7 +786,7 @@ function newProject(name = 'Demo') {
     branding: { toolName: DEFAULT_TOOL, labName: DEFAULT_LAB },
     customer: DEFAULT_CUSTOMER(), pickup: DEFAULT_PICKUP(), tonewinder: DEFAULT_TONEWINDER(),
     settings: DEFAULT_SETTINGS(),
-    measured: {}, noise: null, saturation: [], bode: [], bodeFit: null, polarity: []
+    measured: {}, noise: null, bode: [], bodeFit: null, polarity: []
   };
 }
 
@@ -776,7 +806,7 @@ function normalizeProject(raw) {
   if (!raw || typeof raw !== 'object') throw new Error('Not a project object');
   const ver = raw.version == null ? 1 : +raw.version;
   if (!(ver === 1 || ver === 2)) throw new Error('Unsupported project version ' + raw.version);
-  if (!Array.isArray(raw.bode || []) || !Array.isArray(raw.saturation || []) || !Array.isArray(raw.polarity || [])) throw new Error('Invalid measurement arrays');
+  if (!Array.isArray(raw.bode || []) || !Array.isArray(raw.polarity || [])) throw new Error('Invalid measurement arrays');
   const p = newProject(typeof raw.name === 'string' && raw.name.trim() ? raw.name : 'Demo');
   p.id = typeof raw.id === 'string' && raw.id ? raw.id : p.id;
   p.notes = typeof raw.notes === 'string' ? raw.notes : '';
@@ -798,7 +828,9 @@ function normalizeProject(raw) {
   s.inputTrim = clamp(Math.round(s.inputTrim), -48, 18);
   s.masterLevel = clamp(Math.round(s.masterLevel), -48, -6);
   s.noiseDuration = [2.5, 5, 10].includes(+s.noiseDuration) ? +s.noiseDuration : 5;
-  s.bodeSteps = [20, 30, 40, 50, 60].includes(+s.bodeSteps) ? +s.bodeSteps : 60;
+  s.bodePpd = BODE_PPD_OPTIONS.includes(+s.bodePpd) ? +s.bodePpd : 100;
+  Object.assign(s, bodeRange(s.bodeStart, s.bodeEnd));
+  s.coilR = clamp(+s.coilR, 0, 10000); s.coilL = clamp(+s.coilL, 0, 10000);
   s.bodeSmoothing = clamp(Math.round(s.bodeSmoothing), 0, 100);
   s.inputChannel = Math.max(0, Math.round(s.inputChannel) || 0);
   s.outputChannel = Math.max(0, Math.round(s.outputChannel) || 0);
@@ -807,23 +839,28 @@ function normalizeProject(raw) {
   p.settings = s; // legacy impulse fields are never copied
   // measurements
   p.noise = normalizeNoise(raw.noise);
-  p.saturation = []; // saturation test removed — legacy saturation data is discarded
   p.bode = (raw.bode || []).filter(r => r && isNum(+r.frequency)).map(r => {
     const o = {};
-    for (const k of ['frequency', 'amplitude', 'magnitudeDb', 'rawMagnitudeDb', 'noiseDb', 'snrDb', 'stabilityDb', 'measuredDb', 'outputLevelDb', 'filteredDb', 'normalizedDb', 'rawRelativeDb', 'guardedDb']) o[k] = isNum(+r[k]) ? +r[k] : null;
+    for (const k of ['frequency', 'amplitude', 'magnitudeDb', 'rawMagnitudeDb', 'noiseDb', 'snrDb', 'stabilityDb', 'measuredDb', 'outputLevelDb', 'filteredDb', 'normalizedDb', 'rawRelativeDb', 'guardedDb', 'readings', 'rejected', 'trendDevDb', 'driveGainDb']) o[k] = r[k] != null && isNum(+r[k]) ? +r[k] : null;
+    o.despiked = !!r.despiked;
     o.valid = r.valid !== false; o.refinement = !!r.refinement; o.interpolated = !!r.interpolated;
     if (o.filteredDb == null) o.filteredDb = o.measuredDb != null ? o.measuredDb : o.magnitudeDb;
     return o;
   }).sort((a, b) => a.frequency - b.frequency);
+  // every curve is referenced to its lowest frequency, so the graph reads 0 dB there
+  const bodeBase = bodeBaseDb(p.bode, 'filteredDb'), bodeMin = p.bode.length ? Math.min(...p.bode.map(r => r.filteredDb).filter(isNum)) : 0;
   if (p.bode.length) {
-    const mn = Math.min(...p.bode.map(r => r.filteredDb).filter(isNum));
-    const mr = Math.min(...p.bode.map(r => r.measuredDb).filter(isNum));
+    const rawBase = bodeBaseDb(p.bode, 'measuredDb');
     for (const r of p.bode) {
-      if (r.normalizedDb == null && isNum(r.filteredDb)) r.normalizedDb = r.filteredDb - mn;
-      if (r.rawRelativeDb == null && isNum(r.measuredDb)) r.rawRelativeDb = r.measuredDb - mr;
+      if (isNum(r.filteredDb)) r.normalizedDb = r.filteredDb - bodeBase;
+      if (isNum(r.measuredDb)) r.rawRelativeDb = r.measuredDb - rawBase;
     }
   }
   p.bodeFit = raw.bodeFit && isNum(+raw.bodeFit.frequencyHz) ? Object.assign({}, raw.bodeFit) : (p.bode.length ? computeBodeFit(p.bode) : null);
+  if (p.bodeFit && p.bodeFit.peakRef !== 'base' && isNum(+p.bodeFit.peakNormalizedDb) && p.bode.length) {
+    p.bodeFit.peakNormalizedDb = +p.bodeFit.peakNormalizedDb + bodeMin - bodeBase; // older fits measured the peak above the curve minimum
+    p.bodeFit.peakRef = 'base';
+  }
   p.polarity = (raw.polarity || []).filter(r => r && Array.isArray(r.wave)).map(r => ({ sign: +r.sign || 0, amplitude: +r.amplitude || 0, wave: r.wave.map(Number), peakDb: isNum(+r.peakDb) ? +r.peakDb : db(+r.amplitude || 0) }));
   const md = raw.measured || {};
   p.measured = {};
@@ -864,20 +901,20 @@ const TIPS = {
   midBandDb: { t: 'Mid band', calc: 'Integrated spectral power of the selected band from 250 Hz to 2 kHz, in dB re full-scale RMS.', means: 'Midrange energy, where most of a pickup\'s fundamental note content lives.', caveat: 'Depends on drive level and geometry; compare bands with each other or between identical setups.' },
   highBandDb: { t: 'High band', calc: 'Integrated spectral power of the selected band above 2 kHz, in dB re full-scale RMS.', means: 'Treble and presence energy, dominated by the resonance peak in most pickups.', caveat: 'Strongly influenced by capacitive loading of the input and cable.' },
   // Bode (4)
-  bode_fit: { t: 'Fitted resonance', calc: 'Vertex of a quadratic fitted in log-frequency through the strongest local 7 (or 5) direct Bode points after robust filtering.', means: 'The pickup\'s loaded resonant frequency: higher values sound brighter and more open, lower values darker and thicker.', caveat: 'Resonance depends on the input impedance and capacitance of your interface and cable; compare pickups on the same input.' },
+  bode_fit: { t: 'Fitted resonance', calc: 'Vertex of a quadratic fitted in log-frequency through the strongest local 7 (or 5) stepped-sine points after trend validation and spike removal.', means: 'The pickup\'s loaded resonant frequency: higher values sound brighter and more open, lower values darker and thicker.', caveat: 'Resonance depends on the input impedance and capacitance of your interface and cable; compare pickups on the same input.' },
   bode_unc: { t: 'Fit uncertainty', calc: 'Conservative ± estimate combining half of the closest bin spacing with the leave-one-out variation of the quadratic fit.', means: 'How precisely the resonance is located by this sweep; small values mean a well-defined peak.', caveat: 'It does not include systematic errors from cable or input loading.' },
-  bode_peak: { t: 'Peak above minimum', calc: 'The fitted peak level minus the lowest robust value of the curve, in dB.', means: 'How pronounced the resonance is; high values mean a sharp, high-Q peak, low values a damped or heavily loaded one.', caveat: 'Driver coil inductance and exciter amplifier response shape the curve too.' },
-  bode_points: { t: 'Direct / total points', calc: 'Number of directly measured points that cleared the learned noise floor versus all points including interpolated gaps and refinement points.', means: 'A data-quality indicator: close to the total means a clean, well-coupled measurement.', caveat: 'Below 60% direct points the sweep is rejected; raise output level or improve coupling.' },
+  bode_peak: { get t() { const r = state && state.project && (state.project.bode || [])[0]; return 'Peak above ' + (r ? fmtHz(r.frequency) : 'start'); }, calc: 'The fitted peak level minus the level of the curve at its lowest measured frequency (the start of the sweep), in dB.', means: 'How pronounced the resonance is; high values mean a sharp, high-Q peak, low values a damped or heavily loaded one.', caveat: 'Driver coil inductance and exciter amplifier response shape the curve too.' },
+  bode_points: { t: 'Measured points', calc: 'Number of stepped-sine grid points measured, with the count of re-measured outlier readings and of points replaced by the spike filter.', means: 'A data-quality indicator: few rejected readings and few despiked points mean a clean, well-coupled measurement.', caveat: 'Many rejections point to hum, noise or an unstable fixture; the first point must reach −40 dBFS RMS or the sweep stops.' },
   // Phase (3)
   ph_result: { t: 'Relative phase', calc: 'Majority sign vote of the strongest excursion in each of the five normalised pulse returns.', means: 'POSITIVE or NEGATIVE relative to this fixture and wiring: pickups with the same result are in phase with each other when connected the same way.', caveat: 'Absolute polarity depends on driver orientation, magnet polarity and wiring; INDETERMINATE below about −80 dBFS or with fewer than four agreeing votes.' },
   ph_votes: { t: 'Vote agreement', calc: 'Count of pulses whose sign agrees with the majority, out of five.', means: 'Five of five indicates a clean, repeatable pulse response.', caveat: 'Ringing pickups or hum can split the vote; four agreeing votes are required.' },
   ph_level: { t: 'Pulse response level', calc: 'Median absolute peak of the five pulse returns, in dBFS.', means: 'How strongly the pickup couples to the exciter pulse.', caveat: 'Below about −80 dBFS the vote is declared indeterminate.' },
   // Graphs
-  g_bode: { t: 'Bode magnitude', calc: 'Noise-subtracted, robust-filtered response of the pickup to the logarithmic chirp, normalised so the lowest robust value is 0 dB. The brighter line is the display-only smoothing overlay; the dimmed line and dots are the measured points.', means: 'Read the peak position as resonance and its height as damping; the marker shows the fitted resonance.', caveat: 'The main confounder is input loading (cable and interface capacitance) plus the driver coil\'s own response.' },
+  g_bode: { t: 'Bode magnitude', calc: 'Broadband RMS response of the pickup to the stepped sine, validated against the local curve trend, averaged, despiked and referenced so the level at the start frequency is 0 dB. The brighter line is the display-only smoothing overlay; the dimmed line and dots are the measured points.', means: 'Read the peak position as resonance and its height as damping; the marker shows the fitted resonance.', caveat: 'The main confounder is input loading (cable and interface capacitance) plus the driver coil\'s own response. Broadband RMS includes hum, noise and harmonics, so keep the return well above the input noise floor.' },
   g_phase: { t: 'Pulse response', calc: 'The five normalised 30 ms pulse returns, aligned on their strongest excursion.', means: 'Overlapping traces confirm a repeatable response; the sign of the main excursion gives the relative phase.', caveat: 'Hum and ringing distort the shape; only the sign of the main excursion is used.' },
   g_spectrum: { t: 'Measured frequency spectrum', calc: 'Average of several 8192-point Hann FFT power frames across the capture, downsampled on a log grid and normalised to the strongest point (0 dB).', means: 'Shows the pickup response under broadband drive; the peak corresponds to resonance.', caveat: 'The noise excitation is filtered by the driver coil and amplifier; compare spectra taken on the same setup.' },
   g_waterfall: { t: 'Spectral waterfall', calc: 'Evenly spaced 4096-point frames, each compacted to 96 log-spaced cells and coloured relative to the strongest cell (0 dB). For contrast the colour scale starts at the quietest 5% of cells (never below −90 dB). Frequency runs left to right, capture time from top to bottom.', means: 'A stable pattern confirms a steady measurement; vertical changes reveal drift, handling noise or dropouts.', caveat: 'Random noise makes individual cells flicker; look at the overall pattern.' },
-  g_compare: { t: 'Bode comparison', calc: 'Stored Bode responses of the projects whose Show box is ticked, each normalised to its own minimum. The currently selected project is drawn in red and slightly thicker.', means: 'Compare resonance position and height between pickups measured on the same setup.', caveat: 'Only meaningful when all projects were measured with the same fixture, input and cable.' },
+  g_compare: { t: 'Bode comparison', calc: 'Stored Bode responses of the projects whose Show box is ticked, each referenced to its own level at its start frequency (0 dB). The currently selected project is drawn in red and slightly thicker.', means: 'Compare resonance position and height between pickups measured on the same setup.', caveat: 'Only meaningful when all projects were measured with the same fixture, input and cable.' },
   g_character: { t: 'Character', calc: 'One linear descriptor from the Tone Footprint: Brightness, Clarity and Attack move it toward fast/open, Body toward round/dense. Bands: Velvet, Warm, Balanced, Vivid and Bright.', means: 'A quick overall placement for comparing pickups in this lab.', caveat: 'A comparative normalized descriptor, not a calibrated physical unit.' },
   g_footprint: { t: 'Tone Footprint', calc: 'Four 0–100 comparative scores — Brightness, Clarity, Attack and Body — from a pickup model weighted by fitted resonance, inductance, DCR and winding count.', means: 'A larger blue treble side suggests a brighter, faster pickup; larger orange Body a thicker one.', caveat: 'Every score is a comparative normalized descriptor rather than a calibrated physical unit.' },
   fp_brightness: { t: 'Brightness', calc: 'Weighted mainly by fitted resonance (highest weight), then inductance, DCR and winding count, with a small instrument and construction adjustment; scaled by 0.94.', means: 'A higher resonance and lower inductance raise it; more windings, higher DCR and higher inductance lower it.', caveat: 'Comparative normalized descriptor, not a calibrated unit; loading of the input lowers the measured resonance.' },
@@ -1551,25 +1588,6 @@ function removeHum(x, sr, profile, protect) {
   return y;
 }
 
-/* ---------- Cross-correlation onset search ---------- */
-function bestLag(capture, ref, minLag, maxLag) {
-  minLag = Math.max(0, Math.floor(minLag)); maxLag = Math.min(capture.length - ref.length, Math.ceil(maxLag));
-  if (maxLag <= minLag) return { lag: minLag, score: 0 };
-  const segLen = maxLag - minLag + ref.length;
-  let n = 1; while (n < segLen + ref.length) n <<= 1;
-  const ar = new Float64Array(n), ai = new Float64Array(n), br = new Float64Array(n), bi = new Float64Array(n);
-  for (let i = 0; i < segLen; i++) ar[i] = capture[minLag + i] || 0;
-  for (let i = 0; i < ref.length; i++) br[i] = ref[i];
-  fftInPlace(ar, ai); fftInPlace(br, bi);
-  // A * conj(B)
-  for (let k = 0; k < n; k++) { const r = ar[k] * br[k] + ai[k] * bi[k], im = ai[k] * br[k] - ar[k] * bi[k]; ar[k] = r; ai[k] = -im; }
-  fftInPlace(ar, ai); // inverse via conj trick
-  let best = -1, bl = 0;
-  for (let l = 0; l <= maxLag - minLag; l++) { const v = Math.abs(ar[l]); if (v > best) { best = v; bl = l; } }
-  // envelope-ish: take the abs maximum within ±1 ms neighbourhood already covered
-  return { lag: minLag + bl, score: best / n };
-}
-
 /* ---------- Spectrum analysis (white noise) ---------- */
 function analyzeNoise(x, sr, low, high, duration) {
   const N = 8192;
@@ -1658,38 +1676,115 @@ function analyzeNoise(x, sr, low, high, duration) {
   };
 }
 
-/* ---------- Bode helpers ---------- */
-function bodeSchedule(n) {
-  // high-frequency-dense exponential schedule: steps in log-frequency shrink towards 8 kHz
-  const K = Math.log(BODE_F2 / BODE_F1), out = [];
-  for (let i = 0; i < n; i++) { const t = i / (n - 1); const u = 1 - Math.pow(1 - t, 1.55); out.push(BODE_F1 * Math.exp(K * u)); }
+/* ---------- Bode helpers: stepped-sine engine ---------- */
+const BP = {
+  base: 40, top: 25000,                 // grid: round(40 · 10^(k/N)) Hz while ≤ 25 kHz
+  cycles: 60,                           // RMS integration periods: ×1 ≤ 800 Hz, ×2 ≤ 2 kHz, ×4 above
+  outlierDb: 0.4, retries: 3, maxAvg: 3, // trend outlier rejection and averaging
+  acceptLowDb: 0.015, acceptHighDb: 0.033, acceptSplitHz: 300,
+  spikeRatio: 0.8, spikeRatio2: 0.5,    // spike filter curvature tests
+  minFirstRms: 0.01, minSnrDb: 20,      // first point: ≥ 20 dB above the learned noise floor, never more than −40 dBFS
+  block: 256,                           // analysis block for settle and onset timing
+  burstSec: 0.4, toggles: 7, settleFallbackSec: 0.25, fadeSec: 0.2
+};
+/** Whole-hertz log grid between the start and end frequencies. */
+function bodeGrid(ppd, f1, f2) {
+  const out = [];
+  for (let k = 0; ; k++) {
+    const f = Math.round(BP.base * Math.pow(10, k / ppd));
+    if (f > BP.top) break;
+    if (f >= f1 && f <= f2 && f !== out[out.length - 1]) out.push(f);
+  }
   return out;
 }
-function robustFilter(rows) {
-  // rows sorted by frequency; operates on measuredDb of direct rows, interpolates invalid gaps
-  const direct = rows.filter(r => r.valid && !r.interpolated && isNum(r.measuredDb));
-  const lf = r => Math.log(r.frequency);
-  for (const r of rows) {
-    if (r.valid && isNum(r.measuredDb)) continue;
-    let a = null, b = null;
-    for (const d of direct) { if (d.frequency < r.frequency) a = d; else if (d.frequency > r.frequency && !b) b = d; }
-    r.interpolated = true; r.valid = false;
-    if (a && b) r.measuredDb = a.measuredDb + (b.measuredDb - a.measuredDb) * (lf(r) - lf(a)) / (lf(b) - lf(a));
-    else r.measuredDb = (a || b) ? (a || b).measuredDb : -120;
+function bodeCycles(f) { return BP.cycles * (f <= 800 ? 1 : f <= 2000 ? 2 : 4); }
+/** Per-step drive gain relative to the Output level: 6 dB/oct reduction and constant coil-driver current, clamped at full scale. */
+function bodeDriveGain(f, fRef, s, levelDb) {
+  const r = Math.min(fRef, f); let g = 1;
+  if (s.bodeSixDb) g *= r / f;
+  if (s.bodeCoil && s.coilL > 0) { const z = x => Math.hypot(s.coilR, 2 * Math.PI * x * s.coilL / 1000); g *= z(f) / z(r); }
+  return Math.min(g, 1 / undb(levelDb));
+}
+/** Deviation of a candidate dB value from the trend of the stored points: level step for the second point, second difference after. */
+function bodeTrendDev(pts, value) {
+  const n = pts.length;
+  if (n === 0) return 0;
+  if (n === 1) return Math.abs(value - pts[0].db);
+  const slope = pts[n - 1].db - pts[n - 2].db;
+  if (!isNum(slope)) return 1;
+  return Math.abs(value - pts[n - 1].db - slope);
+}
+/** Spike filter: replace an isolated curvature spike with the neighbour mean, then re-check the previous point. */
+function bodeDespike(pts, i) {
+  if (i < 1 || i + 2 > pts.length - 1) return;
+  const y0 = pts[i - 1].db, y1 = pts[i].db, y2 = pts[i + 1].db;
+  if (!isNum(y0) || !isNum(y1) || !isNum(y2)) return;
+  const c2 = (y2 - y1) - (y1 - y0);
+  if (Math.abs(c2 / (y2 - y0)) < BP.spikeRatio) return;
+  const replace = () => { pts[i].db = (y0 + y2) / 2; pts[i].despiked = true; };
+  if (i <= 1) { replace(); return; }
+  const ym2 = pts[i - 2].db, yp2 = pts[i + 2].db;
+  if (!isNum(ym2) || !isNum(yp2)) return;
+  if (!(Math.abs(((yp2 - y1) - (y1 - ym2) - c2) / c2) < BP.spikeRatio2)) return;
+  replace();
+  bodeDespike(pts, i - 1);
+}
+async function bodeWaitRing(index) {
+  let lastTotal = audio.total, lastMove = performance.now();
+  while (audio.total < index) {
+    checkCancel();
+    if (audio.total !== lastTotal) { lastTotal = audio.total; lastMove = performance.now(); }
+    else if (performance.now() - lastMove > 1500) {
+      await ensureRunning();
+      if (performance.now() - lastMove > 3000) throw new Error('audio capture stalled — the browser paused audio. Click anywhere to resume, then run the measurement again.');
+    }
+    await new Promise(r => setTimeout(r, 15));
   }
-  const v = rows.map(r => r.measuredDb), g = v.slice();
-  for (let i = 0; i < v.length; i++) {
-    const win = v.slice(Math.max(0, i - 2), Math.min(v.length, i + 3));
-    const m = median(win); if (Math.abs(v[i] - m) > 3) g[i] = m;
+}
+/** Broadband RMS of input samples [start, start + n), with no filtering or DC removal. */
+async function bodeReadRms(start, n) {
+  await bodeWaitRing(start + n);
+  const d = ringRead(start, start + n).data;
+  let acc = 0; for (let i = 0; i < d.length; i++) acc += d[i] * d[i];
+  return Math.sqrt(acc / Math.max(1, d.length));
+}
+/**
+ * Round-trip latency in samples, measured against the capture map: the steady tone sets the threshold,
+ * then the tone is switched off and on in 0.4 s bursts (7 toggles) and each switch-on is timed to the
+ * first analysis block whose peak exceeds the threshold. Ends with the tone on.
+ */
+/** Minimum first-point RMS: 0.01 (−40 dBFS), relaxed to 20 dB above the learned noise floor when the route is quieter. */
+function bodeLevelGate(noiseDb) { return Math.min(BP.minFirstRms, undb(noiseDb + BP.minSnrDb)); }
+function bodeLowLevelError(rms, gate, noiseDb, where) {
+  return new Error(`Signal level is too low (${fmtDb(db(rms), 'dBFS')} RMS${where}; at least ${fmtDb(db(gate), 'dBFS')} is needed, ${BP.minSnrDb} dB above the input noise floor of ${fmtDb(noiseDb, 'dBFS')}). Raise Output level or Input trim, then retry.`);
+}
+async function bodeLatency(env, gain, tStart, gate, noiseDb, onTick) {
+  const ctx = audio.ctx, sr = ctx.sampleRate, B = BP.block;
+  const thLen = Math.round(0.1 * sr), thEnd = indexForTime(tStart + BP.fadeSec + 0.3) + Math.round(latencyEstimate() * sr);
+  let threshold = 0;
+  for (let k = 0; ; k++) {
+    threshold = await bodeReadRms(thEnd + k * thLen - thLen, thLen);
+    if (threshold >= gate) break;
+    if (k >= BP.retries) throw bodeLowLevelError(threshold, gate, noiseDb, '');
+    setStatus('Signal level is too low, please adjust volume', 'err', true);
   }
-  rows.forEach((r, i) => { r.guardedDb = g[i]; });
-  for (let i = 0; i < rows.length; i++) {
-    const a = g[Math.max(0, i - 1)], b = g[i], c = g[Math.min(g.length - 1, i + 1)];
-    rows[i].filteredDb = 0.25 * a + 0.5 * b + 0.25 * c;
+  const burst = Math.ceil(BP.burstSec * sr / B) * B / sr, tA = ctx.currentTime + 0.05, edges = [];
+  env.gain.cancelScheduledValues(tA); env.gain.setValueAtTime(0, tA);
+  let on = false;
+  for (let k = 1; k <= BP.toggles; k++) { on = !on; const t = tA + k * burst; env.gain.setValueAtTime(on ? gain : 0, t); if (on) edges.push(t); }
+  const onsets = [], pre = Math.round(0.15 * sr), span = Math.round(burst * sr);
+  for (let e = 0; e < edges.length; e++) {
+    const i0 = indexForTime(edges[e]);
+    await bodeWaitRing(i0 + span);
+    const d = ringRead(i0 - pre, i0 + span).data;
+    for (let b = 0; b + B <= d.length; b += B) {
+      let pk = 0; for (let j = b; j < b + B; j++) { const v = Math.abs(d[j]); if (v > pk) pk = v; }
+      if (pk > threshold) { onsets.push(b + B - pre); break; }
+    }
+    if (onTick) onTick((e + 1) / edges.length);
   }
-  const mn = Math.min(...rows.map(r => r.filteredDb)), mr = Math.min(...rows.map(r => r.measuredDb));
-  for (const r of rows) { r.normalizedDb = r.filteredDb - mn; r.rawRelativeDb = r.measuredDb - mr; }
-  return rows;
+  const samples = onsets.length ? Math.max(B, Math.ceil(mean(onsets) / B) * B) : Math.round(BP.settleFallbackSec * sr);
+  return { samples, onsets: onsets.length, threshold };
 }
 function quadFit(xs, ys) {
   const n = xs.length; let s0 = n, s1 = 0, s2 = 0, s3 = 0, s4 = 0, t0 = 0, t1 = 0, t2 = 0;
@@ -1704,11 +1799,11 @@ function computeBodeFit(rows) {
   if (!direct.length) return null;
   let bi = 0; for (let i = 1; i < direct.length; i++) if (direct[i].filteredDb > direct[bi].filteredDb) bi = i;
   const strongest = direct[bi];
-  const mn = Math.min(...rows.map(r => r.filteredDb).filter(isNum));
+  const mn = bodeBaseDb(rows, 'filteredDb'); // peak is reported above the lowest-frequency level
   const spacingAt = i => { const s = []; if (i > 0) s.push(direct[i].frequency - direct[i - 1].frequency); if (i < direct.length - 1) s.push(direct[i + 1].frequency - direct[i].frequency); return s.length ? Math.min(...s) : direct[i].frequency * 0.05; };
   const halfSpacing = spacingAt(bi) / 2;
   const want = direct.length >= 7 ? 7 : (direct.length >= 5 ? 5 : 0);
-  const fb = (reason) => ({ frequencyHz: strongest.frequency, strongestBinHz: strongest.frequency, uncertaintyHz: halfSpacing, pointsUsed: 1, residualDb: null, peakNormalizedDb: strongest.filteredDb - mn, method: 'strongest-bin fallback', fallback: true, fallbackReason: reason, refinementPoints: rows.filter(r => r.refinement).length });
+  const fb = (reason) => ({ frequencyHz: strongest.frequency, strongestBinHz: strongest.frequency, uncertaintyHz: halfSpacing, pointsUsed: 1, residualDb: null, peakNormalizedDb: strongest.filteredDb - mn, method: 'strongest-bin fallback', fallback: true, peakRef: 'base', fallbackReason: reason, refinementPoints: rows.filter(r => r.refinement).length });
   if (!want) return fb('fewer than five direct points');
   let s = bi - (want >> 1); s = clamp(s, 0, direct.length - want);
   const sel = direct.slice(s, s + want);
@@ -1729,7 +1824,7 @@ function computeBodeFit(rows) {
   return {
     frequencyHz: fHz, strongestBinHz: strongest.frequency, uncertaintyHz: Math.sqrt(halfSpacing * halfSpacing + loo * loo),
     pointsUsed: want, residualDb: Math.sqrt(res / xs.length), peakNormalizedDb: peak - mn,
-    method: 'quadratic log-frequency fit', fallback: false, refinementPoints: rows.filter(r => r.refinement).length
+    method: 'quadratic log-frequency fit', fallback: false, peakRef: 'base', refinementPoints: rows.filter(r => r.refinement).length
   };
 }
 function smoothingSigmaOct(s) { const u = clamp(s, 0, 100) / 100; return u <= 0 ? 0 : 0.012 + 0.62 * Math.pow(u, 3.2); }
@@ -1738,7 +1833,7 @@ function smoothBode(rows, s) {
   const xs = rows.map(r => Math.log2(r.frequency)), ys = rows.map(r => r.normalizedDb);
   if (sig <= 0) return rows.map((r, i) => [r.frequency, ys[i]]);
   const out = [];
-  const n = 160, a = Math.log2(BODE_F1), b = Math.log2(BODE_F2);
+  const n = 160, a = Math.log2(rows[0].frequency), b = Math.log2(rows[rows.length - 1].frequency);
   for (let i = 0; i <= n; i++) {
     const x = a + (b - a) * i / n; let ws = 0, vs = 0;
     for (let j = 0; j < xs.length; j++) { const d = (xs[j] - x) / sig; if (Math.abs(d) > 4) continue; const w = Math.exp(-0.5 * d * d); ws += w; vs += w * ys[j]; }
@@ -1746,7 +1841,33 @@ function smoothBode(rows, s) {
   }
   return out;
 }
-function bodeYMax(rows) { const m = Math.max(0, ...rows.map(r => r.normalizedDb).filter(isNum)); return Math.max(12, Math.ceil((m + 0.5) / 6) * 6); }
+/** Level of a Bode curve at its lowest measured frequency: the 0 dB reference of graph, fit and CSV. */
+function bodeBaseDb(rows, key) { let best = null; for (const r of rows || []) if (isNum(r[key]) && (!best || r.frequency < best.frequency)) best = r; return best ? best[key] : 0; }
+/** Extent of one or more Bode curves (dB re start level); pass the previous extent to accumulate. */
+function bodeYExtent(rows, ext = null) {
+  const v = rows.map(r => r.normalizedDb).filter(isNum); if (!v.length) return ext;
+  const min = Math.min(...v), max = Math.max(...v);
+  return ext ? { min: Math.min(ext.min, min), max: Math.max(ext.max, max) } : { min, max };
+}
+/** Tight y axis: the lowest value sits on the bottom edge, with only a small headroom above the peak. */
+function bodeYAxis(ext) {
+  if (!ext) return { min: 0, max: 24, ticks: [0, 6, 12, 18, 24] };
+  const span = Math.max(ext.max - ext.min, 1), min = ext.min, max = ext.max + Math.max(0.25, span * 0.04);
+  const step = span > 48 ? 12 : span > 18 ? 6 : span > 8 ? 3 : 1, ticks = [];
+  for (let t = Math.ceil(min / step - 1e-9) * step; t <= max + 1e-9; t += step) ticks.push(t);
+  return { min, max, ticks };
+}
+const BODE_TICKS = [20, 30, 50, 70, 100, 150, 200, 300, 500, 700, 1000, 1500, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 10000, 15000, 20000];
+const BODE_TICKS_NARROW = [20, 50, 100, 200, 500, 1000, 2000, 4000, 8000, 16000];
+/** Round outward to two significant digits so axis ends read e.g. 500 and 7000 instead of 504 and 6952. */
+function niceHz(v, up) { const q = Math.pow(10, Math.max(0, Math.floor(Math.log10(v)) - 1)); return (up ? Math.ceil(v / q - 1e-9) : Math.floor(v / q + 1e-9)) * q; }
+/** Log-frequency x axis spanning [lo, hi] (rounded outward) with end labels and in-between ticks. */
+function bodeXAxis(lo, hi, wide) {
+  const a = niceHz(lo, false), b = niceHz(hi, true);
+  return { min: a, max: b, log: true, label: 'Frequency (Hz)', ticks: [a, ...(wide ? BODE_TICKS : BODE_TICKS_NARROW).filter(v => v > a * 1.12 && v < b / 1.12), b] };
+}
+const bodeSpan = (rows, s) => rows.length ? [rows[0].frequency, rows[rows.length - 1].frequency] : [s.bodeStart, s.bodeEnd];
+const fmtSignedDb = v => (v >= 0 ? '+' : '') + minus(v.toFixed(2)) + ' dB';
 /* =====================================================================
    Measurements: Bode, Phase, Spectrum, Measure All
    ===================================================================== */
@@ -1843,85 +1964,72 @@ async function captureAround(when, lenSec, preSec, postSec, onTick) {
 
 /* ---------- Bode ---------- */
 async function runBode() {
-  const ctx = audio.ctx, sr = ctx.sampleRate, s = state.project.settings;
-  const level = s.masterLevel, nPts = s.bodeSteps;
-  const hold = 0.12, T = 7.0, fade = 0.055, total = hold + T + hold, K = Math.log(BODE_F2 / BODE_F1);
-  const N = Math.round(total * sr), sig = new Float32Array(N);
-  let ph = 0;
-  for (let i = 0; i < N; i++) {
-    const t = i / sr;
-    const f = t < hold ? BODE_F1 : t < hold + T ? BODE_F1 * Math.exp(K * (t - hold) / T) : BODE_F2;
-    let e = 1; if (t < fade) e = 0.5 - 0.5 * Math.cos(Math.PI * t / fade); else if (t > total - fade) e = 0.5 - 0.5 * Math.cos(Math.PI * (total - t) / fade);
-    sig[i] = Math.sin(ph) * e; ph += 2 * Math.PI * f / sr; if (ph > 1e4) ph -= 2 * Math.PI * Math.floor(ph / (2 * Math.PI));
-  }
-  const fAt = t => t < hold ? BODE_F1 : t < hold + T ? BODE_F1 * Math.exp(K * (t - hold) / T) : BODE_F2;
-  const tOf = f => hold + T * Math.log(f / BODE_F1) / K;
-  const when = ctx.currentTime + 0.25;
-  playBuffer(sig, when, 1);
-  setProgress('bode', 0, 'Sweeping 500 Hz → 8 kHz');
-  const cap = await captureAround(when, total, 0.3, 0.45, el => {
-    const t = clamp(el, 0, total);
-    setProgress('bode', 0.75 * t / total, 'Sweeping ' + fmtHz(fAt(t)));
-    if (el >= 0) setStatus(`Bode chirp ${fmtHz(fAt(t))} · input ${fmtDb(lastInDb, 'dBFS')}`, 'busy', true);
-  });
-  setProgress('bode', 0.76, 'Locating returned sweep…'); setStatus('Bode · locating returned sweep', 'busy', true);
-  await nextFrame(); checkCancel();
-  const sweepStart = (t0, t1) => [fAt(Math.max(0, t0)), fAt(Math.min(total, t1))];
-  const lag0 = cap.expectedOffset;
-  const found = bestLag(cap.data, sig, lag0 - 0.25 * sr, lag0 + 0.4 * sr);
-  const onset = found.lag;
-  const cleaned = removeHum(cap.data, sr, audio.profile, (f, a, b) => { const [fa, fb] = sweepStart(a - onset / sr, b - onset / sr); return f >= Math.min(fa, fb) - 60 && f <= Math.max(fa, fb) + 60; });
-  const x = bodeBand(cleaned, sr);
-  const noiseP = audio.profile.bandPower;
-  const winHalf = (T / K) * Math.LN2 / 20; // ±1/20 octave
-  const analyse = (f, refinement) => {
-    let tc = tOf(f), a = tc - winHalf, b = tc + winHalf;
-    const lo = fade + 0.004, hi = total - fade - 0.004;
-    if (a < lo) { b += lo - a; a = lo; } if (b > hi) { a -= b - hi; b = hi; }
-    const s0 = onset + Math.round(a * sr), s1 = onset + Math.round(b * sr), nb = 5, len = Math.floor((s1 - s0) / nb);
-    const r = [];
-    for (let k = 0; k < nb; k++) r.push(rmsOf(x, s0 + k * len, s0 + (k + 1) * len, false));
-    const m = median(r), pMeas = m * m, pSig = pMeas - noiseP;
-    const dbs = r.map(db), md = median(dbs);
-    const valid = pMeas > 2 * noiseP && pSig > 0;
-    const sigDb = valid ? pdb(pSig) : null;
-    return {
-      frequency: f, amplitude: valid ? Math.sqrt(pSig) * Math.SQRT2 : 0, magnitudeDb: sigDb, rawMagnitudeDb: pdb(pMeas), noiseDb: pdb(noiseP),
-      snrDb: pdb(pMeas) - pdb(noiseP), stabilityDb: median(dbs.map(v => Math.abs(v - md))), valid, measuredDb: sigDb,
-      outputLevelDb: level, refinement: !!refinement, interpolated: false
-    };
-  };
-  const sched = bodeSchedule(nPts), rows = [];
-  for (let i = 0; i < sched.length; i++) {
-    const row = analyse(sched[i], false); rows.push(row);
-    if (i % 3 === 0) {
-      setProgress('bode', 0.78 + 0.16 * i / sched.length, 'Analysing ' + fmtHz(row.frequency));
-      setStatus(`Bode ${fmtHz(row.frequency)} · ${row.valid ? fmtDb(row.measuredDb, 'dBFS') : 'below noise'}`, 'busy', true);
-      await nextFrame(); checkCancel();
+  const ctx = audio.ctx, sr = ctx.sampleRate, s = state.project.settings, level = s.masterLevel, B = BP.block;
+  const grid = bodeGrid(s.bodePpd, s.bodeStart, Math.min(s.bodeEnd, sr * 0.45)), fRef = grid[0], noiseDb = audio.profile.rmsDb;
+  if (grid.length < 5) throw new Error(`the sweep range ${fmtHz(s.bodeStart)}–${fmtHz(s.bodeEnd)} gives only ${grid.length} grid points. Widen the range or raise Points per decade.`);
+  // continuous-phase sine through a per-step drive gain into the armed output bus
+  const osc = ctx.createOscillator(), env = ctx.createGain();
+  osc.type = 'sine'; osc.frequency.value = fRef; env.gain.value = 0;
+  osc.connect(env); env.connect(audio.outBus);
+  armOutput();
+  const tStart = ctx.currentTime + 0.03;
+  let gain = bodeDriveGain(fRef, fRef, s, level);
+  env.gain.setValueAtTime(0, tStart); env.gain.linearRampToValueAtTime(gain, tStart + BP.fadeSec);
+  osc.start(tStart);
+  registerSource(osc, env);
+
+  setProgress('bode', 0, 'Measuring latency…'); setStatus('Bode · measuring round-trip latency', 'busy', true);
+  const gate = bodeLevelGate(noiseDb);
+  const lat = await bodeLatency(env, gain, tStart, gate, noiseDb, frac => setProgress('bode', 0.05 * frac, 'Measuring latency…'));
+  const settle = lat.samples + 2 * B;
+
+  const pts = [];
+  for (let i = 0; i < grid.length; i++) {
+    const f = grid[i], len = Math.round(bodeCycles(f) * sr / f), g = bodeDriveGain(f, fRef, s, level);
+    const t = ctx.currentTime + 0.025;
+    osc.frequency.setValueAtTime(f, t);
+    env.gain.setValueAtTime(gain, t); env.gain.linearRampToValueAtTime(g, t + 0.005); gain = g;
+    let pos = indexForTime(t) + settle, retries = BP.retries, n = 0, avg = 0, rejected = 0, low = 0, dev = 0;
+    const readings = [];
+    for (;;) {
+      const rms = await bodeReadRms(pos, len);
+      pos += len + settle; // every reading starts after a fresh settle
+      if (!pts.length && rms < gate) {
+        if (++low > BP.retries) throw bodeLowLevelError(rms, gate, noiseDb, ` at ${fmtHz(f)}`);
+        setStatus('Signal level is too low, please adjust volume', 'err', true);
+        continue;
+      }
+      const ref = pts.length ? pts[0].rms : rms;
+      dev = bodeTrendDev(pts, db(rms / ref));
+      if (--retries >= 0 && dev >= BP.outlierDb) { rejected++; continue; }
+      retries = BP.retries;
+      avg = (avg * n + rms) / (n + 1); readings.push(rms); n++;
+      dev = bodeTrendDev(pts, db(avg / (pts.length ? ref : avg)));
+      if (n < BP.maxAvg && dev >= (f < BP.acceptSplitHz ? BP.acceptLowDb : BP.acceptHighDb)) continue;
+      break;
     }
+    const dbv = pts.length ? db(avg / pts[0].rms) : 0, dbs = readings.map(db);
+    pts.push({ f, rms: avg, db: dbv, rawDb: dbv, readings: n, rejected, trendDevDb: dev, stabilityDb: Math.max(...dbs) - Math.min(...dbs), gainDb: db(g), despiked: false });
+    bodeDespike(pts, pts.length - 3);
+    setProgress('bode', 0.05 + 0.93 * (i + 1) / grid.length, `${fmtHz(f)} · ${i + 1} / ${grid.length}`);
+    setStatus(`Bode ${fmtHz(f)} · ${fmtDb(db(avg), 'dBFS')}${n > 1 ? ` · ${n} averaged` : ''}${rejected ? ` · ${rejected} rejected` : ''}`, 'busy', true);
   }
-  const direct = rows.filter(r => r.valid).length;
-  if (direct < Math.ceil(0.6 * rows.length)) throw new Error(`only ${direct} of ${rows.length} points cleared the input noise floor. Check the exciter routing, output device/channel, Output level and Input trim, then retry.`);
-  // candidate detection on a guarded/smoothed copy
-  const probe = robustFilter(deepClone(rows));
-  let ci = -1; probe.forEach((r, i) => { if (r.valid && !r.interpolated && (ci < 0 || r.filteredDb > probe[ci].filteredDb)) ci = i; });
-  const fa = sched[Math.max(0, ci - 1)], fb = sched[Math.min(sched.length - 1, ci + 1)];
-  const extra = [];
-  for (let k = 1; k <= 9; k++) {
-    const f = fa * Math.pow(fb / fa, k / 10);
-    if (sched.some(v => Math.abs(v / f - 1) < 0.002)) { extra.push(fa * Math.pow(fb / fa, (k - 0.5) / 10)); continue; }
-    extra.push(f);
-  }
-  for (const f of extra) {
-    const row = analyse(f, true); rows.push(row);
-    setStatus(`Bode refine ${fmtHz(f)} · ${row.valid ? fmtDb(row.measuredDb, 'dBFS') : 'below noise'}`, 'busy', true);
-  }
-  setProgress('bode', 0.97, 'Fitting resonance…'); await nextFrame(); checkCancel();
-  rows.sort((a, b) => a.frequency - b.frequency);
-  robustFilter(rows);
-  const fit = computeBodeFit(rows);
+  env.gain.cancelScheduledValues(ctx.currentTime); env.gain.setValueAtTime(gain, ctx.currentTime); env.gain.linearRampToValueAtTime(0, ctx.currentTime + BP.fadeSec);
+  await wait(BP.fadeSec * 1000);
+
+  const rows = pts.map(p => {
+    const mag = db(p.rms);
+    return {
+      frequency: p.f, amplitude: p.rms * Math.SQRT2, magnitudeDb: mag, rawMagnitudeDb: mag, noiseDb, snrDb: mag - noiseDb, stabilityDb: p.stabilityDb,
+      measuredDb: p.rawDb, outputLevelDb: level + p.gainDb, filteredDb: p.db, guardedDb: p.db, valid: true, interpolated: false, refinement: false,
+      readings: p.readings, rejected: p.rejected, trendDevDb: p.trendDevDb, driveGainDb: p.gainDb, despiked: p.despiked
+    };
+  });
+  const base = bodeBaseDb(rows, 'filteredDb'), rawBase = bodeBaseDb(rows, 'measuredDb');
+  for (const r of rows) { r.normalizedDb = r.filteredDb - base; r.rawRelativeDb = r.measuredDb - rawBase; }
+  setProgress('bode', 0.99, 'Fitting resonance…'); await nextFrame(); checkCancel();
   state.project.bode = rows;               // publish only after successful completion
-  state.project.bodeFit = fit;
+  state.project.bodeFit = computeBodeFit(rows);
 }
 
 /* ---------- Phase ---------- */
@@ -2051,7 +2159,6 @@ function drawChart(g, w, h, pal, opts, hover, scale = 1) {
     if (!isNum(v.x) || v.x < xo.min || v.x > xo.max) continue;
     const px = X(v.x); g.strokeStyle = v.color; g.lineWidth = (v.width || 1.4) * scale; g.setLineDash((v.dash || [5, 4]).map(d => d * scale));
     g.beginPath(); g.moveTo(px, m.t); g.lineTo(px, m.t + ph); g.stroke(); g.setLineDash([]);
-    if (v.label) { g.fillStyle = v.color; g.font = `600 ${fs}px ${getMono()}`; g.textAlign = px > m.l + pw - 90 * scale ? 'right' : 'left'; g.textBaseline = 'top'; g.fillText(v.label, px + (g.textAlign === 'right' ? -5 : 5) * scale, m.t + 5 * scale); g.font = `${fs}px ${getMono()}`; }
   }
   for (const s of opts.series || []) {
     if (!s.data || !s.data.length) continue;
@@ -2071,6 +2178,14 @@ function drawChart(g, w, h, pal, opts, hover, scale = 1) {
       }
     }
     g.globalAlpha = 1;
+  }
+  for (const v of opts.vlines || []) {
+    if (!v.label || !isNum(v.x) || v.x < xo.min || v.x > xo.max) continue;
+    const px = X(v.x), right = px > m.l + pw - 90 * scale;
+    g.font = `600 ${fs}px ${getMono()}`; g.textAlign = right ? 'right' : 'left'; g.textBaseline = 'top';
+    const tx = px + (right ? -5 : 5) * scale, tw = g.measureText(v.label).width, pad = 3 * scale;
+    g.fillStyle = pal.canvasBg; g.globalAlpha = 0.85; g.fillRect((right ? tx - tw : tx) - pad, m.t + 5 * scale - pad, tw + 2 * pad, fs + 2 * pad); g.globalAlpha = 1;
+    g.fillStyle = v.color; g.fillText(v.label, tx, m.t + 5 * scale); g.font = `${fs}px ${getMono()}`;
   }
   g.restore();
   const hasData = (opts.series || []).some(s => s.data && s.data.length);
@@ -2145,21 +2260,22 @@ function redraw(id) { const p = plots.get(id); if (p) drawPlot(p); }
 function renderBode(g, w, h, pal, hover, scale, project, opts = {}) {
   const rows = (project.bode || []).filter(r => isNum(r.normalizedDb));
   const fit = project.bodeFit, sm = project.settings.bodeSmoothing;
-  const ymax = rows.length ? bodeYMax(rows) : 24;
+  const ya = bodeYAxis(bodeYExtent(rows)), [lo, hi] = bodeSpan(rows, project.settings);
   const smooth = smoothBode(rows, sm);
   const series = [];
-  if (rows.length && sm > 0) series.push({ name: 'Smoothed ' + sm + '%', data: smooth, color: pal.lime, width: 2.6, alpha: 1 });
+  // measured points stay discreet; the curve (smoothed, or measured when smoothing is 0%) is the prominent accent line drawn last
   if (rows.length) series.push({
-    name: 'Measured', data: rows.map(r => [r.frequency, r.normalizedDb]), color: sm > 0 ? (pal.light ? pal.muted : pal.ink) : pal.lime, width: 1.2, alpha: 0.8, dots: true, dotR: 2.2,
-    dotColors: rows.map(r => r.refinement ? pal.amber : (sm > 0 ? (pal.light ? pal.muted : pal.ink) : pal.lime)), hollow: rows.map(r => r.interpolated)
+    name: 'Measured', data: rows.map(r => [r.frequency, r.normalizedDb]), color: sm > 0 ? pal.muted : pal.lime, width: sm > 0 ? 0.8 : 3.4, alpha: sm > 0 ? 0.45 : 1, dots: true, dotR: 1.3,
+    dotColors: rows.map(r => r.refinement || r.despiked ? pal.amber : pal.muted), hollow: rows.map(r => r.interpolated)
   });
+  if (rows.length && sm > 0) series.push({ name: 'Smoothed ' + sm + '%', data: smooth, color: pal.lime, width: 3.4, alpha: 1 });
   const vlines = [];
-  if (fit && isNum(fit.frequencyHz)) vlines.push({ x: fit.frequencyHz, color: pal.red, label: 'f₀ ' + fmtHz(fit.frequencyHz) + (fit.fallback ? ' (bin)' : '') });
+  if (fit && isNum(fit.frequencyHz)) vlines.push({ x: fit.frequencyHz, color: pal.lime, width: 1.6, dash: [6, 4], label: 'f₀ ' + fmtHz(fit.frequencyHz) + (fit.fallback ? ' (bin)' : '') });
   return drawChart(g, w, h, pal, {
-    x: { min: BODE_F1, max: BODE_F2, log: true, label: 'Frequency (Hz)', ticks: [500, 700, 1000, 1500, 2000, 3000, 4000, 5000, 6000, 8000].filter(v => w > 420 * scale || [500, 1000, 2000, 4000, 8000].includes(v)) },
-    y: { min: 0, max: ymax, step: ymax > 48 ? 12 : 6, label: 'Relative level (dB, min = 0)', fmt: v => String(v) },
+    x: bodeXAxis(lo, hi, w > 420 * scale),
+    y: { min: ya.min, max: ya.max, ticks: ya.ticks, label: 'Relative level (dB, 0 at ' + fmtHz(lo) + ')', fmt: v => String(v) },
     series, vlines, empty: opts.empty === false ? '' : 'No Bode data — run the Bode sweep',
-    hoverFmt: (s, pt) => { const r = rows.find(q => q.frequency === pt[0]); return [s.name, fmtHz(pt[0]), '+' + pt[1].toFixed(2) + ' dB' + (r ? (r.refinement ? ' · refinement' : '') + (r.interpolated ? ' · interpolated' : '') : '')]; }
+    hoverFmt: (s, pt) => { const r = rows.find(q => q.frequency === pt[0]); return [s.name, fmtHz(pt[0]), fmtSignedDb(pt[1]) + (r ? (r.refinement ? ' · refinement' : '') + (r.interpolated ? ' · interpolated' : '') + (r.despiked ? ' · despiked' : '') : '')]; }
   }, hover, scale);
 }
 function renderPhase(g, w, h, pal, hover, scale, project) {
@@ -2230,11 +2346,12 @@ function renderWaterfall(g, w, h, pal, hover, scale, project) {
 }
 function renderCompare(g, w, h, pal, hover, scale) {
   const series = [], legend = [];
-  let ymax = 12;
+  let ext = null, lo = Infinity, hi = 0;
+  const span = rows => { lo = Math.min(lo, rows[0].frequency); hi = Math.max(hi, rows[rows.length - 1].frequency); };
   state.slots.forEach((p, i) => {
     if (!p || !state.visible[i] || i === state.activeSlot) return;
     const rows = (p.bode || []).filter(r => isNum(r.normalizedDb)); if (!rows.length) return;
-    ymax = Math.max(ymax, bodeYMax(rows));
+    ext = bodeYExtent(rows, ext); span(rows);
     const data = p.settings.bodeSmoothing > 0 ? smoothBode(rows, p.settings.bodeSmoothing) : rows.map(r => [r.frequency, r.normalizedDb]);
     series.push({ name: p.name, data, color: slotColor(i, pal), width: 1.7, alpha: 0.95 });
     legend.push({ name: p.name.slice(0, 26), color: slotColor(i, pal) });
@@ -2243,17 +2360,17 @@ function renderCompare(g, w, h, pal, hover, scale) {
   if (state.visible[state.activeSlot]) {
     const rows = (cur.bode || []).filter(r => isNum(r.normalizedDb));
     if (rows.length) {
-      ymax = Math.max(ymax, bodeYMax(rows));
+      ext = bodeYExtent(rows, ext); span(rows);
       const data = cur.settings.bodeSmoothing > 0 ? smoothBode(rows, cur.settings.bodeSmoothing) : rows.map(r => [r.frequency, r.normalizedDb]);
       series.push({ name: `Selected · ${cur.name}`, data, color: SELECTED_TRACE, width: 2.8 });
       legend.push({ name: cur.name.slice(0, 26), color: SELECTED_TRACE, width: 2.8 });
     }
   }
   return drawChart(g, w, h, pal, {
-    x: { min: BODE_F1, max: BODE_F2, log: true, label: 'Frequency (Hz)', ticks: [500, 700, 1000, 1500, 2000, 3000, 4000, 5000, 6000, 8000].filter(v => w > 420 || [500, 1000, 2000, 4000, 8000].includes(v)) },
-    y: { min: 0, max: ymax, step: ymax > 48 ? 12 : 6, label: 'Relative level (dB)', fmt: v => String(v) },
+    x: bodeXAxis(hi > 0 ? lo : cur.settings.bodeStart, hi > 0 ? hi : cur.settings.bodeEnd, w > 420),
+    y: (() => { const ya = bodeYAxis(ext); return { min: ya.min, max: ya.max, ticks: ya.ticks, label: 'Relative level (dB, 0 at start)', fmt: v => String(v) }; })(),
     series, legend: legend.length && w > 380 ? legend : null, empty: 'Store measured projects and tick Show to compare',
-    hoverFmt: (s, pt) => [s.name, fmtHz(pt[0]), '+' + pt[1].toFixed(2) + ' dB']
+    hoverFmt: (s, pt) => [s.name, fmtHz(pt[0]), fmtSignedDb(pt[1])]
   }, hover, scale);
 }
 
@@ -2380,8 +2497,9 @@ function bodeStats(p) {
   if (!rows.length) return null;
   const at = f => { let best = rows[0]; for (const r of rows) if (Math.abs(Math.log(r.frequency / f)) < Math.abs(Math.log(best.frequency / f))) best = r; return best.normalizedDb; };
   return {
-    fit, tilt: at(BODE_F2) - at(BODE_F1), direct: rows.filter(r => r.valid && !r.interpolated).length, total: rows.length,
-    refinement: rows.filter(r => r.refinement).length, interpolated: rows.filter(r => r.interpolated).length
+    fit, tilt: rows[rows.length - 1].normalizedDb - rows[0].normalizedDb, direct: rows.filter(r => r.valid && !r.interpolated).length, total: rows.length,
+    refinement: rows.filter(r => r.refinement).length, interpolated: rows.filter(r => r.interpolated).length,
+    stepped: rows.some(r => isNum(r.readings)), rejected: rows.reduce((a, r) => a + (r.rejected || 0), 0), despiked: rows.filter(r => r.despiked).length
   };
 }
 function measurementValues(p) {
@@ -2390,8 +2508,8 @@ function measurementValues(p) {
   for (const k of METRIC_KEYS) v[k] = { v: p.noise ? SPEC_FMT[k](m[k]) : '—' };
   v.bode_fit = { v: fit ? fmtHz(fit.frequencyHz) : '—', s: fit ? (fit.fallback ? 'strongest-bin fallback' : `${fit.pointsUsed}-point log-frequency fit`) : '' };
   v.bode_unc = { v: fit && isNum(fit.uncertaintyHz) ? '± ' + fmtHz(fit.uncertaintyHz, fit.uncertaintyHz >= 1000 ? 2 : 0) : '—' };
-  v.bode_peak = { v: fit && isNum(fit.peakNormalizedDb) ? '+' + fit.peakNormalizedDb.toFixed(1) + ' dB' : '—' };
-  v.bode_points = { v: b ? `${b.direct} / ${b.total}` : '—', s: b ? `${b.refinement} refinement · ${b.interpolated} interpolated` : '' };
+  v.bode_peak = { v: fit && isNum(fit.peakNormalizedDb) ? (fit.peakNormalizedDb >= 0 ? '+' : '') + minus(fit.peakNormalizedDb.toFixed(1)) + ' dB' : '—' };
+  v.bode_points = { v: b ? `${b.direct} / ${b.total}` : '—', s: !b ? '' : b.stepped ? `${b.rejected} rejected readings · ${b.despiked} despiked` : `${b.refinement} refinement · ${b.interpolated} interpolated` };
   v.ph_result = { v: p.polarity.length ? ph.label : '—' };
   v.ph_votes = { v: p.polarity.length ? `${ph.agree} / 5` : '—' };
   v.ph_level = { v: p.polarity.length ? fmtDb(ph.levelDb, 'dBFS') : '—' };
@@ -2517,7 +2635,8 @@ function writeForm() {
   }
   const s = p.settings;
   setTrim(s.inputTrim, false); setLevel(s.masterLevel, false);
-  $('#bodeSteps').value = String(s.bodeSteps); $('#bodeSmooth').value = s.bodeSmoothing; $('#bodeSmoothVal').textContent = s.bodeSmoothing + '%';
+  $('#bodePpd').value = String(s.bodePpd); $('#bodeStart').value = s.bodeStart; $('#bodeEnd').value = s.bodeEnd; $('#bodeSixDb').checked = s.bodeSixDb; $('#bodeCoil').checked = s.bodeCoil; $('#coilR').value = s.coilR; $('#coilL').value = s.coilL;
+  $('#bodeSmooth').value = s.bodeSmoothing; $('#bodeSmoothVal').textContent = s.bodeSmoothing + '%';
   $('#nzLow').value = s.noiseLow; $('#nzHigh').value = s.noiseHigh; $('#nzDur').value = String(s.noiseDuration);
   const pr = Object.entries(NOISE_PRESETS).find(([, r]) => r[0] === s.noiseLow && r[1] === s.noiseHigh);
   $('#nzPreset').value = pr ? pr[0] : 'custom';
@@ -2625,7 +2744,7 @@ function updateControls() {
   $('#outDevice').disabled = busy || cal || !audio.ctx; $('#outChannel').disabled = busy || cal || !audio.ctx;
   $('#inTrim').disabled = busy || cal; $('#outLevel').disabled = busy || cal;
   $('#btnRecal').disabled = busy || cal;
-  for (const id of ['bodeSteps', 'nzPreset', 'nzLow', 'nzHigh', 'nzDur']) $('#' + id).disabled = busy;
+  for (const id of ['bodePpd', 'bodeStart', 'bodeEnd', 'bodeSixDb', 'bodeCoil', 'coilR', 'coilL', 'nzPreset', 'nzLow', 'nzHigh', 'nzDur']) $('#' + id).disabled = busy;
   for (const id of ['btnStore', 'btnPdf', 'btnLoadFile', 'btnSaveFile']) $('#' + id).disabled = pdf || busy;
   $('#btnClearSlot').disabled = pdf || busy || !state.slots[state.activeSlot];
   $('#btnClearAll').disabled = pdf || busy || !state.slots.some(Boolean);
@@ -2638,7 +2757,7 @@ function clearMeasurements() {
   const p = state.project;
   if (!(p.bode.length || p.polarity.length || p.noise)) { toast('There are no measurements to clear.'); return; }
   if (!confirm('Clear all measurements of the current project? Project, customer and pickup data are kept.')) return;
-  p.bode = []; p.bodeFit = null; p.polarity = []; p.saturation = []; p.noise = null; p.measured = {};
+  p.bode = []; p.bodeFit = null; p.polarity = []; p.noise = null; p.measured = {};
   for (const k of ['bode', 'phase', 'spectrum']) setProgress(k, 0, 'Idle');
   markDirty(); renderAll(); saveLocalNow(); toast('Measurements cleared.');
 }
@@ -2696,7 +2815,7 @@ function buildCSV(p) {
   for (const [k, l] of PK) row('pickup', l, typeof p.pickup[k] === 'boolean' ? (p.pickup[k] ? 'yes' : 'no') : p.pickup[k]);
   for (const [k, l] of TW_FIELDS) row('tonewinder', l, p.tonewinder[k]);
   const s = p.settings;
-  for (const [k, l] of [['inputDeviceLabel', 'Input Device'], ['inputDeviceId', 'Input Device ID'], ['inputChannel', 'Input Channel'], ['outputDeviceLabel', 'Output Device'], ['outputDeviceId', 'Output Device ID'], ['outputChannel', 'Output Channel'], ['inputTrim', 'Input Trim (dB)'], ['masterLevel', 'Output Level (dBFS)'], ['bodeSteps', 'Bode Sweep Points'], ['bodeSmoothing', 'Bode Smoothing (%)'], ['noiseLow', 'Noise Low (Hz)'], ['noiseHigh', 'Noise High (Hz)'], ['noiseDuration', 'Noise Duration (s)']]) row('settings', l, (k === 'inputChannel' || k === 'outputChannel') ? s[k] + 1 : s[k]);
+  for (const [k, l] of [['inputDeviceLabel', 'Input Device'], ['inputDeviceId', 'Input Device ID'], ['inputChannel', 'Input Channel'], ['outputDeviceLabel', 'Output Device'], ['outputDeviceId', 'Output Device ID'], ['outputChannel', 'Output Channel'], ['inputTrim', 'Input Trim (dB)'], ['masterLevel', 'Output Level (dBFS)'], ['bodePpd', 'Bode Points per Decade'], ['bodeStart', 'Bode Start Frequency (Hz)'], ['bodeEnd', 'Bode End Frequency (Hz)'], ['bodeSixDb', 'Bode 6 dB/oct Reduction'], ['bodeCoil', 'Bode Coil Driver Load'], ['coilR', 'Coil Driver DCR (Ohm)'], ['coilL', 'Coil Driver Inductance (mH)'], ['bodeSmoothing', 'Bode Smoothing (%)'], ['noiseLow', 'Noise Low (Hz)'], ['noiseHigh', 'Noise High (Hz)'], ['noiseDuration', 'Noise Duration (s)']]) row('settings', l, (k === 'inputChannel' || k === 'outputChannel') ? s[k] + 1 : s[k]);
   // Summary overview
   blank(); const sv = summaryValues(p);
   row('summary', 'Resonance', sv.res); row('summary', 'Resonance detail', sv.resSub); row('summary', 'Relative phase', sv.phase); row('summary', 'Relative phase detail', sv.phaseSub);
@@ -2715,10 +2834,10 @@ function buildCSV(p) {
   // Bode
   blank(); row('bode_fit', 'field', 'value');
   if (p.bodeFit) for (const [k, v] of Object.entries(p.bodeFit)) row('bode_fit', k, v);
-  blank(); row('bode', 'frequency_hz', 'measured_noise_subtracted_dbfs', 'raw_magnitude_dbfs', 'output_dbfs', 'robust_filtered_dbfs', 'raw_relative_db', 'displayed_relative_db', 'smoothed_display_db', 'snr_db', 'learned_noise_dbfs', 'stability_db', 'direct', 'interpolated', 'refinement');
+  blank(); row('bode', 'frequency_hz', 'measured_relative_db', 'raw_magnitude_dbfs', 'output_dbfs', 'filtered_relative_db', 'raw_relative_db', 'displayed_relative_db', 'smoothed_display_db', 'snr_db', 'learned_noise_dbfs', 'stability_db', 'direct', 'interpolated', 'refinement', 'readings_averaged', 'readings_rejected', 'trend_deviation_db', 'drive_gain_db', 'despiked');
   const sm = smoothBode((p.bode || []).filter(r => isNum(r.normalizedDb)), s.bodeSmoothing);
   const smAt = f => { if (!sm.length) return null; let b = sm[0]; for (const q of sm) if (Math.abs(Math.log(q[0] / f)) < Math.abs(Math.log(b[0] / f))) b = q; return b[1]; };
-  for (const r of p.bode || []) row('bode', r.frequency, r.measuredDb, r.rawMagnitudeDb, r.outputLevelDb, r.filteredDb, r.rawRelativeDb, r.normalizedDb, smAt(r.frequency), r.snrDb, r.noiseDb, r.stabilityDb, r.valid && !r.interpolated ? 1 : 0, r.interpolated ? 1 : 0, r.refinement ? 1 : 0);
+  for (const r of p.bode || []) row('bode', r.frequency, r.measuredDb, r.rawMagnitudeDb, r.outputLevelDb, r.filteredDb, r.rawRelativeDb, r.normalizedDb, smAt(r.frequency), r.snrDb, r.noiseDb, r.stabilityDb, r.valid && !r.interpolated ? 1 : 0, r.interpolated ? 1 : 0, r.refinement ? 1 : 0, r.readings, r.rejected, r.trendDevDb, r.driveGainDb, r.despiked ? 1 : 0);
   // Phase
   blank(); row('phase_vote', 'pulse', 'sign', 'peak_amplitude', 'peak_dbfs');
   (p.polarity || []).forEach((r, i) => row('phase_vote', i + 1, r.sign > 0 ? 'positive' : 'negative', r.amplitude, db(r.amplitude)));
@@ -2928,10 +3047,10 @@ async function buildPdf(snap) {
   }
   // Bode + Relative phase
   P.newPage('Bode response');
-  P.graph('Bode magnitude (minimum = 0 dB, smoothing ' + st.bodeSmoothing + '%)', 300 * s, (g, w, h, pal, hv, sc) => renderBode(g, w, h, pal, null, sc, p));
+  P.graph('Bode magnitude (0 dB at start, smoothing ' + st.bodeSmoothing + '%)', 300 * s, (g, w, h, pal, hv, sc) => renderBode(g, w, h, pal, null, sc, p));
   const mv = measurementValues(p);
-  P.kv([['Fitted resonance', mv.bode_fit.v], ['Fit uncertainty', mv.bode_unc.v], ['Peak above minimum', mv.bode_peak.v]]);
-  P.kv([['Direct / total points', mv.bode_points.v + (mv.bode_points.s ? ' (' + mv.bode_points.s + ')' : '')]], 1);
+  P.kv([['Fitted resonance', mv.bode_fit.v], ['Fit uncertainty', mv.bode_unc.v], ['Peak above ' + (p.bode && p.bode.length ? fmtHz(p.bode[0].frequency) : 'start'), mv.bode_peak.v]]);
+  P.kv([['Measured points', mv.bode_points.v + (mv.bode_points.s ? ' (' + mv.bode_points.s + ')' : '')]], 1);
   if (p.bodeFit) P.kv([['Fit method', p.bodeFit.method + (p.bodeFit.fallbackReason ? ' — ' + p.bodeFit.fallbackReason : '')], ['Points used', p.bodeFit.pointsUsed], ['Fit residual', isNum(p.bodeFit.residualDb) ? p.bodeFit.residualDb.toFixed(2) + ' dB' : '—']]);
   P.gap(10); P.heading('Relative phase');
   P.kv([['Relative phase', mv.ph_result.v], ['Vote agreement', mv.ph_votes.v], ['Pulse response level', mv.ph_level.v]]);
@@ -3044,7 +3163,10 @@ function wireEvents() {
   $('#btnStopAll').addEventListener('click', stopAll);
   $('#btnMeasureAll').addEventListener('click', measureAll);
   $('#btnClearMeas').addEventListener('click', clearMeasurements);
-  $('#bodeSteps').addEventListener('change', e => { state.project.settings.bodeSteps = +e.target.value; markDirty(); });
+  $('#bodePpd').addEventListener('change', e => { state.project.settings.bodePpd = +e.target.value; markDirty(); });
+  for (const id of ['bodeStart', 'bodeEnd']) $('#' + id).addEventListener('change', () => { const s = state.project.settings, r = bodeRange($('#bodeStart').value, $('#bodeEnd').value); Object.assign(s, r); $('#bodeStart').value = r.bodeStart; $('#bodeEnd').value = r.bodeEnd; if (!state.project.bode.length) redraw('cvBode'); markDirty(); });
+  for (const id of ['bodeSixDb', 'bodeCoil']) $('#' + id).addEventListener('change', e => { state.project.settings[id] = e.target.checked; markDirty(); });
+  for (const id of ['coilR', 'coilL']) $('#' + id).addEventListener('change', e => { const v = clamp(+e.target.value || 0, 0, 10000); state.project.settings[id] = v; e.target.value = v; markDirty(); });
   $('#bodeSmooth').addEventListener('input', e => { state.project.settings.bodeSmoothing = +e.target.value; $('#bodeSmoothVal').textContent = e.target.value + '%'; redraw('cvBode'); redraw('cvCompare'); markDirty(); });
   $('#nzPreset').addEventListener('change', e => { const r = NOISE_PRESETS[e.target.value]; if (r) { $('#nzLow').value = r[0]; $('#nzHigh').value = clampNoise(r[1]); readNoise(); } });
   for (const id of ['nzLow', 'nzHigh']) { $('#' + id).addEventListener('input', () => { $('#nzPreset').value = 'custom'; }); $('#' + id).addEventListener('change', readNoise); }

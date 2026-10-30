@@ -16,18 +16,7 @@ README.md, PROMPT.md
 
 ## 1. Starting the app and privacy
 
-Browsers only expose microphone input and output-device selection in a secure context. Serve the folder from **localhost** (or HTTPS):
-
-```bash
-python3 -m http.server 8765 --bind 127.0.0.1
-```
-
-Then open <http://localhost:8765/> in a current Chrome or Edge. Add `?footprint=true` to the URL to turn on the Tone Footprint features (see §9).
-
-- A splash screen appears on every load. **Nothing is requested automatically.** Microphone permission is requested only when you press **Allow audio access**. **Explore first** lets you browse, load projects and export without audio. Click the status pill at the top right later to bring the splash back.
-- **AUDIO STAYS ON YOUR PC.** All capture, FFTs and fitting happen inside the page. Captured input is never routed to an audible output. The only path from input to the speakers is a zero-gain node that keeps the capture callback running.
-- Your system output stays silent until you explicitly start the 440 Hz tone or a measurement.
-- Storage: one `localStorage` key, `ih-custom-winds.local-state.v1`, holds the current project, the six comparison slots and UI preferences. No cookies, `sessionStorage` or IndexedDB are used. Live audio, sample buffers and the learned noise/calibration profile are never stored, so after a reload you allow audio again and the route is recalibrated.
+Just open the App on the web [https://niklaushirt.github.io/pickuplab/index.html?footprint=true](https://niklaushirt.github.io/pickuplab/index.html?footprint=true)
 
 ## 2. Audio routing
 
@@ -75,11 +64,29 @@ Measurements reuse this profile. They never recalibrate or move the level contro
 
 ## 5. Building an air-core driver (exciter)
 
-- Wind on a **nonmagnetic former** (3D-printed PLA/PETG, acrylic or phenolic), roughly the footprint of the pickup's pole-piece row.
-- Use roughly **0.25–0.35 mm** enamelled copper wire and **220–350 turns**. Aim for a measured DCR of commonly **6–12 Ω**.
+- Wind on a **nonmagnetic support**, roughly the footprint of the pickup's pole-piece row.
+- Use standard pickup copper wire (41-44 AWG) and **100-200 turns**.
 - Use **twisted, strain-relieved leads**, with the twist running right up to the coil and a clamp at the former.
 - An optional **gapped shield** (a copper foil wrap that does not close into a shorted turn) reduces capacitive coupling. Ground it at one point only.
-- **Amplifier load caveats:** many amplifiers are not stable into an almost purely resistive 6–12 Ω load with long leads, and some headphone outputs current-limit. Use a series resistor (for example 10 Ω, ≥2 W) if needed, check the datasheet's minimum load, and never short the output. A coil with too little DCR may make an amplifier oscillate or trip its protection.
+- **Amplifier load caveats:** many amplifiers are not stable into an almost purely resistive load with long leads, and some headphone outputs current-limit. Use a buffer on the return. I use the [TC Electronic Bona Fide Buffer](https://www.tcelectronic.com/en/products/0709-AHC)
+
+	[Here](https://www.youtube.com/watch?v=SCeFtqdcS1Y) is a super cool video on how to make one yourself.
+	
+	It's pretty easy to build.
+	
+	My everyday coil driver
+	
+	![Coil1](pics/Coil1.png)
+	
+	With a pickup hooked up
+	
+	![Coil2](pics/Coil2.png)
+	
+	The inside
+	
+	![Coil3](pics/Coil3.png)
+
+
 
 ## 6. Input preparation and repeatable geometry
 
